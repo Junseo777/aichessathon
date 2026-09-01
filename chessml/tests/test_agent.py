@@ -1,4 +1,5 @@
 import time
+from collections.abc import Iterator
 
 import chess
 import numpy as np
@@ -14,7 +15,13 @@ from chessml.search import Node, SearchResult  # noqa: E402
 
 
 @pytest.fixture(autouse=True)
-def fresh_game() -> None:
+def fresh_game() -> Iterator[None]:
+    if agent._GAME is not None:
+        agent._stop_ponder(agent._GAME)
+    agent._GAME = None
+    yield
+    if agent._GAME is not None:
+        agent._stop_ponder(agent._GAME)
     agent._GAME = None
 
 
@@ -36,6 +43,38 @@ def test_returns_legal_move_and_tracks_history() -> None:
     assert sum(game.key_counts.values()) == 4
 
 
+def test_ponders_between_moves_and_reuses_the_subtree() -> None:
+    board = chess.Board()
+    first = agent.get_move(board.fen(), 30_000)
+    game = agent._GAME
+    assert game is not None and game.ponder is not None and game.ponder.is_alive()
+    time.sleep(0.4)
+
+    board.push_uci(first)
+    reply = next(iter(board.legal_moves))
+    board.push(reply)
+    agent._stop_ponder(game)
+    assert game.ponder is None and game.tree is not None
+    assert game.tree.total > 0
+    reused = agent._reusable_root(game, reply)
+    assert reused is not None or game.tree.children[game.tree.moves.index(reply)] is None
+
+    second = agent.get_move(board.fen(), 29_000)
+    assert chess.Move.from_uci(second) in board.legal_moves
+    assert agent._GAME is game and game.ponder is not None and game.ponder.is_alive()
+
+
+def test_ponder_stops_within_a_bounded_time() -> None:
+    agent.get_move(chess.Board().fen(), 30_000)
+    game = agent._GAME
+    assert game is not None and game.ponder is not None
+    time.sleep(0.2)
+    start = time.monotonic()
+    agent._stop_ponder(game)
+    assert time.monotonic() - start < 0.5
+    assert game.ponder is None and game.ponder_ok
+
+
 def test_rebases_on_unrelated_position() -> None:
     agent.get_move(chess.Board().fen(), 30_000)
     other = chess.Board("8/5pk1/6p1/8/3K4/8/5PP1/8 w - - 0 45")
@@ -53,11 +92,14 @@ def test_crash_falls_back_to_legal_move(monkeypatch: pytest.MonkeyPatch) -> None
     board = chess.Board()
     move = agent.get_move(board.fen(), 30_000)
     assert chess.Move.from_uci(move) in board.legal_moves
+    assert agent._GAME is None
 
 
 def test_low_clock_modes_are_fast_and_legal() -> None:
     board = chess.Board()
     for clock_ms in (1_800, 200):
+        if agent._GAME is not None:
+            agent._stop_ponder(agent._GAME)
         agent._GAME = None
         start = time.monotonic()
         move = agent.get_move(board.fen(), clock_ms)
@@ -100,3 +142,11 @@ def test_pick_seeks_draw_claim_when_losing() -> None:
     after.push(second)
     counts = {transposition_key(after): 2}
     assert agent._pick(board, counts, result) == second
+
+
+def test_pick_with_no_visits_uses_priors() -> None:
+    board = chess.Board()
+    result = _result(board, visits=[0, 0, 0], q=[0.0, 0.0, 0.0])
+    result.root.priors[:] = np.array([0.1, 0.8, 0.1], dtype=np.float32)
+    assert agent._pick(board, {}, result) == result.moves[1]
+
