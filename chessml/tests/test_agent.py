@@ -1,3 +1,4 @@
+import os
 import time
 from collections.abc import Iterator
 
@@ -8,6 +9,7 @@ import pytest
 from chessml.tests.weights_fixture import require_weights
 
 require_weights()
+os.environ.setdefault("CHESS_PRESEARCH_S", "0.5")
 
 import agent  # noqa: E402
 from chessml.encoding import transposition_key  # noqa: E402
@@ -150,3 +152,25 @@ def test_pick_with_no_visits_uses_priors() -> None:
     result.root.priors[:] = np.array([0.1, 0.8, 0.1], dtype=np.float32)
     assert agent._pick(board, {}, result) == result.moves[1]
 
+
+def test_opening_presearch_is_adopted_for_white() -> None:
+    agent._OPENING_TREE = agent._presearch(0.5)
+    tree = agent._OPENING_TREE
+    assert tree is not None and tree.total > 0
+    assert agent._adopt_opening(chess.Board()) is tree
+    assert agent._OPENING_TREE is None
+
+
+def test_opening_presearch_is_adopted_for_black() -> None:
+    agent._OPENING_TREE = agent._presearch(0.5)
+    board = chess.Board()
+    board.push_uci("e2e4")
+    child = agent._adopt_opening(board)
+    assert child is not None and child.terminal is None
+    assert agent._OPENING_TREE is None
+
+
+def test_opening_presearch_ignores_unrelated_positions() -> None:
+    agent._OPENING_TREE = agent._presearch(0.2)
+    assert agent._adopt_opening(chess.Board("8/5pk1/6p1/8/3K4/8/5PP1/8 w - - 0 45")) is None
+    assert agent._OPENING_TREE is None

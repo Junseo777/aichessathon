@@ -1,4 +1,5 @@
 import math
+import os
 import threading
 import time
 import traceback
@@ -15,9 +16,41 @@ _PIECE_VALUES = {chess.PAWN: 1, chess.KNIGHT: 3, chess.BISHOP: 3, chess.ROOK: 5,
 _PLY_CAP = 300
 _PONDER_NODE_BUDGET = 100_000
 _PONDER_JOIN_S = 2.0
+_PRESEARCH_S = float(os.environ.get("CHESS_PRESEARCH_S", "5"))
+_START_KEY = transposition_key(chess.Board())
 _NET, _MANIFEST = load_fastest(Path(__file__).resolve().parent / "weights")
 _MCTS = MCTS(_NET)
 print(f"init: {_MANIFEST}")
+
+
+def _presearch(seconds: float) -> Node | None:
+    if seconds <= 0:
+        return None
+    result = _MCTS.run(chess.Board(), {_START_KEY: 1}, time.monotonic() + seconds)
+    print(f"init: opening pre-search sims={result.simulations}")
+    return result.root
+
+
+_OPENING_TREE: Node | None = _presearch(_PRESEARCH_S)
+
+
+def _adopt_opening(board: chess.Board) -> Node | None:
+    global _OPENING_TREE
+    tree = _OPENING_TREE
+    if tree is None:
+        return None
+    _OPENING_TREE = None
+    key = transposition_key(board)
+    if key == _START_KEY:
+        return tree
+    start = chess.Board()
+    for idx, move in enumerate(tree.moves):
+        start.push(move)
+        if transposition_key(start) == key:
+            child = tree.children[idx]
+            return child if child is not None and child.terminal is None else None
+        start.pop()
+    return None
 
 
 class _PonderResult:
@@ -183,7 +216,10 @@ def _play(fen: str, time_left_ms: int) -> str:
         _stop_ponder(_GAME)
     game, opponent_move = _sync(fen)
     board = game.board
-    root = _reusable_root(game, opponent_move)
+    if opponent_move is not None:
+        root = _reusable_root(game, opponent_move)
+    else:
+        root = _adopt_opening(board)
     child: Node | None = None
 
     if time_left_ms < 250:
