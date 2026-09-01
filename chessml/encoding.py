@@ -153,3 +153,7 @@ def legal_mask(board: chess.Board) -> npt.NDArray[np.bool_]:
         if idx >= 0:
             mask[idx] = True
     return mask
+
+
+def transposition_key(board: chess.Board) -> object:
+    return board._transposition_key()

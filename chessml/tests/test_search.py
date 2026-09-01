@@ -4,8 +4,9 @@ import chess
 import numpy as np
 import pytest
 
+from chessml.encoding import transposition_key
 from chessml.net import PolicyValueNet, load_fastest
-from chessml.search import MCTS, Node, transposition_key
+from chessml.search import MCTS, Node
 from chessml.tests.weights_fixture import require_weights
 
 WEIGHTS = require_weights()

@@ -5,8 +5,9 @@ from pathlib import Path
 import chess
 import numpy as np
 
+from chessml.encoding import transposition_key
 from chessml.net import load_fastest
-from chessml.search import MCTS, SearchResult, transposition_key
+from chessml.search import MCTS, SearchResult
 
 _PIECE_VALUES = {chess.PAWN: 1, chess.KNIGHT: 3, chess.BISHOP: 3, chess.ROOK: 5, chess.QUEEN: 9}
 _PLY_CAP = 300

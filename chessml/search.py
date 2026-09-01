@@ -5,11 +5,8 @@ import chess
 import numpy as np
 import numpy.typing as npt
 
+from chessml.encoding import transposition_key
 from chessml.net import PolicyValueNet
-
-
-def transposition_key(board: chess.Board) -> object:
-    return board._transposition_key()
 
 
 class Node:

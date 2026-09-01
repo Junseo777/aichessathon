@@ -8,30 +8,58 @@ import numpy as np
 import numpy.typing as npt
 import onnxruntime as ort
 
-from chessml.encoding import encode_move, featurize, mirror_move
+from chessml.encoding import encode_move, featurize, mirror_move, transposition_key
+
+Evaluation = tuple[list[chess.Move], npt.NDArray[np.float32], float]
+
+_NO_PRIORS: npt.NDArray[np.float32] = np.zeros(0, dtype=np.float32)
 
 
 class PolicyValueNet:
-    def __init__(self, session: ort.InferenceSession, name: str) -> None:
+    def __init__(self, session: ort.InferenceSession, name: str, cache_size: int = 60_000) -> None:
         self.session = session
         self.name = name
+        self.cache_size = cache_size
+        self.cache: dict[object, Evaluation] = {}
+        self.hits = 0
+        self.forwards = 0
 
     def raw(self, x: npt.NDArray[np.float32]) -> tuple[npt.NDArray[np.float32], float]:
         policy, value = self.session.run(None, {"x": x[np.newaxis]})
+        self.forwards += 1
         return policy[0], float(value[0, 0])
 
-    def evaluate(
-        self, board: chess.Board
-    ) -> tuple[list[chess.Move], npt.NDArray[np.float32], float]:
-        logits, value = self.raw(featurize(board))
+    def evaluate(self, board: chess.Board) -> Evaluation:
+        cacheable = not board.move_stack
+        key: object = None
+        if cacheable:
+            key = (
+                transposition_key(board),
+                min(board.halfmove_clock, 100) // 2,
+                min(board.fullmove_number, 200) // 2,
+            )
+            hit = self.cache.get(key)
+            if hit is not None:
+                self.hits += 1
+                return hit
+
         moves = list(board.legal_moves)
+        if not moves:
+            return moves, _NO_PRIORS, 0.0
+        logits, value = self.raw(featurize(board))
         rotate = board.turn == chess.BLACK
         indices = [encode_move(mirror_move(m) if rotate else m) for m in moves]
         legal_logits = logits[indices]
         legal_logits -= legal_logits.max()
         priors = np.exp(legal_logits)
         priors /= priors.sum()
-        return moves, priors.astype(np.float32), value
+        result: Evaluation = (moves, priors.astype(np.float32), value)
+
+        if cacheable:
+            if len(self.cache) >= self.cache_size:
+                self.cache.clear()
+            self.cache[key] = result
+        return result
 
 
 def _make_session(path: Path) -> ort.InferenceSession:

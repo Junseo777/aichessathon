@@ -9,7 +9,8 @@ from chessml.tests.weights_fixture import require_weights
 require_weights()
 
 import agent  # noqa: E402
-from chessml.search import SearchResult, transposition_key  # noqa: E402
+from chessml.encoding import transposition_key  # noqa: E402
+from chessml.search import SearchResult  # noqa: E402
 
 
 @pytest.fixture(autouse=True)
