@@ -10,7 +10,7 @@ require_weights()
 
 import agent  # noqa: E402
 from chessml.encoding import transposition_key  # noqa: E402
-from chessml.search import SearchResult  # noqa: E402
+from chessml.search import Node, SearchResult  # noqa: E402
 
 
 @pytest.fixture(autouse=True)
@@ -67,12 +67,15 @@ def test_low_clock_modes_are_fast_and_legal() -> None:
 
 def _result(board: chess.Board, visits: list[int], q: list[float]) -> SearchResult:
     moves = list(board.legal_moves)[: len(visits)]
+    priors = np.full(len(moves), 1.0 / len(moves), dtype=np.float32)
     return SearchResult(
         moves=moves,
         visits=np.array(visits, dtype=np.float32),
         q=np.array(q, dtype=np.float32),
         root_value=q[0],
         simulations=int(sum(visits)),
+        expanded=0,
+        root=Node(moves, priors, q[0]),
     )
 
 
