@@ -52,15 +52,25 @@ evaluation worth searching with.
 ## What's here
 
 ```
-agent.py             your submission
-baselines/           random, greedy, minimax; each is a directory with an agent.py
+agent.py             the submission: time management, history, pondering, degraded modes
+chessml/             what agent.py imports - encoding, ONNX net, PUCT search
+baselines/           random, greedy, minimax, reference-hero; each a dir with an agent.py
 harness/runner.py    the process the platform runs your agent in
 harness/referee.py   the clock, legality, draw and adjudication rules
 harness/play.py      one game between two agent directories
 harness/arena.py     many games, with a score
 harness/package.py   builds submission.zip with agent.py at the root
+train/               model, ONNX export, supervised trainer - never imported at play time
+pipeline/            data: acquire, filter, shard, Stockfish-label, validate
+docs/DECISIONS.md    every material decision, with the evidence behind it
+docs/PIPELINE_BRIEF.md  the data and training runbook
 docs/IDEAS.md        where the strength actually comes from
 ```
+
+`weights/` is a build artifact, not in git: `make weights` regenerates it, and
+`make baseline-hero` rebuilds the reference-project opponent. Both `train/` and
+`pipeline/` need the `train` dependency group and are outside the mypy strict set;
+nothing in either ever enters the submission.
 
 The harness is here so your games are honest, not so you can pre-validate an upload. Acceptance
 happens on the platform, and the validation log on your dashboard is the authority on it.

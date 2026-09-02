@@ -315,6 +315,18 @@ reference, so its code can be cross-checked line by line.
 ~7.8% of rows carrying a Lichess eval. Elite's 0% is the fact that makes Part C the
 whole label supply rather than a top-up.
 
+**Measured on the box** (Sept 2, 16 physical cores / 32 threads, Ryzen 9 7950X;
+`/workspace` is MooseFS over FUSE): filter 20k games/s; shard build 17.8k rows/s;
+Stockfish labelling **509 positions/s at 25k nodes, MultiPV=4, 16 workers**. The 8M
+and 40M shards both land at exactly 80.0/20.0, Part C reached 100% coverage on 8M,
+and assertion 8 is verified - all 8,000,000 Z of the 8M shard match the 40M prefix.
+
+That 509/s is **below the 700/s floor** the labelling amendment set for the 40M pass,
+and the floor assumed 32 physical cores rather than 16 with SMT. The fallback is a
+cheaper per-position search (fewer nodes, or a depth limit), never fewer MultiPV
+lines. Which config the 40M pass uses is decided by the sweep in
+`pipeline/sweep_labels.py`, not by this document.
+
 **Assertions the pipeline must pass** (a predecessor project lost years to these):
 position stored before the move; mirror correctness incl. no pawns on back ranks;
 bit-exact round-trip against `featurize_int8`; value sign on a constructed mate;
@@ -418,6 +430,8 @@ the MultiPV soft target (R8).
 | Decision | Why |
 |---|---|
 | loss = policy CE + value_weight x value MSE | the reference's recipe |
+| policy CE over all 4,672 logits, **unmasked at training time** | masking to legal moves removes the gradient that teaches the net which moves are plausible at all; the mask belongs at inference, where `chessml.search` already applies it. Note the soft-policy runs (R8, R9) do mask, since their target is a distribution over legal moves - that asymmetry is deliberate and worth re-testing if R8 disappoints |
+| loader holds the split in RAM, not memmap | measured: `/workspace` is MooseFS over FUSE at ~15 ms per random read - validating 8M rows took 8m25s wall for 13s of CPU. 124 GB of RAM covers the 8M and 40M shards outright; 100M still needs the bit-packed path |
 | **value_weight tested at 1.0 and 2.5** | the reference tuned 1.0 for single-pass play; we are search-first and the value head is what search amplifies |
 | value target = engine where present, else outcome (masked) | never drop rows lacking evals; their moves still train the policy |
 | AdamW 1e-3, wd 1e-4, batch 1024, BF16, clip 1.0, cosine to zero | the reference's validated settings; BF16 because FP16 silently NaNs deep towers |

@@ -82,14 +82,21 @@ Memmapped binaries in one directory:
 | `Y_policy.bin` | int32 | (N,) | `encode_move` of the human move played, rotated frame |
 | `Y_value.bin` | int8 | (N,) | game result +1/0/-1 from the side-to-move's perspective |
 | `Y_value_engine.bin` | float16 | (N,) | engine value, side-to-move's perspective; NaN if unlabelled |
-| `Y_policy_engine.bin` | int32 | (N,4) | MultiPV moves, rotated frame; -1 where absent |
-| `Y_policy_engine_wp.bin` | float16 | (N,4) | their win-probabilities |
-| `Y_policy_engine_depth.bin` | int8 | (N,4) | their depths |
+| `Y_policy_engine.bin` | int16 | (N,) | the engine's best move, `Y_policy_engine4[:, 0]` |
+| `Y_policy_engine4.bin` | int16 | (N,4) | MultiPV moves, rotated frame; -1 where absent |
+| `Y_value_engine4.bin` | float16 | (N,4) | their win-probabilities; NaN where absent |
+| `Y_depth_engine4.bin` | int8 | (N,4) | their depths; -1 where absent |
+| `Y_value_lichess.bin` | float16 | (N,) | the `[%eval]` value, kept so 6c can compare |
+| `tier.bin` | int8 | (N,) | 0 = top (2400+), 1 = mid |
 | `value_source.bin` | int8 | (N,) | 0 = none, 1 = Lichess `[%eval]`, 2 = our Stockfish |
 | `Z.bin` | uint64 | (N,) | `chess.polyglot.zobrist_hash` of the stored position |
 | `fen.txt` | text | N lines | sidecar, so labelling never re-parses archives |
+| `fen_offset.bin` | uint64 | (N,) | byte offset of each row's line in `fen.txt` |
 | `split.bin` | int8 | (N,) | 0 = train, 1 = validation |
 | `meta.json` | | | n_samples, tier_counts, eval_coverage, seed, source_files |
+
+The authority on this table is `ARRAYS` in `pipeline/shard.py`; it is the schema the
+writer, the labeller, the validator and the trainer all share.
 
 `Y_value_engine` is MultiPV column 0, so everything reading the scalar value target
 is unchanged.
