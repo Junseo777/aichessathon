@@ -1,12 +1,17 @@
 SHELL := /bin/bash
 
-.PHONY: setup weights play arena zip gate
+.PHONY: setup weights baseline-hero play arena zip gate
 
 setup:
 	uv sync
 
 weights:
 	uv run --group train python -m train.export_onnx --out weights
+
+baseline-hero:
+	cp agent.py baselines/reference-hero/agent.py
+	ln -sfn ../../chessml baselines/reference-hero/chessml
+	uv run --group train python -m train.import_reference_hero --out baselines/reference-hero/weights
 
 play:
 	uv run python -m harness.play --white . --black baselines/greedy
