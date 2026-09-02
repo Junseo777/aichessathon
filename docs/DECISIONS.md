@@ -372,11 +372,25 @@ policy side. Our policy target would have stayed human one-hot, with the tau
 histogram collapsing to one-hot outside the opening anyway (the reference's 100M
 rows deduplicated to 72M unique, so most positions occur once).
 
-**MultiPV closes that gap from a strictly better teacher.** Four lines with
-win-probabilities, softmaxed, are a soft policy distribution - the same dark
-knowledge distillation exists to transfer, sourced from Stockfish rather than from a
-37M imitation model, and produced during a labelling pass we were running anyway.
-Run R8 uses it.
+**MultiPV narrows that gap from a stronger source. It does not close it, and it is
+not equivalent to the teacher's policy.** Four lines with win-probabilities,
+softmaxed, are a soft policy distribution produced during a labelling pass we were
+running anyway. Three ways it differs from top-32 teacher logits, all of them
+against us except the first:
+
+- *Source strength:* Stockfish at 25k nodes against a ~2,600-strength imitation
+  model. The one unambiguous improvement.
+- *Breadth:* four lines against thirty-two. Everything outside the top four takes
+  zero mass, where the teacher ranked down to 32. The student's softmax will not
+  learn literal zeros, but the tail shape is gone. This is one reason R8b keeps a
+  human component (alpha 0.5) rather than going pure-teacher as the reference did.
+- *Shape:* the teacher encoded what a strong imitator would plausibly play; Stockfish
+  encodes objective quality, and in forcing positions collapses toward one-hot -
+  which is the target we already had. The gain is concentrated in positions where
+  several moves are close.
+
+Run R8 tests it. Until then this is the least-evidenced claim in this document, and
+"our policy target now matches the 37M teacher" is not a claim it supports.
 
 **What engine evals structurally cannot give, and we accept:** the value head should
 estimate the outcome when *our* net at ~700 sims plays on; Stockfish estimates it
