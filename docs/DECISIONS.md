@@ -83,10 +83,20 @@ Stockfish's own NNUE weights, which are banned here.)
 
 **c) The reference's 2,474 used a value head we could not have copied - but can now
 beat.** That number is for the *distilled* 116k model: a 37M-parameter teacher
-trained on 72M unique positions, then distilled into the student. The reference's
-plain human-trained 116k was policy-identical in one-shot play but materially weaker
-under MCTS, because MCTS is gated by the value head. Distillation was the reference's
-only legal route to a good value head. We have a better one: engine evaluations.
+trained on 72M unique positions, then distilled into the student. Distillation was
+the reference's only legal route to a good value head. We have a better one: engine
+evaluations.
+
+How much that distillation was worth is *not* measured anywhere in the reference,
+and this document previously implied it was. The reference's only published deltas
+are h2h 0.527 against its own undistilled twin (~+19 Elo) and +6.7pp on its
+Stockfish ladder. The 1,572-to-2,474 curve was measured on the distilled model
+alone; no curve exists for the twin. Its README attributes the gain to the value
+head, but its ablation (`eval/v3/run_distill.py`) swept only the teacher/human mix
+and the softmax temperature - never policy-only against value-only - so that
+attribution is an interpretation. Notably, pure teacher beat every mix with human
+labels and T=3 collapsed to h2h 0.38, which is hard to explain if the teacher's
+*policy* distribution were inert. See section 8.
 
 ### The actual argument for going bigger
 
@@ -147,10 +157,10 @@ than the reference needed.
 - The reference's 116k hero was trained with the tau recipe (soft-policy histogram,
   averaged value) and distillation from a 37M teacher. Those are *label-quality*
   advantages, not training-time ones: a 116k run takes hours, not months (the months
-  were the whole project). Our core runs match or beat it on the value side with
-  engine labels, but lack the soft-policy target until the tau runs land (section 8).
-  "Bigger is stronger" holds at equal label quality; ours is not yet equal on the
-  policy side, and that gap is closable within the timeline.
+  were the whole project). We match or beat it on the value side with engine labels,
+  and the MultiPV policy target (section 8) closes the policy side; both are in the
+  run matrix rather than in a checkpoint, so at the time of writing this is a plan,
+  not a measurement.
 - Engine labels would also help a 116k model.
 
 ### The decision, and the guard on it
@@ -264,6 +274,19 @@ the model sees is that grid divided by SCALE, and eleven parity tests pin it (mi
 equivalence, encode/decode round-trips over every legal move including
 underpromotions, en passant and castling, quantisation grid, invariants).
 
+**We then shipped the same class of bug ourselves, and the fix is the interesting
+part.** Plane 16 (en passant) was set from `board.ep_square`, which a live board
+populates after every double push. The referee hands `get_move` a `board.fen()`, and
+python-chess omits the en passant square from a FEN unless a capture is actually
+legal - so a shard built from pushed boards carried a plane-16 bit on roughly a tenth
+of rows that the agent can never see at play time. Exactly the reference's failure:
+no error, just strength paid away quietly. Plane 16 is now keyed on
+`has_legal_en_passant()`, which agrees under every FEN convention because all of them
+carry the square when a capture is legal, and a test pins
+`featurize(Board(b.fen())) == featurize(b)` over every test board. Found by the
+pipeline's own bit-exact round-trip assertion, which is the argument for having
+written those assertions before any data existed.
+
 Plane order, rotation convention and move encoding are otherwise identical to the
 reference, so its code can be cross-checked line by line.
 
@@ -277,12 +300,20 @@ reference, so its code can be cross-checked line by line.
 | the reference's filter recipe kept whole | validated; each filter removes a known noise source |
 | **40M positions first; 100M for the final runs if the data says so** | 40M trains in hours and yields a good model, which is what the Sept 4 ladder needs. Whether a 1.4M-2.4M net is still data-limited at 40M is empirical, not settled: the reference's 116k saturated at 72M unique positions and ours is 12x larger, so it plausibly is. The per-run train-vs-val gap decides. With the build lock on Sept 11, a 100M shard (~126 GB, ~11 h per training run) is affordable for the final candidates |
 | **tier mix 80/20/0 instead of 65/25/10** (fallback if 2400+ volume is short) | we want strength, not a model of human play across levels; weaker games teach moves we do not want imitated |
+| **interleave SOURCES within each tier, not just tiers** | measured: Elite carries 0% `[%eval]` (it strips all annotations) and alone supplies 110.9M positions, so a shard filled tier-by-tier drains Elite first and contains zero Lichess evals - which makes assertion 6c unrunnable. Weighted round-robin over (tier x source) by filtered volume; the pattern depends only on weights and emission history, never on target size, so a 40M shard stays a byte-identical prefix of the 100M one |
 | 8M smoke shard first | surfaces a pipeline bug in one hour instead of after a 40M run |
 | validation split **by game** | positions within a game are correlated; a by-position split leaks |
 | `Z.bin` zobrist column | lets labels be joined later without regenerating 54 GB |
 | FEN sidecar | lets Stockfish label positions without re-parsing archives |
 | filtered PGNs kept | input to the shard, the tau corpus, and any future label join |
 | shard generated by importing `chessml.encoding` | the single hard rule; see section 6 |
+
+**Measured yields** (Sept 2): Elite, six months, 1.31M games kept of 1.71M seen,
+110.9M positions, `[%eval]` yield 0.00% in both tiers. Lichess monthly 2026-07,
+100M games seen: top tier 281k games / 22.9M positions / 42.2% eval yield; mid tier
+7.11M games / 495.5M positions / 15.2%. Interleaved 8M shard: 80.0/20.0 tier split,
+~7.8% of rows carrying a Lichess eval. Elite's 0% is the fact that makes Part C the
+whole label supply rather than a top-up.
 
 **Assertions the pipeline must pass** (a predecessor project lost years to these):
 position stored before the move; mirror correctness incl. no pawns on back ranks;
@@ -312,25 +343,59 @@ Three sources, in order of cost:
    m evaluates the position *after* m, so a stored position's value comes from the
    preceding node - an off-by-one that no statistical test catches, hence the
    hand-verified assertion.
-2. **Stockfish self-labelling on the rented box's CPUs** - fills coverage to ~100%.
-   10k nodes per position (~depth 12-14, vastly better than an outcome), one engine
-   per core, deduplicated by zobrist first (~30-40% fewer positions), joined back by
-   `Z.bin`. ~5-7 hours on 16 cores, running in parallel with GPU training. The engine's
-   best move is recorded too, since it is free.
+2. **Stockfish self-labelling on the rented box's CPUs, MultiPV=4** - fills coverage
+   to ~100% and is the whole label supply in practice, since Elite measured 0%
+   `[%eval]`. 25k nodes per position with four lines (~the depth 10k single-PV gave
+   the top line), one engine per core, deduplicated by zobrist first (~30-40% fewer
+   positions), joined back by `Z.bin`. Stored per position: the four moves, their
+   win-probabilities, and their depths. Column 0 is the scalar value target, so
+   everything reading `Y_value_engine` is unchanged. Roughly 2x the single-PV cost,
+   on CPU, parallel to GPU training. **The fourth line is not a luxury: it is the
+   soft policy target** (section 8, "what replaces distillation"). If throughput
+   forces a cut, cut nodes, never MultiPV - the extra lines cannot be recovered
+   without relabelling.
 3. **The tau recipe** (stretch) - aggregate by unique position: mean outcome, human
    move histogram as a soft policy target, count^0.5 sampling. The reference measured
    **+79 Elo at identical parameters** from this alone.
 
-**Why not distillation from a large teacher:** it was the reference's route to a
-denoised value head because its principles forbade engine data. It manufactures an
-approximation of the signal we can now obtain directly, at a cost of ~3 sequential
-GPU-days. Superseded; estimated marginal value +30-80 on top of engine labels, not
-the +100-200 it gave the reference.
+### Why not distillation, and what replaces it
 
-**Open experiments, both cheap:** pure engine value vs a 0.75/0.25 blend with the
-averaged outcome (engine evals assume near-perfect play; +3 pawns maps to ~90% won,
-which a 1.4M net may not convert); human policy vs a 50/50 blend with the engine's
-best move.
+The first version of this section said engine evaluations "supersede" distillation.
+That was half right, and the half that was wrong is the more important half.
+
+**Distillation replaced two targets; engine evals replace one.** The reference's
+teacher labelled every position with top-32 policy logits *and* a value
+(`src/v3/teacher_label.py`). A Stockfish eval is a scalar. It dominates the value
+half - a near-zero-variance estimate from a ~3,500-strength engine against a
+denoised human-outcome estimate from a ~2,600 teacher - and replaces nothing on the
+policy side. Our policy target would have stayed human one-hot, with the tau
+histogram collapsing to one-hot outside the opening anyway (the reference's 100M
+rows deduplicated to 72M unique, so most positions occur once).
+
+**MultiPV closes that gap from a strictly better teacher.** Four lines with
+win-probabilities, softmaxed, are a soft policy distribution - the same dark
+knowledge distillation exists to transfer, sourced from Stockfish rather than from a
+37M imitation model, and produced during a labelling pass we were running anyway.
+Run R8 uses it.
+
+**What engine evals structurally cannot give, and we accept:** the value head should
+estimate the outcome when *our* net at ~700 sims plays on; Stockfish estimates it
+under near-perfect play. `2/(1+exp(-0.00368208 cp))-1` is a function of cp alone, so
+a +3.0 needing six only-moves and a +3.0 that is trivial technique receive identical
+targets. It cannot express sharpness; a teacher's value head, being a function of
+the position, can. The error points the wrong way for a searching agent -
+overconfidence steers PUCT into lines it cannot hold. Mitigation is the outcome
+blend (R7), not a fix.
+
+**Cost, corrected.** The "~3 sequential GPU-days" previously cited here is the
+reference's from-scratch 37M teacher, not our cost: the size bracket already trains
+d128, and the top-32 format is ~2.5 GB at 40M rows, so a student run is hours. The
+honest reason to skip it is that a 4x teacher-student gap buys far less than the
+reference's 320x - not cost, and not supersession.
+
+**Open experiments:** pure engine value vs a 0.5/0.5 blend with the averaged outcome
+(R6 vs R7 - 0.75/0.25 would sit too close to R6 to discriminate); human policy vs
+the MultiPV soft target (R8).
 
 ---
 
@@ -367,7 +432,7 @@ equivalent over a same-strength fragile entry.
 | past ply 240, material balance drives that logic | ply 300 is adjudicated on material |
 | budget = clamp(left / max(14, 46 - move) + 0.4 s, <= 4 s, <= left - 1 s) | flagging is the most common self-inflicted loss |
 | < 2 s: one forward pass; < 0.25 s: first legal move | degraded modes instead of a flag |
-| repo gate: ruff, mypy strict, 24 tests, two clean fast games | the starter's own bar |
+| repo gate: ruff, mypy strict, 40 tests, two clean fast games | the starter's own bar. On random weights the agent loses those games; the gate checks legality and the clock, not strength |
 
 Verified: a full game at real time control and the gate's fast games completed with
 zero crashes, illegal moves or flags on random weights; search finds mate-in-one for
@@ -383,7 +448,7 @@ both colours from the rules alone.
 | WDL (3-logit) value head | touches model, export, net and search for a refinement (draw awareness); engine values are the big win and work with the scalar head |
 | batched-leaf MCTS | measured <=20% amortisation on CPU |
 | Numba for the tree loop | overhead is ~5% of simulation cost after the fixes in section 3 |
-| distillation | section 8 |
+| distillation | section 8 - on the timeline and the teacher gap available to us, not because engine labels supersede it; MultiPV supplies the policy half it would have brought |
 | Numbfish as a reference | ships Stockfish's NNUE weights: disqualifying on two counts; the architecture without them needs billions of positions |
 | architecture changes | the reference's ablation already settled them |
 | 100M positions | section 7 |
@@ -412,12 +477,15 @@ both colours from the rules alone.
 |---|---|
 | where in 116k-2.4M the optimum actually sits at our training budget | the size bracket incl. the d32 anchor, 400-game arena |
 | whether 40M positions is enough for the larger models | train-vs-val gap on R2; if validation is still climbing at epoch 8, extend to 100M for the final runs |
-| pure engine value vs blend with outcome | one extra run (S1) |
+| pure engine value vs blend with outcome | R6 vs R7 (0.5/0.5) |
+| whether the MultiPV soft policy target beats human one-hot | R8; this is the distillation replacement and the least-evidenced claim in this document |
+| whether Stockfish's MultiPV line order can be trusted | measured: it disagrees with the scores it reports on 18.5% of positions, because a node-capped search leaves the four lines at different depths. Sorting by stored value makes the invariant hold by construction, at the cost of making the value target the max of four noisy scores; a depth-limited search removes the cause instead, if throughput allows |
 | value_weight 1.0 vs 2.5 | R2 vs R3 |
-| int8 accuracy on the trained model | the export parity gate (first real test) |
+| int8 accuracy on the trained model | the export parity gate. Measured on the reference's trained 116k hero: **0.863 argmax agreement, well under the 0.99 bar**. Small models may simply not survive dynamic quantisation, in which case fp32 ships and the sims-per-second table's int8 column does not apply |
 | competition core speed | the init-time probe, per game |
 | whether the platform's cores are truly dedicated for pondering | simulation count during the opponent's turn, in the validation log |
 | how strong the field is | the ladder from Sept 4; nothing else measures it |
+| whether we are actually at least as good as the reference | head-to-head against `baselines/reference-hero` - the reference's own published 116k hero, converted to our checkpoint format by `train/import_reference_hero.py` and run through our search and runtime unchanged. Model-only (equal sims) isolates training; full-agent at the real clock is the answer to the question as asked. Its capsule was trained under the pre-fix en passant convention, so it sees a slightly different input on ~10% of rows; acceptable for a baseline |
 
 Expected strength on the reference's Stockfish-anchored scale: ~2,200-2,500 for the
 first working model, 2,600-2,800 if engine labels, tau and the search work all land.
