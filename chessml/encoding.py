@@ -51,11 +51,12 @@ def featurize_int8(board: chess.Board) -> npt.NDArray[np.int8]:
     if board.has_queenside_castling_rights(not mover):
         x[15, :, :] = _ONE
 
-    if board.ep_square is not None:
-        eh = chess.square_rank(board.ep_square)
+    ep = board.ep_square
+    if ep is not None and board.has_legal_en_passant():
+        eh = chess.square_rank(ep)
         if black:
             eh = 7 - eh
-        x[16, eh, chess.square_file(board.ep_square)] = _ONE
+        x[16, eh, chess.square_file(ep)] = _ONE
 
     _clock_planes(board, x)
     return x

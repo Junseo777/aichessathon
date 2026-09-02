@@ -150,3 +150,13 @@ def test_underpromotions_roundtrip() -> None:
             move = chess.Move.from_uci(f"b7{target}{piece}")
             if move in board.legal_moves:
                 assert decode_move(encode_move(move), board) == move
+
+
+def test_en_passant_plane_matches_platform_fen() -> None:
+    board = chess.Board()
+    board.push_san("e4")
+    assert board.ep_square is not None
+    assert not board.has_legal_en_passant()
+    assert featurize_int8(board)[16].sum() == 0
+    for b in all_test_boards():
+        assert (featurize_int8(chess.Board(b.fen())) == featurize_int8(b)).all(), b.fen()
