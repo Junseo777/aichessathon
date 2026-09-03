@@ -1,3 +1,4 @@
+import hashlib
 import json
 import time
 from pathlib import Path
@@ -90,5 +91,8 @@ def load_fastest(weights_dir: Path) -> tuple[PolicyValueNet, dict[str, Any]]:
     best_ms, best_name = timed[0][0] * 1000.0, timed[0][1]
     manifest["forward_ms"] = round(best_ms, 3)
     manifest["chosen"] = best_name
+    # Identifies the checkpoint in the game log: manifests are identical across
+    # training runs, so nothing else here distinguishes one net from another.
+    manifest["sha256"] = hashlib.sha256((weights_dir / best_name).read_bytes()).hexdigest()
     print(f"net: {[(n, round(t * 1000, 2)) for t, n in timed]} -> {best_name}")
     return PolicyValueNet(sessions[best_name], best_name), manifest
