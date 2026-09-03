@@ -14,7 +14,7 @@ baseline-hero:
 	uv run --group train python -m train.import_reference_hero --out baselines/reference-hero/weights
 
 play:
-	uv run python -m harness.play --white . --black baselines/greedy
+	uv run python -m harness.play --white . --black baselines/greedy $(if $(FEN),--fen "$(FEN)")
 
 arena:
 	uv run python -m harness.arena --opponent baselines/greedy --games 20

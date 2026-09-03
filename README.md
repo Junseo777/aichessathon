@@ -28,6 +28,7 @@ The fork ships a legal random-mover, so the loop works before you write anything
 ```
 make play                                          # one game, real time control
 make arena                                         # 20 fast games, prints a score
+make play FEN="<fen>"                              # start from a given position
 uv run python -m harness.play --black baselines/minimax --pgn game.pgn
 uv run python -m harness.arena --opponent ../my-old-version --games 200
 ```
@@ -44,19 +45,25 @@ evaluation worth searching with.
 |---|---|---|---|
 | random vs greedy | 20 | 10 s + 0.1 s | 10.0% (+1 =2 -17) |
 | greedy vs minimax | 6 | 120 s + 0.5 s | 0.0% (+0 =0 -6) |
+| numba vs minimax | 6 | 10 s + 0.5 s | 66.7% (+2 =4 -0) |
 
 - `baselines/random` plays a uniformly random legal move. It is what `agent.py` starts as.
 - `baselines/greedy` searches one ply on material.
 - `baselines/minimax` searches two plies on material and mobility, with no time management.
+- `baselines/numba` is `minimax` with the evaluation jitted. It is barely stronger, which is
+  the point: jitting a shallow search buys headroom, not depth. Read it for the warm-up call
+  at the bottom, which is how you keep compilation off your clock.
 
 ## What's here
 
 ```
 agent.py             the submission: time management, history, pondering, degraded modes
 chessml/             what agent.py imports - encoding, ONNX net, PUCT search
-baselines/           random, greedy, minimax, reference-hero; each a dir with an agent.py
+baselines/           random, greedy, minimax, numba, reference-hero; each a dir with an agent.py
 harness/runner.py    the process the platform runs your agent in
 harness/referee.py   the clock, legality, draw and adjudication rules
+harness/rules.py     the event constants the harness enforces
+harness/sandbox.py   the one process, spoken to as the platform speaks to a container
 harness/play.py      one game between two agent directories
 harness/arena.py     many games, with a score
 harness/package.py   builds submission.zip with agent.py at the root
@@ -71,6 +78,9 @@ docs/IDEAS.md        where the strength actually comes from
 `make baseline-hero` rebuilds the reference-project opponent. Both `train/` and
 `pipeline/` need the `train` dependency group and are outside the mypy strict set;
 nothing in either ever enters the submission.
+
+Local games start from the normal position unless you pass `--fen`. Rated games start from
+curated neutral positions.
 
 The harness is here so your games are honest, not so you can pre-validate an upload. Acceptance
 happens on the platform, and the validation log on your dashboard is the authority on it.
