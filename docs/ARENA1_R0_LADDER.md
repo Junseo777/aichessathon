@@ -1,4 +1,4 @@
-# STOP AND REPORT #3 — Stockfish-limit-strength ladder, R0
+# ARENA #1 — R0 on the Stockfish limit-strength ladder
 
 Status report on where R0 (the 8M-shard checkpoint currently in `weights/`)
 sits on the same ladder the reference project used for its 2,474 figure.

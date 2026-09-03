@@ -72,7 +72,19 @@ pipeline/            data: acquire, filter, shard, Stockfish-label, validate
 docs/DECISIONS.md    every material decision, with the evidence behind it
 docs/PIPELINE_BRIEF.md  the data and training runbook
 docs/IDEAS.md        where the strength actually comes from
+docs/PROVENANCE.md   how to check the shipped weights are ours
+docs/STOP<n>_*.md    pipeline stop-and-report points, numbered by PIPELINE_BRIEF §7
+docs/ARENA<n>_*.md   measurement reports: games played, Elo estimated
+docs/FINDING_*.md    a bug or effect worth recording, filed rather than fixed
 ```
+
+**Two numbering schemes, deliberately separate.** `STOP<n>` belongs to the five
+stop-and-report points defined in `docs/PIPELINE_BRIEF.md` §7 — they gate the run
+matrix (R0 -> RA, then the full track) and each one waits on a confirmation before
+the next stage starts. Only those five may take a STOP number. `ARENA<n>` is for
+results of games actually played, numbered independently in the order they were
+run. A sparring result is not a stop point, however useful it is: reusing the
+STOP sequence for one makes it ambiguous whether the protocol has advanced.
 
 `weights/` is a build artifact, not in git: `make weights` regenerates it, and
 `make baseline-hero` rebuilds the reference-project opponent. Both `train/` and
