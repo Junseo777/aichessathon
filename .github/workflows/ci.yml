@@ -30,4 +30,5 @@ jobs:
           python-version: "3.12"
           enable-cache: true
       - run: uv sync
+      - run: uv run --group train python -m train.export_onnx --out weights
       - run: uv run python -m harness.arena --opponent baselines/random --games 2 --base-ms 5000
