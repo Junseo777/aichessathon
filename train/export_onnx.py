@@ -8,6 +8,10 @@ import torch
 from train.model import ChessNet, Config, count_params
 
 
+class Int8GateFailure(AssertionError):
+    pass
+
+
 def export(model: ChessNet, out_dir: Path) -> dict[str, object]:
     out_dir.mkdir(parents=True, exist_ok=True)
     model.eval()
@@ -66,8 +70,8 @@ def verify_parity(
     agree = float((t_policy.argmax(1).numpy() == q_policy.argmax(1)).mean())
     q_verr = float(np.abs(t_value.numpy() - q_value).max())
     print(f"parity: fp32 exact, int8 argmax agreement {agree:.3f}, int8 value err {q_verr:.4f}")
-    if strict_int8:
-        assert agree >= 0.99, f"int8 argmax agreement too low: {agree}"
+    if strict_int8 and agree < 0.99:
+        raise Int8GateFailure(f"int8 argmax agreement too low: {agree}")
 
 
 def main() -> None:
@@ -94,14 +98,13 @@ def main() -> None:
     manifest = export(model, args.out)
     try:
         verify_parity(model, args.out, strict_int8=args.checkpoint is not None)
-    except AssertionError as exc:
-        if "int8 argmax agreement too low" in str(exc):
-            (args.out / "model.int8.onnx").unlink(missing_ok=True)
-            print(f"int8 below the gate: {exc}. kept fp32, removed model.int8.onnx")
-        else:
-            for name in ("model.onnx", "model.int8.onnx", "manifest.json"):
-                (args.out / name).unlink(missing_ok=True)
-            raise
+    except Int8GateFailure as exc:
+        (args.out / "model.int8.onnx").unlink(missing_ok=True)
+        print(f"int8 below the gate: {exc}. kept fp32, removed model.int8.onnx")
+    except AssertionError:
+        for name in ("model.onnx", "model.int8.onnx", "manifest.json"):
+            (args.out / name).unlink(missing_ok=True)
+        raise
     print(f"exported {manifest['params']:,} params to {args.out}/")
 
 
