@@ -2,7 +2,10 @@ from __future__ import annotations
 
 import argparse
 import copy
+import hashlib
 import json
+import platform
+import subprocess
 import sys
 import time
 from dataclasses import asdict
@@ -77,9 +80,35 @@ class EMA:
             s.copy_(b)
 
 
-def save(model: torch.nn.Module, cfg: Config, path: Path) -> None:
+def git_commit() -> str:
+    try:
+        return subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            capture_output=True,
+            text=True,
+            check=True,
+            cwd=Path(__file__).resolve().parent.parent,
+        ).stdout.strip()
+    except Exception:
+        return "unknown"
+
+
+def shard_fingerprint(shard_dir: Path) -> dict:
+    meta = shard_dir / "meta.json"
+    raw = meta.read_bytes() if meta.exists() else b""
+    return {
+        "path": str(shard_dir),
+        "meta_sha256": hashlib.sha256(raw).hexdigest() if raw else "missing",
+        "rows": json.loads(raw)["n_samples"] if raw else -1,
+    }
+
+
+def save(model: torch.nn.Module, cfg: Config, path: Path, provenance: dict | None = None) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    torch.save({"config": asdict(cfg), "model": model.state_dict()}, path)
+    blob = {"config": asdict(cfg), "model": model.state_dict()}
+    if provenance is not None:
+        blob["provenance"] = provenance
+    torch.save(blob, path)
 
 
 def main() -> int:
@@ -124,6 +153,9 @@ def main() -> int:
     args.out.mkdir(parents=True, exist_ok=True)
     history: list[dict] = []
     rng = np.random.default_rng(args.seed)
+    commit = git_commit()
+    fingerprint = shard_fingerprint(args.shard)
+    print(f"git {commit[:12]}  shard meta sha256 {fingerprint['meta_sha256'][:16]}", flush=True)
     print(f"steps/epoch {steps_per_epoch:,}  total {total_steps:,}", flush=True)
 
     for epoch in range(1, args.epochs + 1):
@@ -185,8 +217,23 @@ def main() -> int:
             f"{row['samples_per_sec']:,}/s",
             flush=True,
         )
-        save(model, cfg, args.out / f"{args.run}_e{epoch}.pt")
-        save(ema.shadow, cfg, args.out / f"{args.run}_e{epoch}_ema.pt")
+        prov = {
+            "run": args.run,
+            "epoch": epoch,
+            "epochs_planned": args.epochs,
+            "seed": args.seed,
+            "value_weight": args.value_weight,
+            "batch": args.batch,
+            "lr": args.lr,
+            "git_commit": commit,
+            "shard": fingerprint,
+            "metrics": row,
+            "created_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            "torch": torch.__version__,
+            "host": platform.node(),
+        }
+        save(model, cfg, args.out / f"{args.run}_e{epoch}.pt", prov)
+        save(ema.shadow, cfg, args.out / f"{args.run}_e{epoch}_ema.pt", {**prov, "ema": True})
         (args.out / f"{args.run}_history.json").write_text(json.dumps(history, indent=2))
 
     print(json.dumps(history[-1], indent=2))
