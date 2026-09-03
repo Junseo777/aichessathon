@@ -1,0 +1,30 @@
+[16:22:30] === ELITE (2400+ backbone, no evals) ===
+[16:22:30] START lichess_elite_2025-06.zip (82M)
+[16:22:31] DONE  lichess_elite_2025-06.zip (82M)
+[16:22:31] START lichess_elite_2025-07.zip (80M)
+[16:22:32] DONE  lichess_elite_2025-07.zip (80M)
+[16:22:32] START lichess_elite_2025-08.zip (79M)
+[16:22:33] DONE  lichess_elite_2025-08.zip (79M)
+[16:22:33] START lichess_elite_2025-09.zip (76M)
+[16:22:34] DONE  lichess_elite_2025-09.zip (76M)
+[16:22:35] START lichess_elite_2025-10.zip (77M)
+[16:22:36] DONE  lichess_elite_2025-10.zip (77M)
+[16:22:36] START lichess_elite_2025-11.zip (77M)
+[16:22:37] DONE  lichess_elite_2025-11.zip (77M)
+[16:22:37] === MONTHLIES (eval coverage + 6c cross-check) ===
+[16:22:37] START lichess_db_standard_rated_2026-07.pgn.zst (28G)
+[16:37:45] DONE  lichess_db_standard_rated_2026-07.pgn.zst (28G)
+[16:37:45] START lichess_db_standard_rated_2026-06.pgn.zst (27G)
+[16:53:13] DONE  lichess_db_standard_rated_2026-06.pgn.zst (27G)
+[16:53:13] === TOTAL ===
+total 56435211
+drwxrwxrwx 2 root root     3005381 Sep  2 16:37 .
+drwxrwxrwx 7 root root     3006965 Sep  2 16:38 ..
+-rw-rw-rw- 1 root root 28241946492 Sep  2 16:53 lichess_db_standard_rated_2026-06.pgn.zst
+-rw-rw-rw- 1 root root 29051046504 Sep  2 16:37 lichess_db_standard_rated_2026-07.pgn.zst
+-rw-rw-rw- 1 root root    85210660 Sep  2 16:22 lichess_elite_2025-06.zip
+-rw-rw-rw- 1 root root    83612119 Sep  2 16:22 lichess_elite_2025-07.zip
+-rw-rw-rw- 1 root root    82142390 Sep  2 16:22 lichess_elite_2025-08.zip
+-rw-rw-rw- 1 root root    78763489 Sep  2 16:22 lichess_elite_2025-09.zip
+-rw-rw-rw- 1 root root    80571984 Sep  2 16:22 lichess_elite_2025-10.zip
+-rw-rw-rw- 1 root root    80347217 Sep  2 16:22 lichess_elite_2025-11.zip

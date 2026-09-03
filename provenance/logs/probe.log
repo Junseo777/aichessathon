@@ -1,0 +1,6 @@
+=== 8M build finished; box idle ===
+ 17:40:13 up 91 days,  5:35,  0 users,  load average: 0.97, 5.23, 5.02
+workers=16 nodes=25000: 60,000 pos in  113.3s ->    529 pos/sec
+workers=16 nodes=10000: 60,000 pos in   51.2s ->  1,171 pos/sec
+workers=32 nodes=25000: 60,000 pos in  171.5s ->    350 pos/sec
+workers=32 nodes=10000: 60,000 pos in   70.2s ->    854 pos/sec

@@ -1,0 +1,8 @@
+{
+  "rows": 8000000,
+  "unique": 6550441,
+  "rows_labelled": 8000000,
+  "coverage_pct": 100.0,
+  "unique_labelled": 6550441,
+  "unique_coverage_pct": 100.0
+}

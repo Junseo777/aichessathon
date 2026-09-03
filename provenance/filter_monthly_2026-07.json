@@ -1,0 +1,32 @@
+{
+  "seen": 89288421,
+  "kept": 7394952,
+  "duplicates": 5215,
+  "rejects": {
+    "tier_below_1900": 65909057,
+    "termination": 7906557,
+    "time_control": 6085170,
+    "elo_gap": 1854286,
+    "result": 111128,
+    "too_short": 22056
+  },
+  "tier_games": {
+    "mid": 7113673,
+    "top": 281279
+  },
+  "tier_positions": {
+    "mid": 495456240,
+    "top": 22885929
+  },
+  "tier_with_eval": {
+    "mid": 1079099,
+    "top": 118790
+  },
+  "eval_yield_pct": {
+    "mid": 15.17,
+    "top": 42.23
+  },
+  "sources": [
+    "lichess_db_standard_rated_2026-07.pgn.zst"
+  ]
+}

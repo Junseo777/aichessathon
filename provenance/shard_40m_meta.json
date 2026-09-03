@@ -1,0 +1,60 @@
+{
+  "target": 40000000,
+  "n_samples": 40000000,
+  "games_used": 481397,
+  "games_skipped": 0,
+  "tier_positions": {
+    "top": 32000010,
+    "mid": 7999990
+  },
+  "tier_pct": {
+    "top": 80.0,
+    "mid": 20.0
+  },
+  "streams": [
+    {
+      "label": "elite-top",
+      "tier": "top",
+      "weight": 0.6487,
+      "positions": 25949032,
+      "pct": 64.87,
+      "games": 298033,
+      "rows_with_eval": 0,
+      "exhausted": false
+    },
+    {
+      "label": "monthly-top",
+      "tier": "top",
+      "weight": 0.1513,
+      "positions": 6050978,
+      "pct": 15.13,
+      "games": 71075,
+      "rows_with_eval": 2320374,
+      "exhausted": false
+    },
+    {
+      "label": "elite-mid",
+      "tier": "mid",
+      "weight": 0.005,
+      "positions": 200092,
+      "pct": 0.5,
+      "games": 2482,
+      "rows_with_eval": 0,
+      "exhausted": false
+    },
+    {
+      "label": "monthly-mid",
+      "tier": "mid",
+      "weight": 0.195,
+      "positions": 7799898,
+      "pct": 19.5,
+      "games": 109807,
+      "rows_with_eval": 1211367,
+      "exhausted": false
+    }
+  ],
+  "eval_rows": 3531741,
+  "eval_coverage_pct": 8.829,
+  "val_fraction_denom": 50,
+  "seconds": 5534.3
+}

@@ -1,0 +1,22 @@
+=== R0 finished ===
+[R0] epoch 1: train_pol 2.3241 val_pol 1.7826 gap +0.5415 | acc 0.4418 (W 0.4416 / B 0.4419) | val_mse 0.0373 | ema_acc 0.4450 | 26,960/s
+[R0] epoch 2: train_pol 1.6799 val_pol 1.6132 gap +0.0667 | acc 0.4788 (W 0.4790 / B 0.4786) | val_mse 0.0351 | ema_acc 0.4888 | 25,018/s
+[R0] epoch 3: train_pol 1.5632 val_pol 1.5427 gap +0.0204 | acc 0.4955 (W 0.4954 / B 0.4955) | val_mse 0.0254 | ema_acc 0.5046 | 21,887/s
+[R0] epoch 4: train_pol 1.4993 val_pol 1.5037 gap -0.0045 | acc 0.5062 (W 0.5068 / B 0.5057) | val_mse 0.0231 | ema_acc 0.5143 | 21,912/s
+[R0] epoch 5: train_pol 1.4514 val_pol 1.4771 gap -0.0257 | acc 0.5125 (W 0.5121 / B 0.5130) | val_mse 0.0228 | ema_acc 0.5176 | 21,706/s
+[R0] epoch 6: train_pol 1.4123 val_pol 1.4589 gap -0.0466 | acc 0.5172 (W 0.5175 / B 0.5168) | val_mse 0.0216 | ema_acc 0.5200 | 21,907/s
+[R0] epoch 7: train_pol 1.3815 val_pol 1.4501 gap -0.0685 | acc 0.5202 (W 0.5205 / B 0.5198) | val_mse 0.0207 | ema_acc 0.5208 | 21,861/s
+[R0] epoch 8: train_pol 1.3636 val_pol 1.4496 gap -0.0860 | acc 0.5210 (W 0.5212 / B 0.5209) | val_mse 0.0205 | ema_acc 0.5211 | 21,825/s
+
+/workspace/aichessathon/train/model.py:44: TracerWarning: Iterating over a tensor might cause the trace to be incorrect. Passing a tensor of different shape won't change the number of iterations executed (and might lead to errors or silently give incorrect results).
+  q, k, v = qkv.permute(2, 0, 3, 1, 4)
+WARNING:root:Please consider to run pre-processing before quantization. Refer to example: https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/image_classification/cpu/ReadMe.md 
+WARNING:root:Please consider to run pre-processing before quantization. Refer to example: https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/image_classification/cpu/ReadMe.md 
+--- R0_e8 (1,381,050 params) ---
+parity: fp32 exact, int8 argmax agreement 0.953, int8 value err 0.1050
+  int8 deleted (1,720,619 B) - agreement below 0.99
+  fp32 kept: 5,681,715 B
+--- R0_e8_ema (1,381,050 params) ---
+parity: fp32 exact, int8 argmax agreement 0.922, int8 value err 0.0916
+  int8 deleted (1,720,619 B) - agreement below 0.99
+  fp32 kept: 5,681,715 B

@@ -1,0 +1,17 @@
+=== assertions done; starting sweep on an idle box ===
+Wed Sep  2 22:15:32 UTC 2026
+loading 100,000 positions from /workspace/data/shard_8m
+loaded 100,000
+
+config          wk    pos/s  medNodes  p90Nodes medDepth   mixed  disagree  lines
+---------------------------------------------------------------------------------
+nodes=25000     16      534    25,015    25,029       10   0.675     0.209   3.94
+nodes=10000     16    1,200    10,005    10,012        8   0.688     0.222   3.94
+depth=10        16      323    39,258    80,613       10   0.003     0.001   3.94
+depth=12        16      142   112,209   150,129       12   0.229     0.065   3.94
+nodes=25000     32      359    25,015    25,029       10   0.671     0.207   3.94
+nodes=10000     32      857    10,005    10,012        8   0.686     0.220   3.94
+depth=10        32      208    39,196    80,442       10   0.003     0.001   3.94
+depth=12        32       88   112,083   150,128       12   0.228     0.064   3.94
+=== sweep complete ===
+Wed Sep  2 23:10:25 UTC 2026

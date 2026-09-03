@@ -1,0 +1,8 @@
+STORED X vs origin/main featurize_int8, random rows across the whole shard
+   shard_8m 10,000/30,000 mismatches=0
+   shard_8m 20,000/30,000 mismatches=0
+  shard_8m   30,000 random rows  mismatches=0  ep-square rows=2,038
+   shard_40m 10,000/30,000 mismatches=0
+   shard_40m 20,000/30,000 mismatches=0
+  shard_40m  30,000 random rows  mismatches=0  ep-square rows=2,043
+DONE
