@@ -16,74 +16,33 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from chessml.encoding import SCALE
 from pipeline.shard import SPLIT_TRAIN, SPLIT_VAL, Shard
+from train.loader import make_split, side_to_move
 from train.model import ChessNet, Config, count_params
 
 
-def side_to_move(shard_dir: Path, n: int) -> np.ndarray:
-    cache = shard_dir / "stm.bin"
-    if cache.exists() and cache.stat().st_size == n:
-        return np.fromfile(cache, dtype=np.int8)
-    stm = np.zeros(n, dtype=np.int8)
-    with open(shard_dir / "fen.txt", "rb") as fh:
-        for i in range(n):
-            line = fh.readline()
-            stm[i] = 1 if b" w " in line else 0
-    stm.tofile(cache)
-    return stm
-
-
-class RamSplit:
-    def __init__(self, shard: Shard, which: int, stm: np.ndarray) -> None:
-        split = np.asarray(shard.split)
-        idx = np.flatnonzero(split == which)
-        self.n = idx.size
-        label = "train" if which == SPLIT_TRAIN else "val"
-        print(f"  loading {label}: {self.n:,} rows", flush=True)
-        t = time.time()
-        self.x = np.asarray(shard.X)[idx].copy()
-        self.policy = np.asarray(shard.Y_policy)[idx].astype(np.int64)
-        outcome = np.asarray(shard.Y_value)[idx].astype(np.float32)
-        engine = np.asarray(shard.Y_value_engine)[idx].astype(np.float32)
-        self.value = np.where(np.isnan(engine), outcome, engine).astype(np.float32)
-        self.engine_rows = int((~np.isnan(engine)).sum())
-        self.stm = stm[idx]
-        print(
-            f"    {self.x.nbytes / 1e9:.1f} GB in {time.time() - t:.0f}s, "
-            f"engine-labelled {100 * self.engine_rows / max(self.n, 1):.2f}%",
-            flush=True,
-        )
-
-    def batches(self, batch: int, rng: np.random.Generator | None):
-        order = rng.permutation(self.n) if rng is not None else np.arange(self.n)
-        for s in range(0, self.n - (batch - 1 if rng is not None else 0), batch):
-            yield order[s : s + batch]
-
-
-def to_gpu(split: RamSplit, sel: np.ndarray, dev: torch.device):
-    x = torch.from_numpy(split.x[sel]).to(dev, non_blocking=True).float().div_(SCALE)
-    p = torch.from_numpy(split.policy[sel]).to(dev, non_blocking=True)
-    v = torch.from_numpy(split.value[sel]).to(dev, non_blocking=True)
-    return x, p, v
+def to_gpu(x: np.ndarray, p: np.ndarray, v: np.ndarray, dev: torch.device):
+    xt = torch.from_numpy(np.ascontiguousarray(x)).to(dev, non_blocking=True).float().div_(SCALE)
+    pt = torch.from_numpy(p).to(dev, non_blocking=True)
+    vt = torch.from_numpy(v).to(dev, non_blocking=True)
+    return xt, pt, vt
 
 
 @torch.no_grad()
-def evaluate(model: torch.nn.Module, val: RamSplit, dev: torch.device, batch: int) -> dict:
+def evaluate(model: torch.nn.Module, val, dev: torch.device, batch: int) -> dict:
     model.eval()
     tot = correct = 0
     correct_w = n_w = correct_b = n_b = 0
     pol_loss = val_mse = 0.0
     steps = 0
-    for sel in val.batches(batch, None):
-        x, p, v = to_gpu(val, sel, dev)
+    for x, p, v, stm in val.batches(batch, None):
+        xt, pt, vt = to_gpu(x, p, v, dev)
         with torch.autocast("cuda", dtype=torch.bfloat16):
-            logits, value = model(x)
+            logits, value = model(xt)
         logits = logits.float()
         value = value.float().squeeze(-1)
-        pol_loss += F.cross_entropy(logits, p).item()
-        val_mse += F.mse_loss(value, v).item()
-        pred = logits.argmax(dim=1)
-        hit = (pred == p).cpu().numpy()
-        stm = val.stm[sel]
+        pol_loss += F.cross_entropy(logits, pt).item()
+        val_mse += F.mse_loss(value, vt).item()
+        hit = (logits.argmax(dim=1) == pt).cpu().numpy()
         correct += int(hit.sum())
         tot += hit.size
         w = stm == 1
@@ -153,8 +112,8 @@ def main() -> int:
     sh = Shard(args.shard)
     stm = side_to_move(args.shard, sh.n)
     print(f"shard {args.shard} n={sh.n:,}", flush=True)
-    train = RamSplit(sh, SPLIT_TRAIN, stm)
-    val = RamSplit(sh, SPLIT_VAL, stm)
+    train = make_split(sh, SPLIT_TRAIN, stm, "train")
+    val = make_split(sh, SPLIT_VAL, stm, "val")
 
     opt = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     steps_per_epoch = train.n // args.batch
@@ -173,14 +132,14 @@ def main() -> int:
         seen = 0
         run_loss = run_pol = run_val = 0.0
         steps = 0
-        for sel in train.batches(args.batch, rng):
-            x, p, v = to_gpu(train, sel, dev)
+        for x, p, v, _ in train.batches(args.batch, rng):
+            xt, pt, vt = to_gpu(x, p, v, dev)
             with torch.autocast("cuda", dtype=torch.bfloat16):
-                logits, value = model(x)
+                logits, value = model(xt)
             logits = logits.float()
             value = value.float().squeeze(-1)
-            pol = F.cross_entropy(logits, p)
-            vl = F.mse_loss(value, v)
+            pol = F.cross_entropy(logits, pt)
+            vl = F.mse_loss(value, vt)
             loss = pol + args.value_weight * vl
             opt.zero_grad(set_to_none=True)
             loss.backward()
@@ -192,13 +151,12 @@ def main() -> int:
             run_pol += pol.item()
             run_val += vl.item()
             steps += 1
-            seen += len(sel)
+            seen += len(p)
             if steps == 50 or steps % 2000 == 0:
-                rate = seen / (time.time() - t0)
                 print(
                     f"  e{epoch} step {steps:,}/{steps_per_epoch:,} "
                     f"loss {run_loss / steps:.4f} pol {run_pol / steps:.4f} "
-                    f"val {run_val / steps:.4f} {rate:,.0f} samples/s",
+                    f"val {run_val / steps:.4f} {seen / (time.time() - t0):,.0f} samples/s",
                     flush=True,
                 )
 

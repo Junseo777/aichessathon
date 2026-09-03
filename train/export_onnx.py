@@ -94,10 +94,14 @@ def main() -> None:
     manifest = export(model, args.out)
     try:
         verify_parity(model, args.out, strict_int8=args.checkpoint is not None)
-    except AssertionError:
-        for name in ("model.onnx", "model.int8.onnx", "manifest.json"):
-            (args.out / name).unlink(missing_ok=True)
-        raise
+    except AssertionError as exc:
+        if "int8 argmax agreement too low" in str(exc):
+            (args.out / "model.int8.onnx").unlink(missing_ok=True)
+            print(f"int8 below the gate: {exc}. kept fp32, removed model.int8.onnx")
+        else:
+            for name in ("model.onnx", "model.int8.onnx", "manifest.json"):
+                (args.out / name).unlink(missing_ok=True)
+            raise
     print(f"exported {manifest['params']:,} params to {args.out}/")
 
 
