@@ -1,0 +1,50 @@
+--- lichess_db_standard_rated_2026-07.pgn.zst ---
+  seen 5,000,000 kept 414,041 top 15,389 mid 398,652 dup 195
+  seen 10,000,000 kept 829,855 top 31,733 mid 798,122 dup 624
+  seen 15,000,000 kept 1,252,430 top 47,806 mid 1,204,624 dup 1,251
+  seen 20,000,000 kept 1,660,298 top 63,028 mid 1,597,270 dup 1,446
+  seen 25,000,000 kept 2,078,332 top 79,481 mid 1,998,851 dup 1,660
+  seen 30,000,000 kept 2,497,133 top 96,891 mid 2,400,242 dup 2,105
+  seen 35,000,000 kept 2,921,265 top 114,911 mid 2,806,354 dup 2,458
+  seen 40,000,000 kept 3,329,564 top 129,769 mid 3,199,795 dup 2,664
+  seen 45,000,000 kept 3,738,800 top 145,087 mid 3,593,713 dup 2,909
+  seen 50,000,000 kept 4,154,141 top 160,864 mid 3,993,277 dup 3,462
+  seen 55,000,000 kept 4,577,738 top 176,229 mid 4,401,509 dup 3,733
+  seen 60,000,000 kept 4,994,874 top 191,904 mid 4,802,970 dup 3,926
+  seen 65,000,000 kept 5,412,219 top 207,902 mid 5,204,317 dup 4,166
+  seen 70,000,000 kept 5,826,939 top 222,556 mid 5,604,383 dup 4,391
+  seen 75,000,000 kept 6,252,555 top 238,289 mid 6,014,266 dup 4,669
+  seen 80,000,000 kept 6,663,136 top 253,912 mid 6,409,224 dup 4,885
+  seen 85,000,000 kept 7,058,657 top 268,419 mid 6,790,238 dup 5,067
+{
+  "seen": 89288421,
+  "kept": 7394952,
+  "duplicates": 5215,
+  "rejects": {
+    "tier_below_1900": 65909057,
+    "termination": 7906557,
+    "time_control": 6085170,
+    "elo_gap": 1854286,
+    "result": 111128,
+    "too_short": 22056
+  },
+  "tier_games": {
+    "mid": 7113673,
+    "top": 281279
+  },
+  "tier_positions": {
+    "mid": 495456240,
+    "top": 22885929
+  },
+  "tier_with_eval": {
+    "mid": 1079099,
+    "top": 118790
+  },
+  "eval_yield_pct": {
+    "mid": 15.17,
+    "top": 42.23
+  },
+  "sources": [
+    "lichess_db_standard_rated_2026-07.pgn.zst"
+  ]
+}

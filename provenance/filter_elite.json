@@ -1,0 +1,32 @@
+{
+  "seen": 1713767,
+  "kept": 1307125,
+  "duplicates": 42862,
+  "rejects": {
+    "termination": 327541,
+    "elo_gap": 18488,
+    "time_control": 15520,
+    "too_short": 2231
+  },
+  "tier_games": {
+    "top": 1147961,
+    "mid": 159164
+  },
+  "tier_positions": {
+    "top": 98145693,
+    "mid": 12705386
+  },
+  "tier_with_eval": {},
+  "eval_yield_pct": {
+    "top": 0.0,
+    "mid": 0.0
+  },
+  "sources": [
+    "lichess_elite_2025-06.zip",
+    "lichess_elite_2025-07.zip",
+    "lichess_elite_2025-08.zip",
+    "lichess_elite_2025-09.zip",
+    "lichess_elite_2025-10.zip",
+    "lichess_elite_2025-11.zip"
+  ]
+}

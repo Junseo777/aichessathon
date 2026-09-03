@@ -1,0 +1,23 @@
+=== base sweep done; measuring depth=9 and depth=8 (rule c: one step shallower) ===
+config      wk   pos/s  medNodes  p90Nodes medDepth   mixed  disagree
+depth=9     16     548    21,678    45,100        9   0.001     0.000
+depth=8     16     857    12,263    25,962        8   0.000     0.000
+=== extra configs done ===
+=== re-running assertions with 6c-6f ===
+shard /workspace/data/shard_8m  n=8,000,000
+  PASS  1 position-before-move (policy decodes to a legal move) -- 15,000 rows all legal
+  PASS  2 mirror (own pieces in planes 0-5, no back-rank pawns) -- 15,000 rows
+  PASS  3 no truncation (X == featurize_int8 recomputed) -- 15,000 rows bit-identical
+  PASS  4 value sign (White mates -> +1 at final white-to-move row) -- final move Qxf7#, +1 white rows / -1 black rows
+  PASS  6b engine-value attachment (hand-checked plies, incl. post-swing) -- 4 hand-checked plies incl. post-swing row
+  PASS  6 engine-value sign and correlation with outcome -- mean|won=+0.2442  corr=+0.5056  n=8,000,000
+  PASS  6c stockfish-vs-lichess eval agreement (corr > 0.9) -- corr=0.9846 over 709,088 rows labelled by both
+  PASS  6d Y_*_engine == Y_*_engine4[:, 0] byte-exact -- 8,000,000 labelled rows
+  PASS  6e MultiPV rows well-formed (monotone, legal, distinct) -- 15,000 labelled rows
+  note  6f human move within engine top-4: all=80.4% (top-1 44.6%)  top=81.7% (top-1 45.8%, n=400,145)  mid=75.3% (top-1 39.9%, n=99,855)
+  PASS  7 plane and label invariants -- 500,000 rows
+  PASS  Z matches the stored FEN
+  PASS  split is by game and near 2% -- val = 2.030% of rows
+
+12 passed, 0 failed, 1 notes
+ALL ASSERTIONS PASSED

@@ -1,0 +1,106 @@
+streams:
+  elite-top              tier=top available=  98,145,693  w=0.6487
+  monthly-top            tier=top available=  22,885,929  w=0.1513
+  elite-mid              tier=mid available=  12,705,386  w=0.0050
+  monthly-mid            tier=mid available= 495,456,240  w=0.1950
+
+  1,000,048/40,000,000  7,069/s  elite-top=64.9% monthly-top=15.1% elite-mid=0.5% monthly-mid=19.5%
+  2,000,041/40,000,000  7,097/s  elite-top=64.9% monthly-top=15.1% elite-mid=0.5% monthly-mid=19.5%
+  3,000,037/40,000,000  7,077/s  elite-top=64.9% monthly-top=15.1% elite-mid=0.5% monthly-mid=19.5%
+  4,000,034/40,000,000  7,060/s  elite-top=64.9% monthly-top=15.1% elite-mid=0.5% monthly-mid=19.5%
+  5,000,064/40,000,000  7,088/s  elite-top=64.9% monthly-top=15.1% elite-mid=0.5% monthly-mid=19.5%
+  6,000,021/40,000,000  7,083/s  elite-top=64.9% monthly-top=15.1% elite-mid=0.5% monthly-mid=19.5%
+  7,000,034/40,000,000  7,103/s  elite-top=64.9% monthly-top=15.1% elite-mid=0.5% monthly-mid=19.5%
+  8,000,010/40,000,000  7,118/s  elite-top=64.9% monthly-top=15.1% elite-mid=0.5% monthly-mid=19.5%
+  9,000,029/40,000,000  7,132/s  elite-top=64.9% monthly-top=15.1% elite-mid=0.5% monthly-mid=19.5%
+  10,000,143/40,000,000  7,138/s  elite-top=64.9% monthly-top=15.1% elite-mid=0.5% monthly-mid=19.5%
+  11,000,061/40,000,000  7,137/s  elite-top=64.9% monthly-top=15.1% elite-mid=0.5% monthly-mid=19.5%
+  12,000,030/40,000,000  7,139/s  elite-top=64.9% monthly-top=15.1% elite-mid=0.5% monthly-mid=19.5%
+  13,000,017/40,000,000  7,139/s  elite-top=64.9% monthly-top=15.1% elite-mid=0.5% monthly-mid=19.5%
+  14,000,029/40,000,000  7,154/s  elite-top=64.9% monthly-top=15.1% elite-mid=0.5% monthly-mid=19.5%
+  15,000,034/40,000,000  7,172/s  elite-top=64.9% monthly-top=15.1% elite-mid=0.5% monthly-mid=19.5%
+  16,000,060/40,000,000  7,167/s  elite-top=64.9% monthly-top=15.1% elite-mid=0.5% monthly-mid=19.5%
+  17,000,061/40,000,000  7,180/s  elite-top=64.9% monthly-top=15.1% elite-mid=0.5% monthly-mid=19.5%
+  18,000,029/40,000,000  7,194/s  elite-top=64.9% monthly-top=15.1% elite-mid=0.5% monthly-mid=19.5%
+  19,000,042/40,000,000  7,206/s  elite-top=64.9% monthly-top=15.1% elite-mid=0.5% monthly-mid=19.5%
+  20,000,096/40,000,000  7,214/s  elite-top=64.9% monthly-top=15.1% elite-mid=0.5% monthly-mid=19.5%
+  21,000,045/40,000,000  7,221/s  elite-top=64.9% monthly-top=15.1% elite-mid=0.5% monthly-mid=19.5%
+  22,000,084/40,000,000  7,230/s  elite-top=64.9% monthly-top=15.1% elite-mid=0.5% monthly-mid=19.5%
+  23,000,051/40,000,000  7,220/s  elite-top=64.9% monthly-top=15.1% elite-mid=0.5% monthly-mid=19.5%
+  24,000,049/40,000,000  7,209/s  elite-top=64.9% monthly-top=15.1% elite-mid=0.5% monthly-mid=19.5%
+  25,000,021/40,000,000  7,205/s  elite-top=64.9% monthly-top=15.1% elite-mid=0.5% monthly-mid=19.5%
+  26,000,097/40,000,000  7,212/s  elite-top=64.9% monthly-top=15.1% elite-mid=0.5% monthly-mid=19.5%
+  27,000,007/40,000,000  7,220/s  elite-top=64.9% monthly-top=15.1% elite-mid=0.5% monthly-mid=19.5%
+  28,000,002/40,000,000  7,227/s  elite-top=64.9% monthly-top=15.1% elite-mid=0.5% monthly-mid=19.5%
+  29,000,041/40,000,000  7,234/s  elite-top=64.9% monthly-top=15.1% elite-mid=0.5% monthly-mid=19.5%
+  30,000,080/40,000,000  7,235/s  elite-top=64.9% monthly-top=15.1% elite-mid=0.5% monthly-mid=19.5%
+  31,000,031/40,000,000  7,233/s  elite-top=64.9% monthly-top=15.1% elite-mid=0.5% monthly-mid=19.5%
+  32,000,087/40,000,000  7,231/s  elite-top=64.9% monthly-top=15.1% elite-mid=0.5% monthly-mid=19.5%
+  33,000,010/40,000,000  7,234/s  elite-top=64.9% monthly-top=15.1% elite-mid=0.5% monthly-mid=19.5%
+  34,000,056/40,000,000  7,232/s  elite-top=64.9% monthly-top=15.1% elite-mid=0.5% monthly-mid=19.5%
+  35,000,001/40,000,000  7,231/s  elite-top=64.9% monthly-top=15.1% elite-mid=0.5% monthly-mid=19.5%
+  36,000,029/40,000,000  7,229/s  elite-top=64.9% monthly-top=15.1% elite-mid=0.5% monthly-mid=19.5%
+  37,000,014/40,000,000  7,225/s  elite-top=64.9% monthly-top=15.1% elite-mid=0.5% monthly-mid=19.5%
+  38,000,010/40,000,000  7,222/s  elite-top=64.9% monthly-top=15.1% elite-mid=0.5% monthly-mid=19.5%
+  39,000,046/40,000,000  7,222/s  elite-top=64.9% monthly-top=15.1% elite-mid=0.5% monthly-mid=19.5%
+  40,000,000/40,000,000  7,228/s  elite-top=64.9% monthly-top=15.1% elite-mid=0.5% monthly-mid=19.5%
+{
+  "target": 40000000,
+  "n_samples": 40000000,
+  "games_used": 481397,
+  "games_skipped": 0,
+  "tier_positions": {
+    "top": 32000010,
+    "mid": 7999990
+  },
+  "tier_pct": {
+    "top": 80.0,
+    "mid": 20.0
+  },
+  "streams": [
+    {
+      "label": "elite-top",
+      "tier": "top",
+      "weight": 0.6487,
+      "positions": 25949032,
+      "pct": 64.87,
+      "games": 298033,
+      "rows_with_eval": 0,
+      "exhausted": false
+    },
+    {
+      "label": "monthly-top",
+      "tier": "top",
+      "weight": 0.1513,
+      "positions": 6050978,
+      "pct": 15.13,
+      "games": 71075,
+      "rows_with_eval": 2320374,
+      "exhausted": false
+    },
+    {
+      "label": "elite-mid",
+      "tier": "mid",
+      "weight": 0.005,
+      "positions": 200092,
+      "pct": 0.5,
+      "games": 2482,
+      "rows_with_eval": 0,
+      "exhausted": false
+    },
+    {
+      "label": "monthly-mid",
+      "tier": "mid",
+      "weight": 0.195,
+      "positions": 7799898,
+      "pct": 19.5,
+      "games": 109807,
+      "rows_with_eval": 1211367,
+      "exhausted": false
+    }
+  ],
+  "eval_rows": 3531741,
+  "eval_coverage_pct": 8.829,
+  "val_fraction_denom": 50,
+  "seconds": 5534.3
+}

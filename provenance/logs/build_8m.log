@@ -1,0 +1,74 @@
+streams:
+  elite-top              tier=top available=  98,145,693  w=0.6487
+  monthly-top            tier=top available=  22,885,929  w=0.1513
+  elite-mid              tier=mid available=  12,705,386  w=0.0050
+  monthly-mid            tier=mid available= 495,456,240  w=0.1950
+
+  1,000,048/8,000,000  16,736/s  elite-top=64.9% monthly-top=15.1% elite-mid=0.5% monthly-mid=19.5%
+  2,000,041/8,000,000  15,456/s  elite-top=64.9% monthly-top=15.1% elite-mid=0.5% monthly-mid=19.5%
+  3,000,037/8,000,000  11,312/s  elite-top=64.9% monthly-top=15.1% elite-mid=0.5% monthly-mid=19.5%
+  4,000,034/8,000,000  8,131/s  elite-top=64.9% monthly-top=15.1% elite-mid=0.5% monthly-mid=19.5%
+  5,000,064/8,000,000  8,105/s  elite-top=64.9% monthly-top=15.1% elite-mid=0.5% monthly-mid=19.5%
+  6,000,021/8,000,000  8,871/s  elite-top=64.9% monthly-top=15.1% elite-mid=0.5% monthly-mid=19.5%
+  7,000,034/8,000,000  9,508/s  elite-top=64.9% monthly-top=15.1% elite-mid=0.5% monthly-mid=19.5%
+  8,000,000/8,000,000  10,049/s  elite-top=64.9% monthly-top=15.1% elite-mid=0.5% monthly-mid=19.5%
+{
+  "target": 8000000,
+  "n_samples": 8000000,
+  "games_used": 95910,
+  "games_skipped": 0,
+  "tier_positions": {
+    "top": 6399983,
+    "mid": 1600017
+  },
+  "tier_pct": {
+    "top": 80.0,
+    "mid": 20.0
+  },
+  "streams": [
+    {
+      "label": "elite-top",
+      "tier": "top",
+      "weight": 0.6487,
+      "positions": 5189782,
+      "pct": 64.87,
+      "games": 59320,
+      "rows_with_eval": 0,
+      "exhausted": false
+    },
+    {
+      "label": "monthly-top",
+      "tier": "top",
+      "weight": 0.1513,
+      "positions": 1210201,
+      "pct": 15.13,
+      "games": 14245,
+      "rows_with_eval": 476674,
+      "exhausted": false
+    },
+    {
+      "label": "elite-mid",
+      "tier": "mid",
+      "weight": 0.005,
+      "positions": 40054,
+      "pct": 0.5,
+      "games": 501,
+      "rows_with_eval": 0,
+      "exhausted": false
+    },
+    {
+      "label": "monthly-mid",
+      "tier": "mid",
+      "weight": 0.195,
+      "positions": 1559963,
+      "pct": 19.5,
+      "games": 21844,
+      "rows_with_eval": 232414,
+      "exhausted": false
+    }
+  ],
+  "eval_rows": 709088,
+  "eval_coverage_pct": 8.864,
+  "val_fraction_denom": 50,
+  "seconds": 796.1
+}
