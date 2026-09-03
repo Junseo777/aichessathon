@@ -4,7 +4,12 @@ Status report from the Stage 2/3 worker (Part A box). Written to be read cold:
 everything needed to act on it is below, with no reference to prior chat.
 
 Date: 2026-09-03. Box: RunPod, EU-RO-1, 1x RTX 4090, Ryzen 9 7950X (16 physical
-cores / 32 threads), 124 GB RAM, 500 GB network volume at `/workspace`.
+cores / 32 threads), 500 GB network volume at `/workspace`.
+
+**Memory: the container cgroup is capped at 61 GB.** `free` reports the host's
+124 GB and is misleading; `/sys/fs/cgroup/memory.max` is 60,999,999,488. An
+earlier revision of this document said 124 GB. Budget 61 GB, shared with
+whatever else is running on the box.
 
 Pipeline code is pushed to branch `pipeline` (commits `17a32e6`, `0aaf157`),
 based on `51ac5d2`. Not yet merged.
@@ -176,15 +181,63 @@ homogeneous; mixing two labelling regimes inside one training set is the kind of
 silent inconsistency that is expensive to discover later. The 8M shard keeps its
 25k-node labels, so each shard is self-consistent.
 
-## 8. Open items
+## 8. Addendum — R1, and two OOM kills
 
-1. **Threefold repetition rate in the arena** (60%) — unexplained, needs a look.
-2. **`train/export_onnx.py` deletes the fp32 model** when the int8 check fails.
-3. **Assertion 3 cannot catch a stale encoder.** It compares a shard against
+R1 (d96 x b12, 40M shard, Lichess evals only, the A/B baseline against R2's
+full engine coverage) was launched, killed, fixed, killed again, and is now
+running. Confirmed as the right run by its loader line: `engine-labelled 8.84%`.
+
+Both kills were the 61 GB cgroup cap, recorded as `oom_kill 2` in
+`memory.events` with `memory.peak` at 61,004,386,304.
+
+- **First kill, during loading.** `RamSplit` did `np.asarray(shard.X)[idx].copy()`.
+  The fancy index already returns a fresh array, so the copy allocated a second
+  full-size buffer while the first was live: 53.8 GB doubled to ~107 GB.
+  Harmless at 8M (~10 GB), fatal at 40M.
+- **Second kill, at the first training step**, after dropping the copy. 52.7 GB
+  of train rows plus 1.1 GB val plus ~6 GB of Part C plus the CUDA context
+  still exceeds 61 GB.
+
+Fixed in `5d67ce1` by not holding X in RAM at all. `train/loader.py` adds
+`BlockShuffledSplit`: X stays a memmap, read in contiguous 262,144-row blocks
+whose order is shuffled each epoch, sixteen blocks buffered and shuffled
+together. 5.6 GB resident against 52.7 GB on disk, sequential reads rather than
+random, shuffling across 4.2M rows. Splits under 12 GB still load to RAM, so
+the 8M path is unchanged. This is the brief's Plan A, arriving earlier than
+planned; bit-packing is still wanted for 100M.
+
+Alignment was verified rather than assumed: with `rng=None` the k-th sample
+must be split row `row_of[k]`. Over 20,480 samples, zero X mismatches and zero
+policy mismatches. A misalignment here would have produced a normal-looking
+learning curve.
+
+R1 now runs at 30.3 GB of the 61 GB cap, 18,635 samples/s, ~35 min/epoch,
+~4.7 h for 8 epochs.
+
+`train/export_onnx.py` also fixed in `5d67ce1`: an int8-agreement failure now
+removes only `model.int8.onnx` and keeps fp32 plus the manifest; an fp32 parity
+failure still deletes everything and raises.
+
+## 9. Open items
+
+1. **R0 is not on the submission side.** `R0_e8_ema.onnx` needs to land in
+   `weights/model.onnx` with a manifest of `{"d_model":96,"n_heads":4,
+   "n_blocks":12}`. fp32 only, do not quantise. This is a human action; the
+   ladder opens Sept 4 and until it happens there is no trained checkpoint on
+   the submission side.
+2. **Assertion 3 cannot catch a stale encoder.** It compares a shard against
    whichever copy of `chessml/encoding.py` is on the box, so an outdated copy
    agrees with itself perfectly. The current shards were separately verified
-   against `origin/main`'s encoder — 60,000 rows per shard, zero mismatches,
-   with 4,032 ep-square rows in the sample exercising the changed branch. That
-   check should become part of the suite rather than a one-off.
-4. **R1/R2 sequencing** awaits a decision; R2 is gated on the 40M Part C pass.
+   against `origin/main`'s encoder — 60,000 sequential plus 30,000 random rows
+   per shard, zero mismatches, with ~2,000 ep-square rows per sample exercising
+   the changed branch. That check should become part of the suite.
+3. **Bit-packing for the 100M shard** is still required; the block-shuffled
+   loader solves 40M but re-reads 52.7 GB per epoch.
+4. **R2 is gated** on the 40M Part C pass (~7.5 h remaining at time of writing).
 5. `pipeline` branch is unmerged.
+
+**Resolved since first writing:** the 60% threefold rate in R0's arena is
+`agent.py:200-208` working as designed — `q_best < -0.3` makes the agent seek a
+referee draw claim, and against a stronger opponent R0 sits below that
+threshold most of the game. 40% is a floor inflated by draw-seeking, not
+evidence against d96.
