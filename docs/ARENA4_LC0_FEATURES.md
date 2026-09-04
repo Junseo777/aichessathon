@@ -121,7 +121,7 @@ rule, and the raw softmax stays.
 
 **5. Root FPU 1.0, dropped at 41.0%** (+7 =27 −16, Elo -63, 95% -131 to +0;
 as White +2 =15 −8, as Black +5 =12 −8; no failures). The worst result in either chain, and the
-first with a losing record outside its interval's upper reach of 50%. Forcing one visit
+first whose interval only just reaches 50%. Forcing one visit
 to each of ~30 root moves costs about 5% of the budget, which is small; the damage is
 more likely that every root move then carries a real Q from a single visit, so a bad
 move's one lucky evaluation can attract PUCT visits it would never have earned from
