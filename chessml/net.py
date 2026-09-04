@@ -9,7 +9,13 @@ import numpy as np
 import numpy.typing as npt
 import onnxruntime as ort
 
-from chessml.encoding import encode_move, featurize, mirror_move, transposition_key
+from chessml.encoding import (
+    encode_move,
+    featurize,
+    mirror_move,
+    repetition_level,
+    transposition_key,
+)
 
 Evaluation = tuple[list[chess.Move], npt.NDArray[np.float32], float]
 
@@ -21,7 +27,10 @@ class PolicyValueNet:
         self.session = session
         self.name = name
         self.cache_size = cache_size
-        self.cache: dict[object, Evaluation] = {}
+        # priors and value only: the legal-move list is regenerated on a hit, in the
+        # same order, for ~50 us. Holding the Move objects too made a full cache
+        # cost 246 MB against the 2 GB cap; this way it is under 40 MB.
+        self.cache: dict[object, tuple[npt.NDArray[np.float32], float]] = {}
         self.hits = 0
         self.forwards = 0
 
@@ -31,22 +40,26 @@ class PolicyValueNet:
         return policy[0], float(value[0, 0])
 
     def evaluate(self, board: chess.Board) -> Evaluation:
-        cacheable = not board.move_stack
-        key: object = None
-        if cacheable:
-            key = (
-                transposition_key(board),
-                min(board.halfmove_clock, 100) // 2,
-                min(board.fullmove_number, 200) // 2,
-            )
-            hit = self.cache.get(key)
-            if hit is not None:
-                self.hits += 1
-                return hit
-
+        # The key covers everything featurize reads, so a hit is bit-identical to the
+        # forward pass it replaces: the transposition key is pieces, side to move,
+        # castling and en passant; the clocks are quantised exactly as planes 17 and
+        # 18 are; the repetition level is plane 20. Boards with a move stack used to
+        # bypass the cache, which made it dead during search (every simulation
+        # board has one), measured as a 0% hit rate.
+        key = (
+            transposition_key(board),
+            min(board.halfmove_clock, 100) // 2,
+            min(board.fullmove_number, 200) // 2,
+            repetition_level(board),
+        )
         moves = list(board.legal_moves)
         if not moves:
             return moves, _NO_PRIORS, 0.0
+        hit = self.cache.get(key)
+        if hit is not None:
+            self.hits += 1
+            return moves, hit[0], hit[1]
+
         logits, value = self.raw(featurize(board))
         rotate = board.turn == chess.BLACK
         indices = [encode_move(mirror_move(m) if rotate else m) for m in moves]
@@ -54,13 +67,12 @@ class PolicyValueNet:
         legal_logits -= legal_logits.max()
         priors = np.exp(legal_logits)
         priors /= priors.sum()
-        result: Evaluation = (moves, priors.astype(np.float32), value)
+        priors = priors.astype(np.float32)
 
-        if cacheable:
-            if len(self.cache) >= self.cache_size:
-                self.cache.clear()
-            self.cache[key] = result
-        return result
+        if len(self.cache) >= self.cache_size:
+            self.cache.clear()
+        self.cache[key] = (priors, value)
+        return moves, priors, value
 
 
 def _make_session(path: Path) -> ort.InferenceSession:

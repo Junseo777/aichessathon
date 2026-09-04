@@ -3,9 +3,9 @@
 Found 2026-09-03 while installing R2's weights into `weights/`, which un-skipped
 `chessml/tests/test_search.py`. Both mate-in-one tests fail.
 
-This is a search issue, not a weights issue. It is filed rather than fixed
+This is a search issue, not a weights issue. It was filed rather than fixed
 because `chessml/search.py` is the shipped agent's core and search is Junseo's
-to change.
+to change. **Fixed 2026-09-04; see the resolution at the end.**
 
 ## Symptom
 
@@ -117,3 +117,27 @@ affects all candidates equally, so relative rankings are probably still
 informative, but absolute strength is understated and models whose policy is
 sharper will have been flattered relative to models with a better value head.
 Worth re-running the decisive comparisons afterwards.
+
+## Resolution
+
+Fixed in `chessml/search.py` on 2026-09-04. `MCTS` takes `fpu_reduction`
+(default 0.25) and `_select` scores an unvisited child as
+
+```python
+running = (node.value + node.w.sum()) / (1 + node.total)
+fpu = running - fpu_reduction
+```
+
+One change from the patch proposed above: the anchor is the node's *running*
+mean, not `node.value`. The static net value is only the first term of that
+mean, so the two agree on a fresh node and diverge as search learns more. Had
+the anchor stayed at `node.value`, a node whose Q climbed well above the net's
+guess would have reproduced the original collapse for its unvisited children.
+
+Both mate-in-one tests pass at 400 simulations. `make test` and `make gate`
+now run them; CI skips them because its export is a random-init net (see
+`chessml/tests/weights_fixture.py`).
+
+Still open: 0.25 is untuned. Sweep it in the arena before trusting it, and
+re-run the decisive comparisons — every result before this date was measured
+with the collapse in effect.

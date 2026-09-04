@@ -213,16 +213,17 @@ overhead after fixes: ~0.23 ms per simulation, versus 3.77 ms of network.
 
 | Change | Why it cannot hurt | Measured |
 |---|---|---|
-| exact evaluation cache, keyed on transposition + quantised clock planes, stackless boards only | a hit is bit-identical to the forward pass it replaces | fewer forward passes per search |
+| exact evaluation cache, keyed on transposition + quantised clock planes + repetition level | a hit is bit-identical to the forward pass it replaces; the key covers everything `featurize` reads | 0% hit rate while it was gated to stackless boards (every simulation board has a stack); ungated, hits are free simulations |
+| first-play urgency: an unvisited child scores the parent's running mean minus 0.25, not 0 | scoring it 0 excluded every move under ~2.9% prior at 400 sims whenever the position was good (`docs/FINDING_fpu.md`) | mate-in-one from 0 visits of 400 to found; the 0.25 is unswept |
 | subtree reuse across moves | inherited visits are real search work on the same positions | 63-322 visits inherited per move vs a random opponent |
 | repetition checked at visit time, not cached at expansion | a reused subtree stays correct as game history grows | - |
 | pondering on the opponent's clock (section 4) | uses a core that would otherwise idle; stopped before any own-move work | ~790 simulations per two-second opponent turn |
 | opening pre-search during init | runs before the clock starts | 1,206 simulations banked before move one |
 
 **Deferred (need a trained model to tune, so not guaranteed non-negative yet):**
-first-play urgency reduction, c_puct re-sweep at our simulation count (the
-reference's 1.5 was tuned at 50 sims on a 37M model), uncertainty-aware time
-allocation, model-gated opening book, draw contempt.
+the size of the first-play urgency reduction, c_puct re-sweep at our simulation
+count (the reference's 1.5 was tuned at 50 sims on a 37M model),
+uncertainty-aware time allocation, model-gated opening book, draw contempt.
 
 ---
 

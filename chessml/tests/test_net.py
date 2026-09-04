@@ -1,6 +1,7 @@
 import chess
 import numpy as np
 
+from chessml.encoding import transposition_key
 from chessml.net import PolicyValueNet, load_fastest
 from chessml.tests.weights_fixture import require_weights
 
@@ -11,24 +12,43 @@ def fresh_net() -> PolicyValueNet:
     return load_fastest(WEIGHTS)[0]
 
 
+def same_evaluation(a: tuple[object, ...], b: tuple[object, ...]) -> None:
+    assert a[0] == b[0]
+    np.testing.assert_array_equal(a[1], b[1])
+    assert a[2] == b[2]
+
+
 def test_stackless_boards_are_cached_exactly() -> None:
     net = fresh_net()
     board = chess.Board("r1bq1rk1/2pp1ppp/p1n2n2/1pb1p3/4P3/1BP2N2/PP1P1PPP/RNBQR1K1 w - - 0 9")
     first = net.evaluate(board)
     second = net.evaluate(chess.Board(board.fen()))
     assert net.forwards == 1 and net.hits == 1
-    assert second[0] == first[0]
-    np.testing.assert_array_equal(second[1], first[1])
-    assert second[2] == first[2]
+    same_evaluation(second, first)
 
 
-def test_boards_with_history_bypass_the_cache() -> None:
+def test_boards_with_history_are_cached() -> None:
     net = fresh_net()
     board = chess.Board()
     board.push_uci("e2e4")
-    net.evaluate(board)
-    net.evaluate(board)
-    assert net.forwards == 2 and net.hits == 0 and not net.cache
+    first = net.evaluate(board)
+    same_evaluation(net.evaluate(board), first)
+    same_evaluation(net.evaluate(chess.Board(board.fen())), first)
+    assert net.forwards == 1 and net.hits == 2
+
+
+def test_repetition_state_is_part_of_the_key() -> None:
+    net = fresh_net()
+    board = chess.Board()
+    for uci in ("g1f3", "g8f6", "f3g1", "f6g8"):
+        board.push_uci(uci)
+    assert transposition_key(board) == transposition_key(chess.Board())
+    fresh = net.evaluate(chess.Board())
+    repeated = net.evaluate(board)
+    assert net.forwards == 2 and net.hits == 0
+    assert repeated[2] != fresh[2]
+    same_evaluation(net.evaluate(board), repeated)
+    assert net.hits == 1
 
 
 def test_clock_planes_are_part_of_the_key() -> None:

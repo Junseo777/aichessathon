@@ -19,14 +19,22 @@ _PIECE_PLANE = {
 }
 
 
+def repetition_level(board: chess.Board) -> int:
+    """How often the position has already occurred in the board's history: 0, 1 or 2+.
+    Plane 20 shows exactly this, so it is the only part of featurize that reads the
+    move stack, and the only thing a position-keyed cache has to add to its key."""
+    if board.is_repetition(3):
+        return 2
+    if board.is_repetition(2):
+        return 1
+    return 0
+
+
 def _clock_planes(board: chess.Board, x: npt.NDArray[np.int8]) -> None:
     x[17, :, :] = min(board.halfmove_clock, 100) // 2
     x[18, :, :] = min(board.fullmove_number, 200) // 2
     x[19, :, :] = _ONE
-    if board.is_repetition(3):
-        x[20, :, :] = _ONE
-    elif board.is_repetition(2):
-        x[20, :, :] = _ONE // 2
+    x[20, :, :] = (_ONE // 2) * repetition_level(board)
 
 
 def featurize_int8(board: chess.Board) -> npt.NDArray[np.int8]:
