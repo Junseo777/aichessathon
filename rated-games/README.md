@@ -36,7 +36,7 @@ pruning, scaled FPU, policy temperature, in-tree draw score).
 | 10 | meshpotato | Black | loss | mate | +1.5 after 14. Bxa7, gone after 14...Qa5; 30...Nd5 lost the ending |
 | 11 | im-master | Black | win | mate | +4 by move 35; 35...Bxe5 gave a third back, the opponent's 35. fxe5 and 36. Kf2 gave it all back |
 | 12 | zak | White | win | mate | +6 by move 40 and converted, with 4.1 s left at move 68 |
-| 13 | alien-gambit | Black | win | mate | declined a forced mate at moves 40 and 44 for slower wins; neither is provable within 800 simulations, so proofs would not have changed them |
+| 13 | alien-gambit | Black | win | mate | declined a mate in three at move 44 for a slower win; not provable within 800 simulations, so proofs would not have played it either |
 | 14 | pgn | Black | draw | stalemate | +4.3 at move 44; 45...fxg2 at 1.6 s with 15.6 s left walked into a queen sacrifice; bare king by move 64, the opponent stalemated us at 111 |
 | 15 | 50centraise | White | win | mate | first game of the pruning build: worst move 5.8%, eval rising throughout, 36 s left at the end |
 
@@ -119,9 +119,10 @@ the step-1 search picks fxg2 up to 200 simulations and abandons it at 250, and
 proofs make no difference at any budget, since the refutation is a material win,
 not a mate. Round 15, the first ladder game with pruning, reached move 45 with
 76 s against 16 s in every pre-pruning game, so the same position would have
-had the full 4 s budget. Round 13 is the counter-example for proofs: the bot
-twice declined a forced mate Stockfish sees, but neither is provable within 800
-simulations, so proofs would not have played them either; it won anyway.
+had the full 4 s budget. Round 13 is the test case for proofs: at move 44 the bot
+declined a mate in three for a slower win, and with proofs on the replay does
+not prove it within 800 simulations, so proofs would not have played it either;
+it won anyway.
 
 **A signature worth acting on.** In every replayed decisive error the
 most-visited move had a lower q than a less-visited rival. Scoring each pick
