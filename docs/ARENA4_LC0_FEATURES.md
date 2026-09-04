@@ -1,0 +1,70 @@
+# ARENA #4 — six Lc0 search features, each measured against the search without it
+
+Continues `docs/ARENA3_R1_R2_R3.md` (the overnight block) and `docs/FINDING_fpu.md`.
+Written to be read cold. Branch `search-lc0`, one commit per feature; `main` and the
+shipped zip untouched until this report is read.
+
+Date: 2026-09-04/05, unattended overnight run on the Apple M1 (8 cores).
+Harness: `harness.play` at the competition clock, 120 s + 0.5 s, 300-ply cap,
+`harness/rules.py` defaults. Openings: the eight positions in `sparring/openings.tsv`,
+each played with both colours. Two lanes in parallel (four agent processes), the
+parallelism ARENA #2 measured as free of contention on this machine.
+
+---
+
+## 1. Method
+
+Every feature is a keyword argument of `chessml.search.MCTS` (or, for the policy
+temperature, of `chessml.net.load_fastest`), so any combination can be built from one
+code snapshot (`0d91963`) by changing one line of `agent.py`. `sparring/feat/driver.py`
+does that: for feature *k* it plays **50 games** of *kept-so-far + k* against
+*kept-so-far*, both on the base net chosen by the block (the R2 vs R3 winner; a tie
+keeps R2), and **keeps the feature if it scores 50% or better.** Kept features
+stack; dropped ones are left out of every later comparison.
+
+The rule was set before any game was played, and 50 games at this clock resolve about
+±70 Elo at 95%, so a "kept" verdict means *no evidence of harm and a non-losing
+record*, not proof of gain. The keep rule is the user's; the point estimates and
+intervals are reported alongside so the reader can apply a stricter one.
+
+The base configuration is the search as it ran in the block (`docs/FINDING_fpu.md`
+fix: constant FPU reduction 0.25, evaluation cache), which is what the block's
+numbers and ARENA #2 describe.
+
+## 2. The features, in the order tested
+
+| # | feature | switch | what Lc0 does | what changes here |
+|---|---|---|---|---|
+| 1 | proven results | `proofs=True` | terminal bounds propagate; a node with a proven-lost child is solved | exact values (mate, stalemate, fifty-move, insufficient material) cascade up the path; a proven root stops the search; `_pick` prefers proven wins and refuses proven losses. Derived proofs are valid for one search only, because a repetition claim can void them after the game moves on |
+| 2 | smart pruning | `pruning_factor=1.33` | stop when no move can overtake the leader in the remaining time | checked every 32 simulations from the current rate; time-based only, so fixed-count searches and pondering are untouched; the move log says `pruned` |
+| 3 | scaled FPU | `fpu_reduction=0.33, fpu_scaled=True` | reduction × sqrt(visited policy mass), 0.33 | a fresh node has no reduction, the reduction grows as its policy is explored; replaces the constant 0.25 |
+| 4 | policy temperature | `policy_temperature=1.359` | logits / 1.359 before the softmax | flatter priors; the order of moves is unchanged |
+| 5 | root FPU | `root_fpu=1.0` | separate FPU at the root | every root move is tried once before any is repeated; about 30 of ~500 simulations |
+| 6 | draw score | `draw_score=0.1` | draws scored inside the tree; WDL contempt | when the root's standing is above +0.3 a drawn leaf is worth −0.1 to the root's side, below −0.3 it is +0.1; proofs unchanged |
+
+Unit evidence, all on the branch: mate in two is proven in under 2,000 simulations and
+the search stops on its own; mate in one is proven on the first visit of the mating
+move; `_pick` prefers a proven win, refuses a proven loss, and still vetoes a proven
+win that hands the referee a claim; pruning fires exactly at the first check when the
+inherited lead is unbeatable and never without a deadline; the scaled reduction is 0 on
+a fresh node and 0.25·√0.64 after one child with prior 0.64 is visited; the temperature
+lowers the maximum prior and raises the minimum without reordering; absolute root FPU
+leaves no root move unvisited where the default leaves several; a repetition is worth
+−0.1 to a root standing at +0.9 and +0.1 at −0.9. 62 tests pass, ruff and mypy strict
+clean, at every commit.
+
+## 3. Results
+
+RESULTS_PENDING
+
+## 4. What to ship
+
+SHIP_PENDING
+
+## 5. Artifacts
+
+`sparring/feat/<k>_<name>/{with,without}` — the two agents, each a copy of the
+snapshot with its own `agent.py` line and a symlink to the base net.
+`sparring/feat/<k>_<name>/lane{1,2}/` — 25 PGNs and logs each, `results.csv`, `run.log`.
+`sparring/feat/decisions.txt` — the keep/drop line per feature as the driver wrote it.
+`sparring/feat/driver.log` — the driver's timeline.
