@@ -76,6 +76,7 @@ that point.
 | 2 | smart pruning | none | +15 =27 −8 | 57.0% | 47.8–66.2% | +49 | 54% | **kept** |
 | 3 | scaled FPU 0.33 | pruning | +8 =30 −12 | 46.0% | 37.3–54.7% | −28 | 60% | **dropped** |
 | 4 | policy temperature 1.359 | pruning | +11 =25 −14 | 47.0% | 37.2–56.8% | -21 | 50% | **dropped** |
+| 5 | root FPU 1.0 | pruning | +7 =27 −16 | 41.0% | 31.9–50.1% | -63 | 54% | **dropped** |
 
 **1. Proofs, dropped at 49.0%.** Eleven decisive games in fifty, five to six, all by
 checkmate; the rest threefold repetitions but one. As White the feature side went
@@ -117,6 +118,15 @@ decisive arena in chain A (25 of 50), which is what flatter priors do: the searc
 spends more of its budget on second and third choices, so both sides find and allow
 more. It did not translate into a better record. Not significant; dropped by the
 rule, and the raw softmax stays.
+
+**5. Root FPU 1.0, dropped at 41.0%** (+7 =27 −16, Elo -63, 95% -131 to +0;
+as White +2 =15 −8, as Black +5 =12 −8; no failures). The worst result in either chain, and the
+first with a losing record outside its interval's upper reach of 50%. Forcing one visit
+to each of ~30 root moves costs about 5% of the budget, which is small; the damage is
+more likely that every root move then carries a real Q from a single visit, so a bad
+move's one lucky evaluation can attract PUCT visits it would never have earned from
+its prior. The blind-spot problem it was meant to insure against is already handled
+by the first-play-urgency fix. Dropped.
 
 ### Chain B, base R1 (box)
 
