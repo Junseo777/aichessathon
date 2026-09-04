@@ -234,8 +234,9 @@ knobs stay off for the ladder, whose hardware is unknown and probably nearer the
 Mac's. If it is the net, they ship with R1 and not with the R2/R3 family.
 
 **Branch defaults** are set to the set both nets support: `pruning_factor=1.33`, all
-else off, temperature 1.0. The per-net lines from the drivers are recorded above for
-whichever net is chosen; the final step before the zip is one 50-game confirmation of
+else off, temperature 1.0. The box's arm A has since shown R1's edge over R2 survives with the draw rule off
+(ARENA #3 addendum), so R1 is the net to plan around. The per-net lines from the
+drivers are recorded above for whichever net is chosen; the final step before the zip is one 50-game confirmation of
 the chosen line on the chosen net at the Mac's budget.
 
 ## 5. Artifacts

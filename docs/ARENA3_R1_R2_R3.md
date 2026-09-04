@@ -113,6 +113,20 @@ discriminating test is R1 vs R2 with the rule neutralised on both sides, or each
 side's threshold scaled to its own spread (R2 at ±0.24); it is queued on the box.
 Until it runs, treat "R1 is the best net" as likely and "engine labels hurt" as open.
 
+**Addendum, 2026-09-04 21:30.** The box ran that test (`/workspace/bracket`, phase A,
+100 games per arm at the competition clock, R1 vs R2): with the draw rule switched
+off on both sides R1 scored **65.5%, +111 Elo (95% +40 to +182)**; with per-net
+thresholds (R1 ±0.30, R2 ±0.24) 61.5%, +81. The edge survives both arms, so the
+thresholds are not what decides R1 vs R2. The calibration hypothesis above is
+refuted for this pairing: the outcome-labelled net is the stronger one under
+search, and the depth-8 engine labels are the weaker target. Its bracket, rule off,
+~100 games each vs R2: R5 (d128) 48.5%, R4 (d64) 42%, RA (d32) 10%. The size
+decision holds at d96, and R5's accuracy does not survive its forward cost. One
+loose end from the same run: R1 vs R3 with the rule off came out 50.6% over 84
+games (+4, 95% −70 to +78), which sits awkwardly beside R1's +111 over R2 and this
+report's R2 ≈ R3; the intervals overlap between +40 and +78, so it is not a
+contradiction, but R3 may be better than R2 once the rule is out of the way.
+
 ## 4. Other things the data says
 
 - **White scores ~63% at this level**, across both lanes and all four nets (R1 79%,
