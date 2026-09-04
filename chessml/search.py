@@ -76,11 +76,15 @@ class MCTS:
         proofs: bool = True,
         pruning_factor: float | None = 1.33,
         fpu_scaled: bool = False,
+        root_fpu: float | None = None,
     ) -> None:
         self.net = net
         self.c_puct = c_puct
         self.fpu_reduction = fpu_reduction
         self.fpu_scaled = fpu_scaled
+        # absolute first-play urgency at the root: with 1.0 every root move is tried
+        # once before any is repeated, so no root move can go unvisited
+        self.root_fpu = root_fpu
         self.proofs = proofs
         self.pruning_factor = pruning_factor
         self.generation = 0
@@ -134,8 +138,10 @@ class MCTS:
             reduction *= math.sqrt(float(node.priors[node.n > 0].sum()))
         return running - reduction
 
-    def _select(self, node: Node) -> int:
-        fpu = np.float32(self._fpu(node))
+    def _select(self, node: Node, is_root: bool = False) -> int:
+        fpu = np.float32(
+            self.root_fpu if is_root and self.root_fpu is not None else self._fpu(node)
+        )
         q = np.divide(node.w, node.n, out=np.full_like(node.w, fpu), where=node.n > 0)
         u = (self.c_puct * np.sqrt(float(node.total) + 1.0)) * node.priors / (1.0 + node.n)
         return int(np.argmax(q + u))
@@ -186,7 +192,7 @@ class MCTS:
                     leaf_value = proof
                     solved = True
                     break
-                idx = self._select(node)
+                idx = self._select(node, node is root)
                 sim_board.push(node.moves[idx])
                 path.append((node, idx))
                 key = transposition_key(sim_board)

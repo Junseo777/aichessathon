@@ -21,7 +21,9 @@ _START_KEY = transposition_key(chess.Board())
 _NET, _MANIFEST = load_fastest(
     Path(__file__).resolve().parent / "weights", policy_temperature=1.359
 )
-_MCTS = MCTS(_NET, fpu_reduction=0.33, fpu_scaled=True, proofs=True, pruning_factor=1.33)
+_MCTS = MCTS(
+    _NET, fpu_reduction=0.33, fpu_scaled=True, root_fpu=1.0, proofs=True, pruning_factor=1.33
+)
 print(f"init: {_MANIFEST}")
 
 

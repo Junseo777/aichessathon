@@ -245,3 +245,16 @@ def test_scaled_fpu_reduction_grows_with_visited_policy() -> None:
     running = (0.2 + 0.1) / 2
     assert constant._fpu(node) == pytest.approx(running - 0.25)
     assert scaled._fpu(node) == pytest.approx(running - 0.25 * 0.8)
+
+
+def test_absolute_root_fpu_visits_every_root_move(net: PolicyValueNet) -> None:
+    board = chess.Board()
+    sims = len(list(board.legal_moves)) * 6
+    every = MCTS(net, proofs=False, root_fpu=1.0).run(
+        board, fresh_counts(board), time.monotonic() + 30.0, max_sims=sims
+    )
+    assert (every.visits > 0).all()
+    plain = MCTS(net, proofs=False).run(
+        board, fresh_counts(board), time.monotonic() + 30.0, max_sims=sims
+    )
+    assert (plain.visits == 0).any()
