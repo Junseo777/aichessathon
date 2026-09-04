@@ -11,8 +11,17 @@ fabrication far more expensive than simply training the model would have been.
 ## The one-command check
 
 ```
-uv run --group train python -m train.verify_provenance weights/model.pt
+uv run --group train python -m train.verify_provenance ../checkpoints/R2_e8_ema.pt
 ```
+
+The argument is a training checkpoint, `<run>_e<epoch>.pt` or its `_ema` twin.
+Checkpoints live in the run store, not in this repository: `../checkpoints/`
+beside it on a dev machine, `/workspace/checkpoints` on the training box.
+`weights/` holds only the ONNX graph exported from one, which this check
+cannot read; the export's `manifest.json` names the checkpoint it came from and
+that file's SHA-256 (for exports made after this was added — R0, R1 and R2's
+manifests predate it, and `weights/CHECKSUMS.txt` in the run store is the
+record for those).
 
 Add `--shard <path>` to also re-evaluate the checkpoint and confirm it still
 produces the metrics recorded inside it.
@@ -84,10 +93,14 @@ learning curve and final metrics will land in the same place.
 
 ## 5. Raw artifacts
 
-`provenance/` contains, committed and unedited:
+`provenance/` contains, committed as the stages wrote them:
 
 - `logs/` — stdout from every pipeline stage and training run, with timestamps
-  and throughput
+  and throughput. One file is filtered: `acquire.log` keeps the stage's own
+  timestamped lines and its closing directory listing, and drops curl's
+  progress meter, which was the other 148 KB of the 150 KB file on the box.
+  `tr '\r' '\n' < acquire.log | grep -E '^\[[0-9:]+\]|^total|^d|^-rw'` on the
+  original reproduces the committed copy byte for byte.
 - `history/` — per-epoch metrics for every run
 - `filter_*.json` — corpus composition per tier
 

@@ -96,6 +96,15 @@ def main() -> int:
     ap.add_argument("--batch", type=int, default=1024)
     args = ap.parse_args()
 
+    if args.checkpoint.suffix != ".pt":
+        print(
+            f"{args.checkpoint} is not a training checkpoint. weights/ holds only the ONNX "
+            "graph exported from one; pass the <run>_e<epoch>[_ema].pt it came from "
+            "(docs/PROVENANCE.md says where those live).",
+            file=sys.stderr,
+        )
+        return 2
+
     blob = torch.load(args.checkpoint, map_location="cpu", weights_only=False)
 
     print(f"file                {args.checkpoint}")
