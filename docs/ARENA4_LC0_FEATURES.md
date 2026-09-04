@@ -139,6 +139,7 @@ otherwise as chain A.
 | 2 | smart pruning | proofs | +19 =32 −1 | 67.3% | 60.3–74.3% | +125 | 62% | **kept** |
 | 3 | scaled FPU 0.33 | proofs, pruning | +10 =31 −11 | 49.0% | 40.4–57.7% | -7 | 60% | **dropped** |
 | 4 | policy temperature 1.359 | proofs, pruning | +12 =39 −1 | 60.6% | 54.4–66.7% | +75 | 75% | **kept** |
+| 5 | root FPU 1.0 | proofs, pruning, temperature | +9 =39 −4 | 54.8% | 48.1–61.5% | +34 | 75% | **kept** |
 
 **1. Proofs, kept at exactly 50.0%** (+2 =48 −2, no failures). Four decisive games
 in fifty-two. An R1 mirror at the box's ~1,400 simulations per move is draw-saturated,
@@ -175,6 +176,16 @@ more of the search on second choices, which a hotter value head can rank and a
 larger budget can afford. The way to separate them is one 50-game R1 chain at the
 Mac's budget, or R3 at the box's. Until then the setting is net-specific: on for R1,
 off for R3.
+
+**5. Root FPU 1.0, kept at 54.8%** (+9 =39 −4, Elo +34, 95% -13 to +81; as White
++5 =18 −3, as Black +4 =21 −1; two-sided p = 0.27 on the thirteen decisive games; no failures). The
+second disagreement, in the same direction as the first: chain A dropped it on R3 at
+41.0%, its worst result. On its own this one is inside noise; together with the
+temperature it makes a pattern. Both knobs widen the search at the root, and both
+help R1 at ~1,400 simulations per move while hurting R3 at ~600. A wider root costs
+depth, and depth is what a small budget cannot spare; a hot value head ranks the
+extra candidates more decisively than a cool one. Either explanation fits, and the
+same single arena would separate them. Net-specific for now: on for R1, off for R3.
 
 ## 4. What to ship
 
