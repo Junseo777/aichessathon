@@ -55,6 +55,16 @@ clean, at every commit.
 
 ## 3. Results
 
+Two chains, same snapshot, same features, same rule. Chain A on the Mac with base
+**R3** (the block's pick); chain B on the RunPod box with base **R1** (the block's
+strongest net, added on Junseo's instruction at 15:48), four lanes of 13 games each
+pinned to physical cores with `taskset`, the harness copied from this repo because
+the box's checkout predates `--fen`. The box runs the net at 2.3 ms per forward
+against the Mac's 3.6–4.0 ms, so chain B plays at roughly twice the simulations per
+move; the ladder's hardware is unknown, so neither is "the" budget.
+
+### Chain A, base R3 (Mac)
+
 Base net: **R3_e8_ema** (`a1163b19…`), chosen by the block (`docs/ARENA3_R1_R2_R3.md`:
 R2 49.0% over 98 games, so R3 by the higher-score rule). Every row is 50 games at
 120 s + 0.5 s, two lanes of 25, colours balanced, against the kept configuration at
@@ -87,6 +97,10 @@ hits. The banked clock shows up late: from move 40 onwards the pruned side spent
 left. That is where games are decided, and this arena had 23 decisive games to the
 proofs arena's 11, with the draw rate down from 78% to 54%. Games averaged
 241 s against 286 s, so the rest of the chain runs faster than planned.
+
+### Chain B, base R1 (box)
+
+CHAIN_B_PENDING
 
 ## 4. What to ship
 
