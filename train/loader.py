@@ -31,13 +31,39 @@ def side_to_move(shard_dir: Path, n: int) -> np.ndarray:
     return stm
 
 
-def _labels(shard: Shard, idx: np.ndarray, stm: np.ndarray):
+VALUE_SOURCES = ("engine", "lichess", "outcome", "blend")
+
+
+def _labels(shard: Shard, idx: np.ndarray, stm: np.ndarray, value_source: str = "engine"):
+    """Policy target, value target, side to move, and how many rows took a label from the
+    chosen source rather than the game outcome.
+
+    engine   the Stockfish label where one exists, else the outcome (R2-R5)
+    lichess  the Lichess [%eval] where one exists, else the outcome (R1's target)
+    outcome  the game outcome on every row
+    blend    0.5 engine + 0.5 outcome where the engine label exists, else the outcome (R7)
+    """
+    if value_source not in VALUE_SOURCES:
+        raise ValueError(f"value_source must be one of {VALUE_SOURCES}, not {value_source!r}")
     policy = np.asarray(shard.Y_policy)[idx].astype(np.int64)
     outcome = np.asarray(shard.Y_value)[idx].astype(np.float32)
-    engine = np.asarray(shard.Y_value_engine)[idx].astype(np.float32)
-    value = np.where(np.isnan(engine), outcome, engine).astype(np.float32)
-    labelled = int((~np.isnan(engine)).sum())
-    return policy, value, stm[idx], labelled
+    if value_source == "outcome":
+        return policy, outcome, stm[idx], 0
+    column = shard.Y_value_lichess if value_source == "lichess" else shard.Y_value_engine
+    label = np.asarray(column)[idx].astype(np.float32)
+    present = ~np.isnan(label)
+    target = 0.5 * label + 0.5 * outcome if value_source == "blend" else label
+    value = np.where(present, target, outcome).astype(np.float32)
+    return policy, value, stm[idx], int(present.sum())
+
+
+def describe_target(value_source: str, labelled: int, n: int) -> str:
+    if value_source == "outcome":
+        return "value target: game outcome on every row"
+    return (
+        f"value target: {value_source} on {100 * labelled / max(n, 1):.2f}% of rows, "
+        "outcome elsewhere"
+    )
 
 
 class _BlockReader:
@@ -75,6 +101,7 @@ class RamSplit:
         name: str,
         *,
         block_rows: int = BLOCK_ROWS,
+        value_source: str = "engine",
     ) -> None:
         mask = np.asarray(shard.split) == which
         idx = np.flatnonzero(mask)
@@ -88,10 +115,10 @@ class RamSplit:
             for b in range(len(reader.blocks)):
                 fill += reader.rows(fh, b, mask, self.x[fill:])
         assert fill == self.n
-        self.policy, self.value, self.stm, labelled = _labels(shard, idx, stm)
+        self.policy, self.value, self.stm, labelled = _labels(shard, idx, stm, value_source)
         print(
-            f"    {self.x.nbytes / 1e9:.1f} GB in {time.time() - t:.0f}s, "
-            f"engine-labelled {100 * labelled / max(self.n, 1):.2f}%",
+            f"    {self.x.nbytes / 1e9:.1f} GB in {time.time() - t:.0f}s; "
+            + describe_target(value_source, labelled, self.n),
             flush=True,
         )
 
@@ -118,12 +145,13 @@ class BlockShuffledSplit:
         window_blocks: int = WINDOW_BLOCKS,
         block_rows: int = BLOCK_ROWS,
         prefetch: bool = False,
+        value_source: str = "engine",
     ) -> None:
         self.mask = np.asarray(shard.split) == which
         idx = np.flatnonzero(self.mask)
         self.n = idx.size
         self.row_of = idx
-        self.policy, self.value, self.stm, labelled = _labels(shard, idx, stm)
+        self.policy, self.value, self.stm, labelled = _labels(shard, idx, stm, value_source)
         self.pos_of = np.full(shard.n, -1, dtype=np.int64)
         self.pos_of[idx] = np.arange(self.n)
         self.reader = _BlockReader(shard.root / "X.bin", shard.n, block_rows)
@@ -140,7 +168,7 @@ class BlockShuffledSplit:
             flush=True,
         )
         print(
-            f"    engine-labelled {100 * labelled / max(self.n, 1):.2f}%, "
+            f"    {describe_target(value_source, labelled, self.n)}; "
             f"{len(self.reader.blocks):,} blocks of {block_rows:,}",
             flush=True,
         )
@@ -233,10 +261,11 @@ def make_split(
     window_blocks: int = WINDOW_BLOCKS,
     block_rows: int = BLOCK_ROWS,
     prefetch: bool = False,
+    value_source: str = "engine",
 ):
     idx_bytes = int((np.asarray(shard.split) == which).sum()) * ROW_BYTES
     if idx_bytes <= RAM_LIMIT_BYTES:
-        return RamSplit(shard, which, stm, name, block_rows=block_rows)
+        return RamSplit(shard, which, stm, name, block_rows=block_rows, value_source=value_source)
     return BlockShuffledSplit(
         shard,
         which,
@@ -245,4 +274,5 @@ def make_split(
         window_blocks=window_blocks,
         block_rows=block_rows,
         prefetch=prefetch,
+        value_source=value_source,
     )

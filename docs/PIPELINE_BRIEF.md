@@ -223,6 +223,12 @@ value_loss   = mse(value_head, value_target)
 loss         = policy_loss + VALUE_WEIGHT * value_loss
 ```
 
+`--value-source` picks the value target: `engine` is the line above (R2-R5); `lichess`
+takes the `[%eval]` where one exists and the outcome elsewhere, which is what R1 saw
+because it trained before the Stockfish pass finished; `outcome` uses the game result
+on every row; `blend` averages engine and outcome where the engine label exists (R7).
+The checkpoint's provenance block records the choice.
+
 **Schedule.** AdamW lr 1e-3, weight decay 1e-4, batch 1024, BF16, gradient clipping
 at norm 1.0, cosine decay to zero **across the epochs actually run**. 8 epochs over
 40M. Shuffle every epoch, fixed seeds. EMA of weights (decay 0.999), saving both raw

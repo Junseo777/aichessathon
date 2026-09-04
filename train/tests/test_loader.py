@@ -33,6 +33,7 @@ def shard(tmp_path_factory: pytest.TempPathFactory) -> Shard:
                 fen=f"8/8/8/8/8/8/8/8 {'w' if i % 2 else 'b'} - - 0 1",
                 split=SPLIT_VAL if i % 7 == 0 else SPLIT_TRAIN,
                 y_value_engine=float("nan") if i % 2 == 0 else float(i % 3 - 1),
+                y_value_lichess=float("nan") if i % 3 else (i % 7 - 3) / 4,
             )
         writer.write_meta({})
     return Shard(root)
@@ -136,3 +137,52 @@ def test_ram_split_reads_the_rows_of_its_split(shard: Shard) -> None:
     want_value, want_stm = expected_labels(shard, rows)
     np.testing.assert_array_equal(value, want_value)
     np.testing.assert_array_equal(side, want_stm)
+
+
+def expected_target(shard: Shard, rows: np.ndarray, source: str) -> np.ndarray:
+    outcome = np.asarray(shard.Y_value)[rows].astype(np.float32)
+    engine = np.asarray(shard.Y_value_engine)[rows].astype(np.float32)
+    lichess = np.asarray(shard.Y_value_lichess)[rows].astype(np.float32)
+    want = {
+        "engine": np.where(np.isnan(engine), outcome, engine),
+        "lichess": np.where(np.isnan(lichess), outcome, lichess),
+        "outcome": outcome,
+        "blend": np.where(np.isnan(engine), outcome, 0.5 * engine + 0.5 * outcome),
+    }[source]
+    return want.astype(np.float32)
+
+
+@pytest.mark.parametrize("source", ["engine", "lichess", "outcome", "blend"])
+def test_value_source_selects_the_target(shard: Shard, source: str) -> None:
+    stm = side_to_move(shard.root, N)
+    ram = RamSplit(shard, SPLIT_TRAIN, stm, "train", block_rows=BLOCK, value_source=source)
+    ids, _, value, _, _ = drain(ram, None)
+    np.testing.assert_array_equal(value, expected_target(shard, ids, source))
+    assert not np.isnan(value).any()
+    block = BlockShuffledSplit(
+        shard,
+        SPLIT_TRAIN,
+        stm,
+        "train",
+        window_blocks=WINDOW,
+        block_rows=BLOCK,
+        value_source=source,
+    )
+    ids, _, value, _, _ = drain(block, np.random.default_rng(1))
+    np.testing.assert_array_equal(value, expected_target(shard, ids, source))
+
+
+def test_lichess_source_differs_from_engine_where_both_exist(shard: Shard) -> None:
+    rows = np.flatnonzero(np.asarray(shard.split) == SPLIT_TRAIN)
+    engine = expected_target(shard, rows, "engine")
+    lichess = expected_target(shard, rows, "lichess")
+    both = ~np.isnan(np.asarray(shard.Y_value_engine)[rows]) & ~np.isnan(
+        np.asarray(shard.Y_value_lichess)[rows]
+    )
+    assert both.any()
+    assert (engine[both] != lichess[both]).any()
+
+
+def test_unknown_value_source_is_refused(shard: Shard) -> None:
+    with pytest.raises(ValueError, match="value_source"):
+        RamSplit(shard, SPLIT_TRAIN, side_to_move(shard.root, N), "train", value_source="deep")

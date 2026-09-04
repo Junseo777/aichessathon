@@ -19,7 +19,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from chessml.encoding import SCALE
 from pipeline.shard import SPLIT_TRAIN, SPLIT_VAL, Shard
-from train.loader import WINDOW_BLOCKS, make_split, side_to_move
+from train.loader import VALUE_SOURCES, WINDOW_BLOCKS, make_split, side_to_move
 from train.model import ChessNet, Config, count_params
 
 
@@ -120,6 +120,14 @@ def main() -> int:
     ap.add_argument("--n-heads", type=int, default=4)
     ap.add_argument("--n-blocks", type=int, default=12)
     ap.add_argument("--value-weight", type=float, default=1.0)
+    ap.add_argument(
+        "--value-source",
+        choices=VALUE_SOURCES,
+        default="engine",
+        help="value target: engine = Stockfish label where present else outcome (R2-R5); "
+        "lichess = the [%%eval] where present else outcome (R1's target); outcome = the "
+        "game result only; blend = 0.5 engine + 0.5 outcome where the engine label exists",
+    )
     ap.add_argument("--epochs", type=int, default=8)
     ap.add_argument("--batch", type=int, default=1024)
     ap.add_argument("--lr", type=float, default=1e-3)
@@ -155,9 +163,15 @@ def main() -> int:
     stm = side_to_move(args.shard, sh.n)
     print(f"shard {args.shard} n={sh.n:,}", flush=True)
     train = make_split(
-        sh, SPLIT_TRAIN, stm, "train", window_blocks=args.window_blocks, prefetch=args.prefetch
+        sh,
+        SPLIT_TRAIN,
+        stm,
+        "train",
+        window_blocks=args.window_blocks,
+        prefetch=args.prefetch,
+        value_source=args.value_source,
     )
-    val = make_split(sh, SPLIT_VAL, stm, "val")
+    val = make_split(sh, SPLIT_VAL, stm, "val", value_source=args.value_source)
 
     opt = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     steps_per_epoch = train.n // args.batch
@@ -170,7 +184,11 @@ def main() -> int:
     rng = np.random.default_rng(args.seed)
     commit = git_commit()
     fingerprint = shard_fingerprint(args.shard)
-    print(f"git {commit[:12]}  shard meta sha256 {fingerprint['meta_sha256'][:16]}", flush=True)
+    print(
+        f"git {commit[:12]}  shard meta sha256 {fingerprint['meta_sha256'][:16]}  "
+        f"value source {args.value_source}",
+        flush=True,
+    )
     print(f"steps/epoch {steps_per_epoch:,}  total {total_steps:,}", flush=True)
 
     for epoch in range(1, args.epochs + 1):
@@ -238,6 +256,7 @@ def main() -> int:
             "epochs_planned": args.epochs,
             "seed": args.seed,
             "value_weight": args.value_weight,
+            "value_source": args.value_source,
             "batch": args.batch,
             "lr": args.lr,
             "git_commit": commit,
