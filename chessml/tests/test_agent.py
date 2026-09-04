@@ -110,9 +110,14 @@ def test_low_clock_modes_are_fast_and_legal() -> None:
 
 
 def _result(
-    board: chess.Board, visits: list[int], q: list[float], proofs: list[float] | None = None
+    board: chess.Board,
+    visits: list[int],
+    q: list[float],
+    proofs: list[float] | None = None,
+    moves: list[chess.Move] | None = None,
 ) -> SearchResult:
-    moves = list(board.legal_moves)[: len(visits)]
+    if moves is None:
+        moves = list(board.legal_moves)[: len(visits)]
     priors = np.full(len(moves), 1.0 / len(moves), dtype=np.float32)
     return SearchResult(
         moves=moves,
@@ -160,6 +165,49 @@ def test_pick_vetoes_draw_claim_when_winning() -> None:
     assert agent._pick(board, {}, result) == favourite
 
 
+def test_pick_avoids_a_second_occurrence_when_winning() -> None:
+    board = chess.Board("8/5pk1/6p1/8/3K4/8/5PP1/8 w - - 0 45")
+    result = _result(board, visits=[100, 50], q=[0.8, 0.7])
+    favourite, second = result.moves[0], result.moves[1]
+
+    after = board.copy(stack=False)
+    after.push(favourite)
+    assert agent._pick(board, {transposition_key(after): 1}, result) == second
+
+
+def test_pick_avoids_running_down_the_fifty_move_count_when_winning() -> None:
+    quiet, pawn = chess.Move.from_uci("d4e4"), chess.Move.from_uci("f2f3")
+    drifting = chess.Board("8/5pk1/6p1/8/3K4/8/5PP1/8 w - - 97 45")
+    result = _result(drifting, visits=[100, 50], q=[0.8, 0.7], moves=[quiet, pawn])
+    assert agent._pick(drifting, {}, result) == pawn
+    fresh = chess.Board("8/5pk1/6p1/8/3K4/8/5PP1/8 w - - 0 45")
+    assert agent._pick(fresh, {}, result) == quiet
+
+
+def test_pick_seeks_a_draw_the_reply_completes_when_losing() -> None:
+    board = chess.Board("8/5pk1/6p1/8/3K4/8/5PP1/8 w - - 0 45")
+    result = _result(board, visits=[100, 50], q=[-0.8, -0.9])
+    second = result.moves[1]
+
+    after = board.copy(stack=False)
+    after.push(second)
+    after.push(next(iter(after.legal_moves)))
+    assert agent._pick(board, {transposition_key(after): 2}, result) == second
+
+
+def test_referee_draws_matches_the_harness_referee() -> None:
+    board = chess.Board("8/5pk1/6p1/8/3K4/8/5PP1/8 w - - 92 45")
+    counts = {transposition_key(board): 1}
+    for uci in ("d4e4", "g7h7", "e4d4", "h7g7", "d4e4", "g7h7", "e4d4", "h7g7"):
+        for move in board.legal_moves:
+            probe = board.copy()
+            probe.push(move)
+            referee = probe.outcome(claim_draw=True) is not None
+            assert agent._referee_draws(board, counts, move) == referee, (board.fen(), move)
+        board.push_uci(uci)
+        counts[transposition_key(board)] = counts.get(transposition_key(board), 0) + 1
+
+
 def test_pick_seeks_draw_claim_when_losing() -> None:
     board = chess.Board("8/5pk1/6p1/8/3K4/8/5PP1/8 w - - 0 45")
     result = _result(board, visits=[100, 50], q=[-0.8, -0.9])
@@ -192,6 +240,22 @@ def test_opening_presearch_is_adopted_for_black() -> None:
     board.push_uci("e2e4")
     child = agent._adopt_opening(board)
     assert child is not None and child.terminal is None
+    assert agent._OPENING_TREE is None
+
+
+def test_opening_presearch_is_adopted_several_plies_in() -> None:
+    agent._OPENING_TREE = agent._presearch(1.0)
+    tree = agent._OPENING_TREE
+    assert tree is not None
+    board = chess.Board()
+    node = tree
+    for _ in range(2):
+        idx = int(np.argmax(node.n))
+        child = node.children[idx]
+        assert child is not None and child.terminal is None
+        board.push(node.moves[idx])
+        node = child
+    assert agent._adopt_opening(board) is node
     assert agent._OPENING_TREE is None
 
 

@@ -48,6 +48,20 @@ def test_deadline_is_respected(net: PolicyValueNet) -> None:
     assert elapsed < 0.5, f"deadline overrun: {elapsed:.3f}s"
 
 
+def test_second_occurrence_is_a_draw_in_the_tree(net: PolicyValueNet) -> None:
+    board = chess.Board()
+    board.push_uci("g1f3")
+    repeating = chess.Move.from_uci("g8f6")
+    after = board.copy(stack=False)
+    after.push(repeating)
+    counts = {transposition_key(board): 1, transposition_key(after): 1}
+    result = MCTS(net).run(board, counts, time.monotonic() + 30.0, max_sims=300)
+    idx = result.moves.index(repeating)
+    assert result.visits[idx] > 0
+    assert result.q[idx] == 0.0
+    assert result.root.children[idx] is None
+
+
 def test_third_occurrence_is_a_draw_on_the_path(net: PolicyValueNet) -> None:
     board = chess.Board()
     board.push_uci("g1f3")

@@ -18,18 +18,8 @@ _PONDER_NODE_BUDGET = 100_000
 _PONDER_JOIN_S = 2.0
 _PRESEARCH_S = float(os.environ.get("CHESS_PRESEARCH_S", "5"))
 _START_KEY = transposition_key(chess.Board())
-_NET, _MANIFEST = load_fastest(
-    Path(__file__).resolve().parent / "weights", policy_temperature=1.359
-)
-_MCTS = MCTS(
-    _NET,
-    fpu_reduction=0.33,
-    fpu_scaled=True,
-    root_fpu=1.0,
-    proofs=True,
-    pruning_factor=1.33,
-    draw_score=0.1,
-)
+_NET, _MANIFEST = load_fastest(Path(__file__).resolve().parent / "weights")
+_MCTS = MCTS(_NET, fpu_reduction=0.25, proofs=False, pruning_factor=1.33)
 print(f"init: {_MANIFEST}")
 
 
@@ -44,6 +34,32 @@ def _presearch(seconds: float) -> Node | None:
 _OPENING_TREE: Node | None = _presearch(_PRESEARCH_S)
 
 
+_ADOPT_NODE_LIMIT = 4096
+
+
+def _find_in_tree(tree: Node, key: object, limit: int = _ADOPT_NODE_LIMIT) -> Node | None:
+    # depth-first walk from the standard start for the position received; rated games
+    # begin from curated positions several plies in, so one ply is never enough
+    board = chess.Board()
+    budget = limit
+
+    def walk(node: Node) -> Node | None:
+        nonlocal budget
+        for idx, move in enumerate(node.moves):
+            child = node.children[idx]
+            if child is None or child.terminal is not None or budget <= 0:
+                continue
+            budget -= 1
+            board.push(move)
+            found = child if transposition_key(board) == key else walk(child)
+            board.pop()
+            if found is not None:
+                return found
+        return None
+
+    return walk(tree)
+
+
 def _adopt_opening(board: chess.Board) -> Node | None:
     global _OPENING_TREE
     tree = _OPENING_TREE
@@ -53,14 +69,7 @@ def _adopt_opening(board: chess.Board) -> Node | None:
     key = transposition_key(board)
     if key == _START_KEY:
         return tree
-    start = chess.Board()
-    for idx, move in enumerate(tree.moves):
-        start.push(move)
-        if transposition_key(start) == key:
-            child = tree.children[idx]
-            return child if child is not None and child.terminal is None else None
-        start.pop()
-    return None
+    return _find_in_tree(tree, key)
 
 
 class _PonderResult:
@@ -187,22 +196,37 @@ def _material_for_mover(board: chess.Board) -> int:
     )
 
 
-def _hands_over_draw_claim(
-    board: chess.Board, key_counts: dict[object, int], move: chess.Move
-) -> bool:
+def _referee_draws(board: chess.Board, key_counts: dict[object, int], move: chess.Move) -> bool:
+    # the referee ends the game once the side to move could claim: a third occurrence
+    # or the fifty-move count reached by this move, or reachable by any reply to it
     after = board.copy(stack=False)
     after.push(move)
-    if after.halfmove_clock >= 100:
+    clock = after.halfmove_clock
+    if clock >= 100 or key_counts.get(transposition_key(after), 0) >= 2:
         return True
-    return key_counts.get(transposition_key(after), 0) >= 2
+    for reply in after.legal_moves:
+        if clock >= 99 and not after.is_zeroing(reply):
+            return True
+        after.push(reply)
+        repeated = key_counts.get(transposition_key(after), 0) >= 2
+        after.pop()
+        if repeated:
+            return True
+    return False
+
+
+def _repeats(board: chess.Board, key_counts: dict[object, int], move: chess.Move) -> bool:
+    # a second occurrence, or a fifty-move count the opponent can run down, lets a
+    # shuffling opponent force the referee's claim two plies later
+    after = board.copy(stack=False)
+    after.push(move)
+    return after.halfmove_clock >= 98 or key_counts.get(transposition_key(after), 0) >= 1
 
 
 def _pick(board: chess.Board, key_counts: dict[object, int], result: SearchResult) -> chess.Move:
     order = [int(i) for i in np.argsort(-result.visits)]
     for idx in order:
-        if result.proofs[idx] == 1.0 and not _hands_over_draw_claim(
-            board, key_counts, result.moves[idx]
-        ):
+        if result.proofs[idx] == 1.0 and not _referee_draws(board, key_counts, result.moves[idx]):
             return result.moves[idx]
     safe = [idx for idx in order if result.proofs[idx] != -1.0]
     if safe:
@@ -219,11 +243,11 @@ def _pick(board: chess.Board, key_counts: dict[object, int], result: SearchResul
 
     if losing:
         for idx in order:
-            if _hands_over_draw_claim(board, key_counts, result.moves[idx]):
+            if _referee_draws(board, key_counts, result.moves[idx]):
                 return result.moves[idx]
     if winning:
         for idx in order:
-            if not _hands_over_draw_claim(board, key_counts, result.moves[idx]):
+            if not _repeats(board, key_counts, result.moves[idx]):
                 return result.moves[idx]
     return result.moves[best]
 

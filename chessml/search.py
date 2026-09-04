@@ -209,7 +209,9 @@ class MCTS:
                 sim_board.push(node.moves[idx])
                 path.append((node, idx))
                 key = transposition_key(sim_board)
-                if key_counts.get(key, 0) + path_keys.count(key) >= 2:
+                # a second occurrence is scored as a draw: from there a shuffling
+                # opponent can force the referee's claim, so the line is worth no more
+                if key_counts.get(key, 0) + path_keys.count(key) >= 1:
                     leaf_value = 0.0
                     drawn = True
                     break
