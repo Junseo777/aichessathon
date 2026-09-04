@@ -140,6 +140,7 @@ otherwise as chain A.
 | 3 | scaled FPU 0.33 | proofs, pruning | +10 =31 −11 | 49.0% | 40.4–57.7% | -7 | 60% | **dropped** |
 | 4 | policy temperature 1.359 | proofs, pruning | +12 =39 −1 | 60.6% | 54.4–66.7% | +75 | 75% | **kept** |
 | 5 | root FPU 1.0 | proofs, pruning, temperature | +9 =39 −4 | 54.8% | 48.1–61.5% | +34 | 75% | **kept** |
+| 6 | draw score 0.1 | proofs, pruning, temperature, root FPU | +5 =40 −7 | 48.1% | 41.6–54.6% | -13 | 77% | **dropped** |
 
 **1. Proofs, kept at exactly 50.0%** (+2 =48 −2, no failures). Four decisive games
 in fifty-two. An R1 mirror at the box's ~1,400 simulations per move is draw-saturated,
@@ -186,6 +187,15 @@ help R1 at ~1,400 simulations per move while hurting R3 at ~600. A wider root co
 depth, and depth is what a small budget cannot spare; a hot value head ranks the
 extra candidates more decisively than a cool one. Either explanation fits, and the
 same single arena would separate them. Net-specific for now: on for R1, off for R3.
+
+**6. Draw score 0.1, dropped at 48.1%** (+5 =40 −7, Elo -13, 95% -59 to +32; as
+White +4 =20 −2, as Black +1 =20 −5; no failures). Twelve decisive games in fifty-two, split five to
+seven. R1's hot value head crosses the ±0.3 gates often, so the in-tree contempt was
+live in most positions, and it did not help. Dropped.
+
+**Chain B final configuration** (the driver's last line): `fpu_reduction=0.25`,
+`proofs=True`, `pruning_factor=1.33`, `root_fpu=1.0`, `policy_temperature=1.359`,
+`fpu_scaled=False`, `draw_score=0.0`.
 
 ## 4. What to ship
 
