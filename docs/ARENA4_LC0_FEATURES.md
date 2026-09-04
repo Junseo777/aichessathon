@@ -118,12 +118,26 @@ otherwise as chain A.
 | # | feature | kept so far | W-D-L (with) | score | 95% | Elo | draws | decision |
 |---|---|---|---|---|---|---|---|---|
 | 1 | proofs | none | +2 =48 −2 | 50.0% | 46.2–53.8% | 0 | 92% | **kept** (tie) |
+| 2 | smart pruning | proofs | +19 =32 −1 | 67.3% | 60.3–74.3% | +125 | 62% | **kept** |
 
 **1. Proofs, kept at exactly 50.0%** (+2 =48 −2, no failures). Four decisive games
 in fifty-two. An R1 mirror at the box's ~1,400 simulations per move is draw-saturated,
 so the arena has almost no power and the verdict is the rule's tie-break, not
 evidence. Chain A dropped the same feature at 49.0%; both are nulls, and the
 difference between "kept" and "dropped" here is one game.
+
+**2. Smart pruning, kept at 67.3%** (+19 =32 −1, Elo +125, 95% +73 to +184; as White +11 =14 −1, as Black +8 =18 −0; two-sided
+binomial on the twenty decisive games p < 0.0001; no failures). The same feature scored
+57.0% on R3 at the Mac's budget; on R1 at the box's it is the largest effect in either
+chain. The mechanism is the one chain A saw, with more room to work: R1's hotter value
+head converts when it has time, and pruning gives it time late in the game.
+The telemetry differs from chain A in one respect. The pruned side stopped 96% of its
+searches and spent 1.13 s per move to the other side's 2.22 s, but this time it made
+*fewer* simulations per move, 810 against 1,122: at the box's speed the unpruned
+side's longer searches outrun what pondering can pre-fill. It won anyway, 19 to 1,
+and the clock is where: from move 40 onwards the pruned side had 1.39 s per move to
+1.06 s. So on R1 the gain is time management alone, with no simulation bonus, and it
+is larger than on R3. Games averaged 222 s.
 
 ## 4. What to ship
 
