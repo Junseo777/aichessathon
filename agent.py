@@ -19,7 +19,7 @@ _PONDER_JOIN_S = 2.0
 _PRESEARCH_S = float(os.environ.get("CHESS_PRESEARCH_S", "5"))
 _START_KEY = transposition_key(chess.Board())
 _NET, _MANIFEST = load_fastest(Path(__file__).resolve().parent / "weights")
-_MCTS = MCTS(_NET, fpu_reduction=0.25, proofs=True)
+_MCTS = MCTS(_NET, fpu_reduction=0.25, proofs=True, pruning_factor=1.33)
 print(f"init: {_MANIFEST}")
 
 
@@ -247,6 +247,7 @@ def _play(fen: str, time_left_ms: int) -> str:
             f"move {board.fullmove_number}: {move.uci()} sims={result.simulations} "
             f"reused={inherited} pondered={pondered} "
             f"q={result.q[result.moves.index(move)]:+.2f} t={elapsed:.2f}s"
+            f"{' pruned' if result.pruned else ''}"
         )
 
     game.board.push(move)

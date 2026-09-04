@@ -205,3 +205,29 @@ def test_proofs_can_be_switched_off(net: PolicyValueNet) -> None:
     )
     assert result.simulations == 200 and result.root.proof is None
     assert np.isnan(result.proofs).all()
+
+
+def test_smart_pruning_stops_when_the_lead_cannot_be_overtaken(net: PolicyValueNet) -> None:
+    board = chess.Board("8/5pk1/6p1/8/3K4/8/5PP1/8 w - - 0 45")
+    mcts = MCTS(net, proofs=False)
+    first = mcts.run(board, fresh_counts(board), time.monotonic() + 30.0, max_sims=64)
+    assert not first.pruned
+    lead = int(np.argmax(first.root.n))
+    first.root.n[lead] += 5000.0
+    first.root.total += 5000
+    second = mcts.run(board, fresh_counts(board), time.monotonic() + 1.0, root=first.root)
+    assert second.pruned and second.simulations == 32
+    assert int(np.argmax(second.visits)) == lead
+
+
+def test_smart_pruning_needs_a_deadline_and_can_be_disabled(net: PolicyValueNet) -> None:
+    board = chess.Board("8/5pk1/6p1/8/3K4/8/5PP1/8 w - - 0 45")
+    mcts = MCTS(net, proofs=False)
+    seed = mcts.run(board, fresh_counts(board), time.monotonic() + 30.0, max_sims=64)
+    seed.root.n[int(np.argmax(seed.root.n))] += 5000.0
+    seed.root.total += 5000
+    unbounded = mcts.run(board, fresh_counts(board), math.inf, max_sims=64, root=seed.root)
+    assert not unbounded.pruned and unbounded.simulations == 64
+    off = MCTS(net, proofs=False, pruning_factor=None)
+    plain = off.run(board, fresh_counts(board), time.monotonic() + 1.0, max_sims=64, root=seed.root)
+    assert not plain.pruned and plain.simulations == 64

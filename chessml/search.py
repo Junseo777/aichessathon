@@ -1,3 +1,4 @@
+import math
 import threading
 import time
 from dataclasses import dataclass
@@ -63,6 +64,7 @@ class SearchResult:
     expanded: int
     root: Node
     proofs: npt.NDArray[np.float32]
+    pruned: bool = False
 
 
 class MCTS:
@@ -72,12 +74,27 @@ class MCTS:
         c_puct: float = 1.5,
         fpu_reduction: float = 0.25,
         proofs: bool = True,
+        pruning_factor: float | None = 1.33,
     ) -> None:
         self.net = net
         self.c_puct = c_puct
         self.fpu_reduction = fpu_reduction
         self.proofs = proofs
+        self.pruning_factor = pruning_factor
         self.generation = 0
+
+    def _cannot_be_overtaken(self, root: Node, sims: int, started: float, deadline: float) -> bool:
+        # smart pruning: stop once the visit lead exceeds what the remaining time can
+        # produce, since the move is chosen by visits and nothing can change it
+        if self.pruning_factor is None or deadline == math.inf or len(root.moves) < 2:
+            return False
+        now = time.monotonic()
+        elapsed = now - started
+        if elapsed <= 0.0:
+            return False
+        remaining = (deadline - now) * (sims / elapsed) / self.pruning_factor
+        top = np.partition(root.n, -2)[-2:]
+        return float(top[1] - top[0]) > remaining
 
     @staticmethod
     def _proof(node: Node, gen: int) -> float | None:
@@ -138,9 +155,11 @@ class MCTS:
             raise ValueError("no legal moves at search root")
         self.generation += 1
         gen = self.generation
+        started = time.monotonic()
 
         sims = 0
         expanded = 0
+        pruned = False
         while sims < max_sims and time.monotonic() < deadline:
             if stop is not None and stop.is_set():
                 break
@@ -187,6 +206,9 @@ class MCTS:
                 self._prove(path, gen)
                 if self._proof(root, gen) is not None:
                     break
+            if sims % 32 == 0 and self._cannot_be_overtaken(root, sims, started, deadline):
+                pruned = True
+                break
 
         q = np.divide(root.w, root.n, out=np.zeros_like(root.w), where=root.n > 0)
         proofs = np.full(len(root.moves), np.nan, dtype=np.float32)
@@ -195,4 +217,6 @@ class MCTS:
                 proof = self._proof(child, gen)
                 if proof is not None:
                     proofs[i] = -proof
-        return SearchResult(root.moves, root.n.copy(), q, root.value, sims, expanded, root, proofs)
+        return SearchResult(
+            root.moves, root.n.copy(), q, root.value, sims, expanded, root, proofs, pruned
+        )
