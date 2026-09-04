@@ -19,7 +19,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from chessml.encoding import SCALE
 from pipeline.shard import SPLIT_TRAIN, SPLIT_VAL, Shard
-from train.loader import make_split, side_to_move
+from train.loader import WINDOW_BLOCKS, make_split, side_to_move
 from train.model import ChessNet, Config, count_params
 
 
@@ -126,6 +126,19 @@ def main() -> int:
     ap.add_argument("--weight-decay", type=float, default=1e-4)
     ap.add_argument("--ema-decay", type=float, default=0.999)
     ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument(
+        "--window-blocks",
+        type=int,
+        default=WINDOW_BLOCKS,
+        help="blocks of 262,144 rows shuffled together per window; 16 is a 5.6 GB window "
+        "and the resident footprint of the loader (plus 0.4 GB staging)",
+    )
+    ap.add_argument(
+        "--prefetch",
+        action="store_true",
+        help="read the next window in a background thread while the GPU trains on this "
+        "one; costs a second window of RAM",
+    )
     args = ap.parse_args()
 
     torch.manual_seed(args.seed)
@@ -141,7 +154,9 @@ def main() -> int:
     sh = Shard(args.shard)
     stm = side_to_move(args.shard, sh.n)
     print(f"shard {args.shard} n={sh.n:,}", flush=True)
-    train = make_split(sh, SPLIT_TRAIN, stm, "train")
+    train = make_split(
+        sh, SPLIT_TRAIN, stm, "train", window_blocks=args.window_blocks, prefetch=args.prefetch
+    )
     val = make_split(sh, SPLIT_VAL, stm, "val")
 
     opt = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
