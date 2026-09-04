@@ -74,6 +74,7 @@ that point.
 |---|---|---|---|---|---|---|---|---|
 | 1 | proofs | none | +5 =39 −6 | 49.0% | 42.5–55.5% | −7 | 78% | **dropped** |
 | 2 | smart pruning | none | +15 =27 −8 | 57.0% | 47.8–66.2% | +49 | 54% | **kept** |
+| 3 | scaled FPU 0.33 | pruning | +8 =30 −12 | 46.0% | 37.3–54.7% | −28 | 60% | **dropped** |
 
 **1. Proofs, dropped at 49.0%.** Eleven decisive games in fifty, five to six, all by
 checkmate; the rest threefold repetitions but one. As White the feature side went
@@ -97,6 +98,17 @@ hits. The banked clock shows up late: from move 40 onwards the pruned side spent
 left. That is where games are decided, and this arena had 23 decisive games to the
 proofs arena's 11, with the draw rate down from 78% to 54%. Games averaged
 241 s against 286 s, so the rest of the chain runs faster than planned.
+
+**3. Scaled FPU (Lc0's 0.33 × √visited policy), dropped at 46.0%** (+8 =30 −12, Elo −28,
+95% −90 to +33; as White +5 =14 −6, as Black +3 =16 −6; no failures). Both sides had
+pruning, and the telemetry is symmetric (479 vs 458 simulations per move, 1.78 s
+per move each), so this is the FPU form alone. The twelve losses are spread over all
+eight openings and both colours, which is the profile of a slightly worse search
+rather than a blind spot. On this net at ~480 simulations per move the scaled form
+starts softer than the constant 0.25 (no reduction on a fresh node) and ends
+harder (0.33 once the policy is explored); the probe in `docs/FINDING_fpu.md`
+predicted the trade, not its sign. Not significant, and the rule drops it. The
+constant 0.25 stays.
 
 ### Chain B, base R1 (box)
 
