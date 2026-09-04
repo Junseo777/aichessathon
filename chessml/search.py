@@ -75,10 +75,12 @@ class MCTS:
         fpu_reduction: float = 0.25,
         proofs: bool = True,
         pruning_factor: float | None = 1.33,
+        fpu_scaled: bool = False,
     ) -> None:
         self.net = net
         self.c_puct = c_puct
         self.fpu_reduction = fpu_reduction
+        self.fpu_scaled = fpu_scaled
         self.proofs = proofs
         self.pruning_factor = pruning_factor
         self.generation = 0
@@ -123,10 +125,17 @@ class MCTS:
                 best = max(best, -value)
             parent.proof, parent.proof_gen = best, gen
 
-    def _select(self, node: Node) -> int:
-        # first-play urgency, docs/FINDING_fpu.md
+    def _fpu(self, node: Node) -> float:
+        # first-play urgency, docs/FINDING_fpu.md; Lc0's form scales the reduction by
+        # the square root of the policy mass already visited, so a fresh node has none
         running = (node.value + float(node.w.sum())) / (1.0 + node.total)
-        fpu = np.float32(running - self.fpu_reduction)
+        reduction = self.fpu_reduction
+        if self.fpu_scaled:
+            reduction *= math.sqrt(float(node.priors[node.n > 0].sum()))
+        return running - reduction
+
+    def _select(self, node: Node) -> int:
+        fpu = np.float32(self._fpu(node))
         q = np.divide(node.w, node.n, out=np.full_like(node.w, fpu), where=node.n > 0)
         u = (self.c_puct * np.sqrt(float(node.total) + 1.0)) * node.priors / (1.0 + node.n)
         return int(np.argmax(q + u))

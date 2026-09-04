@@ -231,3 +231,17 @@ def test_smart_pruning_needs_a_deadline_and_can_be_disabled(net: PolicyValueNet)
     off = MCTS(net, proofs=False, pruning_factor=None)
     plain = off.run(board, fresh_counts(board), time.monotonic() + 1.0, max_sims=64, root=seed.root)
     assert not plain.pruned and plain.simulations == 64
+
+
+def test_scaled_fpu_reduction_grows_with_visited_policy() -> None:
+    node = Node(_two_moves(), np.array([0.64, 0.36], dtype=np.float32), 0.2)
+    constant = MCTS.__new__(MCTS)
+    constant.fpu_reduction, constant.fpu_scaled = 0.25, False
+    scaled = MCTS.__new__(MCTS)
+    scaled.fpu_reduction, scaled.fpu_scaled = 0.25, True
+    assert constant._fpu(node) == pytest.approx(0.2 - 0.25)
+    assert scaled._fpu(node) == pytest.approx(0.2)
+    node.n[0], node.w[0], node.total = 1.0, 0.1, 1
+    running = (0.2 + 0.1) / 2
+    assert constant._fpu(node) == pytest.approx(running - 0.25)
+    assert scaled._fpu(node) == pytest.approx(running - 0.25 * 0.8)
