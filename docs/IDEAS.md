@@ -1,5 +1,9 @@
 # Where the strength comes from
 
+> The starter's general advice, kept as it came. What this project built and why is in
+> `DECISIONS.md`. The opening-book paragraph below was measured on 2026-09-04 and held
+> (`../rated-games/README.md`, `DECISIONS.md` section 11).
+
 A model is optional. Material plus piece-square tables is a legal entry, and the winning
 shape is usually a search that calls a small evaluation, learned or not. This is what tends to
 matter, roughly in order.
@@ -88,6 +92,6 @@ fast time control is how you get them. Keep the previous version around as an op
 - Flagging. See above.
 - Crashing on an edge case: no legal moves, a promotion, an en passant capture. Play a few hundred
   games against a random baseline and the rare paths show up.
-- Blowing the 60 second import budget loading weights.
+- Blowing the 90 second import budget loading weights.
 - Writing anywhere but `/tmp`. Everything else is read-only.
 - More threads than cores. `torch.set_num_threads(1)`.

@@ -86,6 +86,18 @@ marks it as a fast classical engine and the strongest opponent here.
 9; `_adopt_opening` matches the start position or one ply from it. Harmless,
 since it runs in the init budget, but dead weight.
 
+**The opening is not where the games go, either.** Our first five moves from
+the curated start, scored against Stockfish at depth 16 in eight of the fifteen
+games (rounds 1, 2 and 10 to 15): mean loss 6 cp per move, and 2 of the 40
+moves lost 30 cp or more, both in round 2, which we won. A book cannot improve
+on that; it can only return the same moves without the 3.5 s the budget formula
+spends on each, 7 to 10 s a game if the opponent stays in book for two or three
+moves. The curated pool is finite and public: our round 15 start (French
+Tarrasch, ply 9) is the position SoberJackson played in its round 9, one exact
+repeat among 30 sampled starts, so a pool of a few hundred positions, and every
+public game page carries the FEN. The verdict and what would change it are in
+`docs/DECISIONS.md` sections 11 and 13.
+
 **Opponents.** hyperfish moves in 0.06 s and is free points. bishop and
 tobias-carlsen use fixed-time moves and collapsed tactically. omega3-fish and
 asher-falcon burn their clock to nothing by move 45 and are still hard to beat
@@ -148,4 +160,8 @@ agent's own verdicts come from replaying those positions through the working
 tree's `chessml` search, which carries the Sept 4 features the upload lacks,
 with the budget it actually had in the game and again with 6 s, on a laptop
 that was running sparring lanes at the time, so simulation counts are neither
-the platform's nor idle.
+the platform's nor idle. The first-five-move losses were scored on 2026-09-04
+with Stockfish at depth 16 on one thread, our side identified by the clock
+fingerprint above. The lichess opening explorer refused unauthenticated
+requests that day, so how deep a human-games book would follow the curated
+starts is unmeasured.

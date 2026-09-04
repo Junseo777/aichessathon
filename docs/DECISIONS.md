@@ -17,7 +17,7 @@ read in full; its measured results are cited as "the reference measured".
 | Compute at play time | 1 dedicated CPU core, no GPU, 2 GB RAM | model size is paid for in search depth |
 | Clock | 120 s + 0.5 s/move | ~2.5 s of thinking per move, sustainably |
 | Language/runtime | Python 3.12, torch-CPU, numpy, python-chess, onnxruntime preinstalled | interpreter overhead is a first-order cost |
-| Init | 60 s before the clock starts | load, warm up, probe hardware, pre-search for free |
+| Init | 90 s before the clock starts (60 when this was written; the harness still enforces 60) | load, warm up, probe hardware; a pre-search only helps from the standard start, which rated games never use |
 | Process model | one process per game, alive between moves, pondering allowed | history tracking and pondering are possible |
 | Failure modes | illegal move, crash, OOM, flag: all full losses | reliability is worth as much as strength |
 | Draws | referee auto-claims threefold and fifty-move; ply 300 adjudicated on material | the agent must track repetition itself |
@@ -225,12 +225,13 @@ overhead after fixes: ~0.23 ms per simulation, versus 3.77 ms of network for int
 | subtree reuse across moves | inherited visits are real search work on the same positions | 63-322 visits inherited per move vs a random opponent |
 | repetition checked at visit time, not cached at expansion | a reused subtree stays correct as game history grows | - |
 | pondering on the opponent's clock (section 4) | uses a core that would otherwise idle; stopped before any own-move work | ~790 simulations per two-second opponent turn |
-| opening pre-search during init | runs before the clock starts | 1,206 simulations banked before move one |
+| opening pre-search during init | runs before the clock starts | 1,206 simulations banked before move one in local games; never adopted in rated play, where every game so far started 9-16 plies into a curated position (`rated-games/README.md`) |
 
 **Deferred (need a trained model to tune, so not guaranteed non-negative yet):**
 the size of the first-play urgency reduction, c_puct re-sweep at our simulation
 count (the reference's 1.5 was tuned at 50 sims on a 37M model),
-uncertainty-aware time allocation, model-gated opening book, draw contempt.
+uncertainty-aware time allocation, draw contempt. The opening book was measured on
+2026-09-04 and is in section 11.
 
 ---
 
@@ -490,6 +491,7 @@ until the first-play-urgency fix of 2026-09-04 (`docs/FINDING_fpu.md`).
 | architecture changes | the reference's ablation already settled them |
 | 100M positions | section 7 |
 | committing weights to git | build artifacts; every retrain would add megabytes to history permanently. Exports live in the run store beside the repo with checksums, and `use-weights.sh` switches between them |
+| opening book, for now | measured 2026-09-04 on the rated games (`rated-games/README.md`): our first five moves from the curated starts lose 6 cp each against Stockfish, so a book cannot improve the moves, only return them without the 3.5 s the budget spends on each; two or three book moves a game is 7-10 s of a 120 s clock, less than the time-management change in section 13 recovers. Allowed as shipped data, and the pool of curated positions is finite and public, so it stays available as a clock lever once time management is fixed; a Stockfish-generated book would ship engine choices and is not the safe form |
 
 ---
 
@@ -524,6 +526,8 @@ until the first-play-urgency fix of 2026-09-04 (`docs/FINDING_fpu.md`).
 | what pondering is worth | unconfirmed as of 2026-09-04. `docs/ARENA1_R0_LADDER.md` section 5 names the confound (Stockfish does not ponder back); a same-machine run with the ponder thread disabled isolates it |
 | how strong the field is | the ladder from Sept 4; nothing else measures it |
 | whether we are actually at least as good as the reference | head-to-head against `baselines/reference-hero` - the reference's own published 116k hero, converted to our checkpoint format by `train/import_reference_hero.py` and run through our search and runtime unchanged. Model-only (equal sims) isolates training; full-agent at the real clock is the answer to the question as asked. Its capsule was trained under the pre-fix en passant convention, so it sees a slightly different input on ~10% of rows; acceptable for a baseline. The baseline shares the live `chessml` by symlink, so it always searches with the current code: results are comparable only within one search version, and every number before the 2026-09-04 first-play-urgency fix (ARENA1 section 1, STOP2 section 5) predates it |
+| whether the spare init time (about 80 s of 90 unused) can buy strength | resolved 2026-09-04: no. The agent learns its position on the clock, so init work is position-independent, and the only such work (load, warm-up, core probe) takes ~6 s. The pre-search is adopted only at or one ply from the standard start; rated games start 9-16 plies in |
+| opening book as a clock lever | scrape the curated pool from the public game pages (about 1,260 games at round 15; one exact repeat in a sample of 30 starts, so a pool of a few hundred), then arena a book of own-net or human-game moves against the same agent with the time-management fix in, at the competition clock |
 
 Expected strength on the reference's Stockfish-anchored scale: ~2,200-2,500 for the
 first working model, 2,600-2,800 if engine labels, tau and the search work all land.

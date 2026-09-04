@@ -71,6 +71,7 @@ harness/package.py   builds submission.zip with agent.py at the root
 train/               model, ONNX export, trainer, provenance check, loader tests - never imported at play time
 pipeline/            data: acquire, filter, shard, Stockfish-label, validate
 provenance/          logs, per-epoch histories and corpus reports for every run
+rated-games/         PGNs from the platform's rated ladder, and what they show about the agent
 use-weights.sh       points weights/ at one export in the run store beside the repo
 docs/DECISIONS.md    every material decision, with the evidence behind it
 docs/PIPELINE_BRIEF.md  the data and training runbook
@@ -88,6 +89,12 @@ the next stage starts. Only those five may take a STOP number. `ARENA<n>` is for
 results of games actually played, numbered independently in the order they were
 run. A sparring result is not a stop point, however useful it is: reusing the
 STOP sequence for one makes it ambiguous whether the protocol has advanced.
+
+**Where new material goes.** A bug or effect worth recording gets a `FINDING_*.md`;
+games played get the next `ARENA<n>`; a decision, a rejection or an open question
+gets a row in `docs/DECISIONS.md` sections 11 to 13; analysis of the platform's
+games goes in `rated-games/README.md`. An idea that has not been measured yet
+belongs in section 13 as an uncertainty with the experiment that would resolve it.
 
 `weights/` is not in git. Trained exports live in a run store beside the repo
 (`../weights/<run>/model.onnx` and `manifest.json`, with a `CHECKSUMS.txt`), and
