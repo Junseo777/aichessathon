@@ -11,7 +11,18 @@ from chessml.net import PolicyValueNet
 
 
 class Node:
-    __slots__ = ("children", "moves", "n", "priors", "terminal", "total", "value", "w")
+    __slots__ = (
+        "children",
+        "moves",
+        "n",
+        "priors",
+        "proof",
+        "proof_gen",
+        "terminal",
+        "total",
+        "value",
+        "w",
+    )
 
     def __init__(
         self,
@@ -28,6 +39,10 @@ class Node:
         self.w: npt.NDArray[np.float32] = np.zeros(len(moves), dtype=np.float32)
         self.children: list[Node | None] = [None] * len(moves)
         self.total = 0
+        # exact value for the side to move, when the subtree has been solved; a
+        # terminal's is permanent, a derived one is valid for one search only
+        self.proof: float | None = terminal
+        self.proof_gen = -1
 
 
 _NO_MOVES: list[chess.Move] = []
@@ -47,15 +62,49 @@ class SearchResult:
     simulations: int
     expanded: int
     root: Node
+    proofs: npt.NDArray[np.float32]
 
 
 class MCTS:
     def __init__(
-        self, net: PolicyValueNet, c_puct: float = 1.5, fpu_reduction: float = 0.25
+        self,
+        net: PolicyValueNet,
+        c_puct: float = 1.5,
+        fpu_reduction: float = 0.25,
+        proofs: bool = True,
     ) -> None:
         self.net = net
         self.c_puct = c_puct
         self.fpu_reduction = fpu_reduction
+        self.proofs = proofs
+        self.generation = 0
+
+    @staticmethod
+    def _proof(node: Node, gen: int) -> float | None:
+        if node.proof is None or (node.terminal is None and node.proof_gen != gen):
+            return None
+        return node.proof
+
+    def _prove(self, path: list[tuple[Node, int]], gen: int) -> None:
+        # a proven-lost child proves the parent won; all children proven proves the
+        # parent the best of them. Derived proofs are stamped with the search
+        # generation because a repetition claim after the game moves on can void them
+        for parent, edge in reversed(path):
+            child = parent.children[edge]
+            if child is None or self._proof(child, gen) is None:
+                return
+            if self._proof(parent, gen) is not None:
+                return
+            if child.proof == -1.0:
+                parent.proof, parent.proof_gen = 1.0, gen
+                continue
+            best = -1.0
+            for other in parent.children:
+                value = None if other is None else self._proof(other, gen)
+                if value is None:
+                    return
+                best = max(best, -value)
+            parent.proof, parent.proof_gen = best, gen
 
     def _select(self, node: Node) -> int:
         # first-play urgency, docs/FINDING_fpu.md
@@ -87,6 +136,8 @@ class MCTS:
             root = self._expand(board)
         if root.terminal is not None:
             raise ValueError("no legal moves at search root")
+        self.generation += 1
+        gen = self.generation
 
         sims = 0
         expanded = 0
@@ -100,9 +151,12 @@ class MCTS:
             node = root
             path: list[tuple[Node, int]] = []
 
+            solved = False
             while True:
-                if node.terminal is not None:
-                    leaf_value = node.terminal
+                proof = self._proof(node, gen) if self.proofs else node.terminal
+                if proof is not None:
+                    leaf_value = proof
+                    solved = True
                     break
                 idx = self._select(node)
                 sim_board.push(node.moves[idx])
@@ -117,6 +171,7 @@ class MCTS:
                     node.children[idx] = child
                     expanded += 1
                     leaf_value = child.value
+                    solved = child.terminal is not None
                     break
                 path_keys.append(key)
                 node = child
@@ -128,6 +183,16 @@ class MCTS:
                 parent.w[edge] += value
                 parent.total += 1
             sims += 1
+            if solved and self.proofs:
+                self._prove(path, gen)
+                if self._proof(root, gen) is not None:
+                    break
 
         q = np.divide(root.w, root.n, out=np.zeros_like(root.w), where=root.n > 0)
-        return SearchResult(root.moves, root.n.copy(), q, root.value, sims, expanded, root)
+        proofs = np.full(len(root.moves), np.nan, dtype=np.float32)
+        for i, child in enumerate(root.children):
+            if child is not None and self.proofs:
+                proof = self._proof(child, gen)
+                if proof is not None:
+                    proofs[i] = -proof
+        return SearchResult(root.moves, root.n.copy(), q, root.value, sims, expanded, root, proofs)

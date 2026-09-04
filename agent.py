@@ -19,7 +19,7 @@ _PONDER_JOIN_S = 2.0
 _PRESEARCH_S = float(os.environ.get("CHESS_PRESEARCH_S", "5"))
 _START_KEY = transposition_key(chess.Board())
 _NET, _MANIFEST = load_fastest(Path(__file__).resolve().parent / "weights")
-_MCTS = MCTS(_NET)
+_MCTS = MCTS(_NET, fpu_reduction=0.25, proofs=True)
 print(f"init: {_MANIFEST}")
 
 
@@ -188,9 +188,17 @@ def _hands_over_draw_claim(
 
 
 def _pick(board: chess.Board, key_counts: dict[object, int], result: SearchResult) -> chess.Move:
-    if float(result.visits.max()) <= 0.0:
-        return result.moves[int(np.argmax(result.root.priors))]
     order = [int(i) for i in np.argsort(-result.visits)]
+    for idx in order:
+        if result.proofs[idx] == 1.0 and not _hands_over_draw_claim(
+            board, key_counts, result.moves[idx]
+        ):
+            return result.moves[idx]
+    safe = [idx for idx in order if result.proofs[idx] != -1.0]
+    if safe:
+        order = safe
+    if float(result.visits[order].max()) <= 0.0:
+        return result.moves[order[int(np.argmax(result.root.priors[order]))]]
     best = order[0]
     q_best = float(result.q[best])
 
