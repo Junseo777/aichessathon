@@ -8,17 +8,19 @@ clock after it. Time control 120 s + 0.5 s.
 ## Which side is ours
 
 The headers do not say. The clocks do: our spend per move matches `_budget_s` in
-`agent.py` to within 10 ms in every game, the opponent's is off by seconds.
+`agent.py` to within 10 ms in every game, the opponent's is off by seconds. From
+round 15 the pruning build spends under its budget, so there the fingerprint is
+the side that never exceeds `_budget_s` and stops most of its searches early.
 
-The code in play was `main` at f2a78b8 in both of the day's uploads (R3_e8_ema
-at 02:56, R1_e8_ema built 15:29). Rounds 1 to 8 were downloaded at 15:34, so
-they were almost certainly played by the R3 upload; rounds 9 and 10 (17:34) by
-R1 if that upload went in. The dashboard's per-game log settles which net; the
-code is the same either way. Its `_budget_s`, `_hands_over_draw_claim` and
+Which upload played which round (Junseo, Sept 4 evening): rounds 1 to 8 the
+R3_e8_ema upload of 02:56; rounds 9 to 14 R1_e8_ema on the same code; round 15
+onwards R1 with smart pruning. The clocks agree: not one of the 722 searched
+moves in rounds 1 to 14 stopped before its deadline, and in round 15 the bot
+stopped 62 of 63 searches early and spent 47% of its budget. The code before
+pruning was `main` at f2a78b8: its `_budget_s`, `_hands_over_draw_claim` and
 `_pick` thresholds are identical to the working tree, but its search is the
 Sept 1 PUCT with the FPU fix and none of the Sept 4 features (proofs, smart
-pruning, scaled FPU, policy temperature, in-tree draw score). The games agree:
-not one of the 373 searched moves stopped before its deadline.
+pruning, scaled FPU, policy temperature, in-tree draw score).
 
 | Round | Opponent | Ours | Result | Termination | Stockfish, our view, at the end or at the slip |
 |---|---|---|---|---|---|
@@ -32,10 +34,16 @@ not one of the 373 searched moves stopped before its deadline.
 | 8 | fuzzybot | Black | draw | threefold | +2.2 for us when the draw was declared |
 | 9 | blunder-buss | White | draw | threefold | +4.3 at move 59, +0.3 after 60. Qe7 and 61. c7 |
 | 10 | meshpotato | Black | loss | mate | +1.5 after 14. Bxa7, gone after 14...Qa5; 30...Nd5 lost the ending |
+| 11 | im-master | Black | win | mate | not yet analysed |
+| 12 | zak | White | win | mate | not yet analysed |
+| 13 | alien-gambit | Black | win | mate | not yet analysed |
+| 14 | pgn | Black | draw | stalemate | bare king against king and pawn; the opponent stalemated us at move 111 |
+| 15 | 50centraise | White | win | mate | first game of the pruning build; two queens mated |
 
-Score 6/10. The four wins were all against opponents who blundered into mate.
-Rounds 9 and 10 were downloaded at 17:34 and show the same clock fingerprint
-and, again, no early stops in their 107 searched moves.
+Score 10.5/15. The first ten games are analysed below; the four wins among them
+were all against opponents who blundered into mate. Rounds 11 to 15 (downloaded
+22:18) are fingerprinted from the clocks only and have not been through
+Stockfish.
 
 ## What the games show
 
