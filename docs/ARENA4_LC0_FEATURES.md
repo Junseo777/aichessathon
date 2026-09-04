@@ -128,6 +128,7 @@ otherwise as chain A.
 | 1 | proofs | none | +2 =48 −2 | 50.0% | 46.2–53.8% | 0 | 92% | **kept** (tie) |
 | 2 | smart pruning | proofs | +19 =32 −1 | 67.3% | 60.3–74.3% | +125 | 62% | **kept** |
 | 3 | scaled FPU 0.33 | proofs, pruning | +10 =31 −11 | 49.0% | 40.4–57.7% | -7 | 60% | **dropped** |
+| 4 | policy temperature 1.359 | proofs, pruning | +12 =39 −1 | 60.6% | 54.4–66.7% | +75 | 75% | **kept** |
 
 **1. Proofs, kept at exactly 50.0%** (+2 =48 −2, no failures). Four decisive games
 in fifty-two. An R1 mirror at the box's ~1,400 simulations per move is draw-saturated,
@@ -152,6 +153,18 @@ is larger than on R3. Games averaged 222 s.
 +4 =22 −0, as Black +6 =9 −11; no failures). Chain A dropped it at 46.0% on R3. Two nets, two
 budgets, the same answer: Lc0's form of the reduction is not better than the constant
 0.25 here, and both chains say so from inside their intervals rather than by a tie.
+
+**4. Policy temperature 1.359, kept at 60.6%** (+12 =39 −1, Elo +75, 95% +31 to
++121; as White +6 =20 −0, as Black +6 =19 −1; two-sided binomial on the thirteen decisive games
+p = 0.003; no failures). **The first disagreement between the chains**: chain A dropped
+the same setting on R3 at 47.0% (+11 =25 −14). The two chains differ in two things at
+once, the net (R1's outcome-trained value head against R3's engine-trained one) and
+the budget (~1,400 against ~600 simulations per move), so this arena alone cannot
+say which one flipped the sign. Both mechanisms are plausible: flatter priors spend
+more of the search on second choices, which a hotter value head can rank and a
+larger budget can afford. The way to separate them is one 50-game R1 chain at the
+Mac's budget, or R3 at the box's. Until then the setting is net-specific: on for R1,
+off for R3.
 
 ## 4. What to ship
 
