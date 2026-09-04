@@ -258,3 +258,27 @@ def test_absolute_root_fpu_visits_every_root_move(net: PolicyValueNet) -> None:
         board, fresh_counts(board), time.monotonic() + 30.0, max_sims=sims
     )
     assert (plain.visits == 0).any()
+
+
+def test_draw_score_makes_a_repetition_worth_less_when_ahead(net: PolicyValueNet) -> None:
+    board = chess.Board()
+    board.push_uci("g1f3")
+    repeating = chess.Move.from_uci("g8f6")
+    after = board.copy(stack=False)
+    after.push(repeating)
+    counts = {transposition_key(board): 1, transposition_key(after): 2}
+    mcts = MCTS(net, proofs=False, draw_score=0.1)
+    ahead = mcts._expand(board)
+    ahead.value = 0.9
+    result = mcts.run(board, counts, time.monotonic() + 30.0, max_sims=200, root=ahead)
+    idx = result.moves.index(repeating)
+    assert result.visits[idx] > 0 and result.q[idx] == pytest.approx(-0.1, abs=1e-5)
+    behind = mcts._expand(board)
+    behind.value = -0.9
+    result = mcts.run(board, counts, time.monotonic() + 30.0, max_sims=200, root=behind)
+    idx = result.moves.index(repeating)
+    assert result.visits[idx] > 0 and result.q[idx] == pytest.approx(0.1, abs=1e-5)
+    level = mcts._expand(board)
+    level.value = 0.0
+    result = mcts.run(board, counts, time.monotonic() + 30.0, max_sims=200, root=level)
+    assert abs(float(result.q[result.moves.index(repeating)])) < 1e-6

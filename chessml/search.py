@@ -77,6 +77,7 @@ class MCTS:
         pruning_factor: float | None = 1.33,
         fpu_scaled: bool = False,
         root_fpu: float | None = None,
+        draw_score: float = 0.0,
     ) -> None:
         self.net = net
         self.c_puct = c_puct
@@ -85,6 +86,10 @@ class MCTS:
         # absolute first-play urgency at the root: with 1.0 every root move is tried
         # once before any is repeated, so no root move can go unvisited
         self.root_fpu = root_fpu
+        # in-tree contempt: a draw is worth -draw_score to the root's side when it is
+        # clearly better and +draw_score when clearly worse, so the search steers
+        # away from or towards repetitions before the root has to veto a claim
+        self.draw_score = draw_score
         self.proofs = proofs
         self.pruning_factor = pruning_factor
         self.generation = 0
@@ -171,6 +176,12 @@ class MCTS:
         self.generation += 1
         gen = self.generation
         started = time.monotonic()
+        standing = (root.value + float(root.w.sum())) / (1.0 + root.total)
+        draw_root = 0.0
+        if standing > 0.3:
+            draw_root = -self.draw_score
+        elif standing < -0.3:
+            draw_root = self.draw_score
 
         sims = 0
         expanded = 0
@@ -186,11 +197,13 @@ class MCTS:
             path: list[tuple[Node, int]] = []
 
             solved = False
+            drawn = False
             while True:
                 proof = self._proof(node, gen) if self.proofs else node.terminal
                 if proof is not None:
                     leaf_value = proof
                     solved = True
+                    drawn = proof == 0.0
                     break
                 idx = self._select(node, node is root)
                 sim_board.push(node.moves[idx])
@@ -198,6 +211,7 @@ class MCTS:
                 key = transposition_key(sim_board)
                 if key_counts.get(key, 0) + path_keys.count(key) >= 2:
                     leaf_value = 0.0
+                    drawn = True
                     break
                 child = node.children[idx]
                 if child is None:
@@ -206,10 +220,13 @@ class MCTS:
                     expanded += 1
                     leaf_value = child.value
                     solved = child.terminal is not None
+                    drawn = child.terminal == 0.0
                     break
                 path_keys.append(key)
                 node = child
 
+            if drawn and draw_root != 0.0:
+                leaf_value = draw_root if len(path) % 2 == 0 else -draw_root
             value = leaf_value
             for parent, edge in reversed(path):
                 value = -value
