@@ -127,6 +127,7 @@ otherwise as chain A.
 |---|---|---|---|---|---|---|---|---|
 | 1 | proofs | none | +2 =48 −2 | 50.0% | 46.2–53.8% | 0 | 92% | **kept** (tie) |
 | 2 | smart pruning | proofs | +19 =32 −1 | 67.3% | 60.3–74.3% | +125 | 62% | **kept** |
+| 3 | scaled FPU 0.33 | proofs, pruning | +10 =31 −11 | 49.0% | 40.4–57.7% | -7 | 60% | **dropped** |
 
 **1. Proofs, kept at exactly 50.0%** (+2 =48 −2, no failures). Four decisive games
 in fifty-two. An R1 mirror at the box's ~1,400 simulations per move is draw-saturated,
@@ -146,6 +147,11 @@ side's longer searches outrun what pondering can pre-fill. It won anyway, 19 to 
 and the clock is where: from move 40 onwards the pruned side had 1.39 s per move to
 1.06 s. So on R1 the gain is time management alone, with no simulation bonus, and it
 is larger than on R3. Games averaged 222 s.
+
+**3. Scaled FPU, dropped at 49.0%** (+10 =31 −11, Elo -7, 95% -68 to +54; as White
++4 =22 −0, as Black +6 =9 −11; no failures). Chain A dropped it at 46.0% on R3. Two nets, two
+budgets, the same answer: Lc0's form of the reduction is not better than the constant
+0.25 here, and both chains say so from inside their intervals rather than by a tie.
 
 ## 4. What to ship
 
