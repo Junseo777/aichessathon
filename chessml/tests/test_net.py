@@ -88,3 +88,17 @@ def test_cache_clears_when_full() -> None:
     ):
         net.evaluate(chess.Board(fen))
     assert len(net.cache) == 1
+
+
+def test_policy_temperature_flattens_the_priors_without_reordering_them() -> None:
+    sharp = fresh_net()
+    flat = PolicyValueNet(sharp.session, sharp.name, policy_temperature=1.359)
+    board = chess.Board("r1bq1rk1/2pp1ppp/p1n2n2/1pb1p3/4P3/1BP2N2/PP1P1PPP/RNBQR1K1 w - - 0 9")
+    moves, p1, v1 = sharp.evaluate(board)
+    same_moves, p2, v2 = flat.evaluate(board)
+    assert same_moves == moves and v2 == v1
+    assert p2.max() < p1.max() and p2.min() > p1.min()
+    assert int(np.argmax(p2)) == int(np.argmax(p1))
+    np.testing.assert_allclose(p2.sum(), 1.0, atol=1e-5)
+    unit = PolicyValueNet(sharp.session, sharp.name, policy_temperature=1.0)
+    np.testing.assert_array_equal(unit.evaluate(board)[1], p1)

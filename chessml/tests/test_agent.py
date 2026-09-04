@@ -109,7 +109,9 @@ def test_low_clock_modes_are_fast_and_legal() -> None:
         assert time.monotonic() - start < 0.5
 
 
-def _result(board: chess.Board, visits: list[int], q: list[float]) -> SearchResult:
+def _result(
+    board: chess.Board, visits: list[int], q: list[float], proofs: list[float] | None = None
+) -> SearchResult:
     moves = list(board.legal_moves)[: len(visits)]
     priors = np.full(len(moves), 1.0 / len(moves), dtype=np.float32)
     return SearchResult(
@@ -120,7 +122,30 @@ def _result(board: chess.Board, visits: list[int], q: list[float]) -> SearchResu
         simulations=int(sum(visits)),
         expanded=0,
         root=Node(moves, priors, q[0]),
+        proofs=np.array(proofs if proofs is not None else [np.nan] * len(moves), dtype=np.float32),
     )
+
+
+def test_pick_prefers_a_proven_win_over_visits() -> None:
+    board = chess.Board("8/5pk1/6p1/8/3K4/8/5PP1/8 w - - 0 45")
+    result = _result(board, visits=[100, 50], q=[0.6, 0.4], proofs=[np.nan, 1.0])
+    assert agent._pick(board, {}, result) == result.moves[1]
+
+
+def test_pick_avoids_a_proven_loss() -> None:
+    board = chess.Board("8/5pk1/6p1/8/3K4/8/5PP1/8 w - - 0 45")
+    result = _result(board, visits=[100, 50, 10], q=[0.1, 0.0, 0.0], proofs=[-1.0, np.nan, np.nan])
+    assert agent._pick(board, {}, result) == result.moves[1]
+    all_lost = _result(board, visits=[100, 50], q=[-0.9, -0.9], proofs=[-1.0, -1.0])
+    assert agent._pick(board, {}, all_lost) == all_lost.moves[0]
+
+
+def test_pick_vetoes_a_proven_win_that_hands_over_a_claim() -> None:
+    board = chess.Board("8/5pk1/6p1/8/3K4/8/5PP1/8 w - - 0 45")
+    result = _result(board, visits=[100, 50], q=[0.6, 0.4], proofs=[np.nan, 1.0])
+    after = board.copy(stack=False)
+    after.push(result.moves[1])
+    assert agent._pick(board, {transposition_key(after): 2}, result) == result.moves[0]
 
 
 def test_pick_vetoes_draw_claim_when_winning() -> None:
