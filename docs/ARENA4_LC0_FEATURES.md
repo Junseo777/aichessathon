@@ -75,6 +75,7 @@ that point.
 | 1 | proofs | none | +5 =39 −6 | 49.0% | 42.5–55.5% | −7 | 78% | **dropped** |
 | 2 | smart pruning | none | +15 =27 −8 | 57.0% | 47.8–66.2% | +49 | 54% | **kept** |
 | 3 | scaled FPU 0.33 | pruning | +8 =30 −12 | 46.0% | 37.3–54.7% | −28 | 60% | **dropped** |
+| 4 | policy temperature 1.359 | pruning | +11 =25 −14 | 47.0% | 37.2–56.8% | -21 | 50% | **dropped** |
 
 **1. Proofs, dropped at 49.0%.** Eleven decisive games in fifty, five to six, all by
 checkmate; the rest threefold repetitions but one. As White the feature side went
@@ -109,6 +110,13 @@ starts softer than the constant 0.25 (no reduction on a fresh node) and ends
 harder (0.33 once the policy is explored); the probe in `docs/FINDING_fpu.md`
 predicted the trade, not its sign. Not significant, and the rule drops it. The
 constant 0.25 stays.
+
+**4. Policy temperature 1.359, dropped at 47.0%** (+11 =25 −14, Elo -21, 95%
+-91 to +47; as White +6 =12 −7, as Black +5 =13 −7; no failures). The most
+decisive arena in chain A (25 of 50), which is what flatter priors do: the search
+spends more of its budget on second and third choices, so both sides find and allow
+more. It did not translate into a better record. Not significant; dropped by the
+rule, and the raw softmax stays.
 
 ### Chain B, base R1 (box)
 
