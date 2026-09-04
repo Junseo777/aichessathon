@@ -27,8 +27,12 @@ moves stopped before its deadline.
 | 6 | ai-fellows | White | win | mate | clean, 42...Rb5 allowed Rh8# |
 | 7 | asher-falcon | White | loss | mate | −0.2 at move 59, −3.0 after 60. Rg3, 80. Kg4 into mate |
 | 8 | fuzzybot | Black | draw | threefold | +2.2 for us when the draw was declared |
+| 9 | blunder-buss | White | draw | threefold | +4.3 at move 59, +0.3 after 60. Qe7 and 61. c7 |
+| 10 | meshpotato | Black | loss | mate | +1.5 after 14. Bxa7, gone after 14...Qa5; 30...Nd5 lost the ending |
 
-Score 5.5/8. The four wins were all against opponents who blundered into mate.
+Score 6/10. The four wins were all against opponents who blundered into mate.
+Rounds 9 and 10 were downloaded at 17:34 and show the same clock fingerprint
+and, again, no early stops in their 107 searched moves.
 
 ## What the games show
 
@@ -76,14 +80,48 @@ tobias-carlsen use fixed-time moves and collapsed tactically. omega3-fish and
 asher-falcon burn their clock to nothing by move 45 and are still hard to beat
 on the increment. fuzzybot keeps 35 s in hand and drew from −2.2.
 
+**Round 9 is the conversion failure again, round 10 is not.** In round 9 we
+held +3.6 to +4.4 from move 45 with queen and three pawns against rook, bishop
+and three pawns, then 59. e5 and 60. Qe7 at 0.9 s per move with 6 s left let
+the bishop and rook trade into a dead queen-versus-rook-and-pawns draw; the
+winning 60. Qe3 was not among the search's top five candidates even with 6 s.
+Round 10 was lost at full budget: 14...Qa5 (94 s in hand, Stockfish wanted b6,
++1.5) and 30...Nd5 (46 s in hand, Nd7 held at 0.0) were each searched for the
+formula's 3.4 s. With 6 s the working-tree search finds both b6 and Nd7. Those
+are the first errors in the set that time alone would have fixed.
+
+**A signature worth acting on.** In every replayed decisive error the
+most-visited move had a lower q than a less-visited rival. Scoring each pick
+against that rival with Stockfish at 3 s:
+
+| position | budget | most-visited | cp | higher-q rival | cp |
+|---|---|---|---|---|---|
+| R10 14...  | 3.4 s | Qa5 | −27 | b6 | +104 |
+| R10 30...  | 3.5 s | Nd5 | −224 | Nd7 | −25 |
+| R7 60.     | 0.9 s | Rg3 | −508 | Rf4 | 0 |
+| R7 60.     | 6 s   | Rg3 | −541 | Rd3 | −21 |
+| R5 50...   | 1.3 s | h5 | +295 | Rh3 | +422 |
+| R5 50...   | 6 s   | c4 | +413 | Rh3 | +439 |
+| R8 42...   | 2.0 s | Kf8 | +242 | Rd1+ | +269 |
+| R9 60.     | 0.9 s | Qe7 | +3 | Qa7 | 0 |
+| R1 43.     | 1.9 s | f3 | +64 | Rc4 | 0 (the repetition) |
+
+Five for the rival, three ties, one for the pick. Picking by raw q is not the
+answer, since low-visit q is noise, but the disagreement itself is a usable
+signal: extend the search while the best-visited and best-q moves differ, or
+select by a lower confidence bound on q among moves with a share of the
+visits, as KataGo does. Both are cheap to arena.
+
 ## What the clocks say about the platform's core
 
 The rules state only "1 dedicated CPU core, 2 GB RAM, identical hardware". The
 clock stamps give an indirect probe: the search loop checks its deadline once
 per simulation, so each move overruns the budget by a fixed harness overhead
-plus the remainder of one in-flight simulation. Over the 373 searched moves the
-overrun runs from 2.8 ms (5th percentile) to 12.2 ms (95th), never negative, so
-a full simulation takes roughly 10 ms on the platform. Idle reference points:
+plus the remainder of one in-flight simulation. Over the 373 searched moves of
+rounds 1 to 8 the overrun runs from 2.8 ms (5th percentile) to 12.2 ms (95th),
+never negative, so a full simulation takes roughly 10 ms on the platform; the
+107 moves of rounds 9 and 10 give 2.8 to 12.6 ms, the same. It varies by game,
+7 to 11 ms, so the hosts are not equally loaded. Idle reference points:
 the M1 at 3.6 to 6.0 ms per forward, about 7 to 10 ms per simulation; the box
 at 2.3 ms per forward, about 5 to 6 ms, though its timings swing by 60% between
 runs. The platform therefore looks like the Mac, if anything a little slower,
