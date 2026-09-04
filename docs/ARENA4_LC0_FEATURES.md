@@ -55,7 +55,24 @@ clean, at every commit.
 
 ## 3. Results
 
-RESULTS_PENDING
+Base net: **R3_e8_ema** (`a1163b19…`), chosen by the block (`docs/ARENA3_R1_R2_R3.md`:
+R2 49.0% over 98 games, so R3 by the higher-score rule). Every row is 50 games at
+120 s + 0.5 s, two lanes of 25, colours balanced, against the kept configuration at
+that point.
+
+| # | feature | kept so far | W-D-L (with) | score | 95% | Elo | draws | decision |
+|---|---|---|---|---|---|---|---|---|
+| 1 | proofs | none | +5 =39 −6 | 49.0% | 42.5–55.5% | −7 | 78% | **dropped** |
+
+**1. Proofs, dropped at 49.0%.** Eleven decisive games in fifty, five to six, all by
+checkmate; the rest threefold repetitions but one. As White the feature side went
++0 =21 −4, as Black +5 =18 −2, which is colour noise at n = 25, not a colour effect.
+No failures. The only tracebacks in the logs are the known post-mate ponder
+`ValueError` on the winner's side, twelve of them, one per checkmate. Nothing here
+says proofs hurt; nothing says they help either. On a same-net mirror at this clock
+78% of games are drawn, so the 95% interval is ±6.5 points of score and a feature
+can register only through conversions, of which there were eleven. Proven results
+were designed to matter in exactly those, and did not produce more of them.
 
 ## 4. What to ship
 
