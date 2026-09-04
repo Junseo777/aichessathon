@@ -1,0 +1,10 @@
+--- R3_e8 ---
+/workspace/aichessathon/train/export_onnx.py:16: DeprecationWarning: You are using the legacy TorchScript-based ONNX export. Starting in PyTorch 2.9, the new torch.export-based ONNX exporter has become the default. Learn more about the new export logic: https://docs.pytorch.org/docs/stable/onnx_export.html. For exporting control flow: https://pytorch.org/tutorials/beginner/onnx/export_control_flow_model_to_onnx_tutorial.html
+parity: fp32 exact, int8 argmax agreement 0.898, int8 value err 0.1381
+int8 below the gate: int8 argmax agreement too low: 0.8984375. kept fp32, removed model.int8.onnx
+exported 1,381,050 params to /workspace/weights/R3_e8/
+--- R3_e8_ema ---
+/workspace/aichessathon/train/export_onnx.py:16: DeprecationWarning: You are using the legacy TorchScript-based ONNX export. Starting in PyTorch 2.9, the new torch.export-based ONNX exporter has become the default. Learn more about the new export logic: https://docs.pytorch.org/docs/stable/onnx_export.html. For exporting control flow: https://pytorch.org/tutorials/beginner/onnx/export_control_flow_model_to_onnx_tutorial.html
+parity: fp32 exact, int8 argmax agreement 0.898, int8 value err 0.1314
+int8 below the gate: int8 argmax agreement too low: 0.8984375. kept fp32, removed model.int8.onnx
+exported 1,381,050 params to /workspace/weights/R3_e8_ema/
