@@ -58,12 +58,7 @@ class MCTS:
         self.fpu_reduction = fpu_reduction
 
     def _select(self, node: Node) -> int:
-        # First-play urgency: an unvisited child is scored as the parent's running
-        # value less a reduction, not as a dead draw. Scoring it 0 made every untried
-        # move look worse than the tried ones whenever the position was already good,
-        # so a low-prior win (a mate the policy ranked 13th) was never visited at all.
-        # The anchor is the running mean, not the static net value, so it keeps up
-        # when search finds the position better than the net thought.
+        # first-play urgency, docs/FINDING_fpu.md
         running = (node.value + float(node.w.sum())) / (1.0 + node.total)
         fpu = np.float32(running - self.fpu_reduction)
         q = np.divide(node.w, node.n, out=np.full_like(node.w, fpu), where=node.n > 0)

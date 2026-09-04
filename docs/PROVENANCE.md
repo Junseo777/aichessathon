@@ -56,6 +56,13 @@ timestamp, torch version, and host.
 R0, R1 and R2 predate this and carry only `config` and `model`. Their evidence
 is section 3.
 
+R3 carries the block but names `git_commit da3ba48`, a commit without the
+provenance code: the box ran that code uncommitted, and it reached `main` as
+`69e34ee`. Read `git_commit` as the last commit checked out on the box when the
+run started, not as proof of the exact code that ran. Later runs (RA from
+`f08a856` on the box's `pipeline` branch) were started from a commit that
+includes it.
+
 ## 3. Reproduction — the part that is hard to fake
 
 Every run keeps a checkpoint at **every epoch**, not just the last, alongside
@@ -79,7 +86,10 @@ choosing a favourable split after the fact.
 ## 4. The corpus is reproducible from public data
 
 - Sources: Lichess Elite database (2025-06 .. 2025-11) and the Lichess standard
-  monthly archive for 2026-07. Both public, both CC0.
+  monthly archive for 2026-07. Both public, both CC0. `pipeline/acquire.sh` also
+  fetches the 2026-06 monthly (28 GB); it was downloaded for a cross-check and
+  never filtered, so nothing from it is in any shard. `MONTHLIES=2026-07
+  pipeline/acquire.sh` skips it.
 - `pipeline/filter_pgn.py` applies the filters; `provenance/` holds the filter
   reports with exact game and position counts per tier.
 - `pipeline/build_shard.py` is deterministic: same sources, same weights, same

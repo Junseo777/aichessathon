@@ -23,6 +23,14 @@ def sha256(path: Path) -> str:
 
 def export(model: ChessNet, out_dir: Path, checkpoint: Path | None = None) -> dict[str, object]:
     out_dir.mkdir(parents=True, exist_ok=True)
+    for name in ("model.onnx", "model.int8.onnx", "manifest.json"):
+        link = out_dir / name
+        if link.is_symlink():
+            raise SystemExit(
+                f"{link} is a symlink to {link.resolve()}: exporting here would overwrite that "
+                "export in the run store. Export with --out ../weights/<run> and switch with "
+                "./use-weights.sh, or remove the links first."
+            )
     model.eval()
     fp32_path = out_dir / "model.onnx"
     example = torch.zeros(1, 21, 8, 8)
@@ -42,9 +50,7 @@ def export(model: ChessNet, out_dir: Path, checkpoint: Path | None = None) -> di
 
     quantize_dynamic(str(fp32_path), str(int8_path), weight_type=QuantType.QInt8)
 
-    # The checkpoint entry is what tells two exports of the same architecture apart
-    # in the agent's init line, and what lets the tests know a random-init export
-    # (checkpoint: null) from a trained one.
+    # null means random init; the tests and the agent's init line read it
     manifest: dict[str, object] = {
         "d_model": model.cfg.d_model,
         "n_heads": model.cfg.n_heads,

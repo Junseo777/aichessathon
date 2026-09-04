@@ -20,9 +20,7 @@ _PIECE_PLANE = {
 
 
 def repetition_level(board: chess.Board) -> int:
-    """How often the position has already occurred in the board's history: 0, 1 or 2+.
-    Plane 20 shows exactly this, so it is the only part of featurize that reads the
-    move stack, and the only thing a position-keyed cache has to add to its key."""
+    """How many times the position already occurred, capped at 2; plane 20 shows this."""
     if board.is_repetition(3):
         return 2
     if board.is_repetition(2):

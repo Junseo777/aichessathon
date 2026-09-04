@@ -241,3 +241,8 @@ failure still deletes everything and raises.
 referee draw claim, and against a stronger opponent R0 sits below that
 threshold most of the game. 40% is a floor inflated by draw-seeking, not
 evidence against d96.
+
+*Addendum 2026-09-04: `docs/FINDING_fpu.md` found a second cause, the
+first-play-urgency collapse, fixed that day; its resolution carries the
+re-measured rate. Item 1 above was done on 2026-09-03: `weights/` points at
+`R2_e8_ema` through `use-weights.sh`.*

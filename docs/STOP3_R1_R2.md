@@ -167,7 +167,8 @@ Pod 1 only; a second pod was discussed but not provisioned.
 1. **R0/R1/R2 are still not on the submission side.** `weights/` on Junseo's
    machine is the random-init export. R2 is the current best: drop
    `R2_e8_ema/model.onnx` in as `weights/model.onnx` with its `manifest.json`.
-   fp32 only, do not quantise. The ladder opens Sept 4.
+   fp32 only, do not quantise. The ladder opens Sept 4. *(Done 2026-09-03:
+   `R2_e8_ema` is active.)*
 2. **Part C's value is unmeasured.** See section 4. Needs an arena or a
    common-criterion value comparison before the run matrix leans on it.
 3. **Bit-packing for the 100M shard.** The block-shuffled loader handles 40M
@@ -179,4 +180,4 @@ Pod 1 only; a second pod was discussed but not provisioned.
    but that check is not in the suite.
 5. **The box idled ~3.5 hours** between R2 finishing and R3 starting, roughly
    $2.70. Nothing watches for a finished run and starts the next one.
-6. `pipeline` branch is unmerged.
+6. `pipeline` branch is unmerged. *(Merged in `e77ee46`.)*

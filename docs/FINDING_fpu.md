@@ -62,8 +62,8 @@ That exclusion is real but budget-dependent, because the threshold falls as
 
 The formula puts the crossover near 1,300 simulations; measured, it falls between
 800 and 1,600. This changes how the finding should be tested, not whether it
-bites: the shipped agent gets roughly 700 evaluations per move, well inside the
-excluded regime. Anyone re-testing at a few thousand simulations will not
+bites: the shipped fp32 agent gets roughly 400-500 simulations per move, well inside
+the excluded regime. Anyone re-testing at a few thousand simulations will not
 reproduce it, and should not conclude from that that it is not there.
 
 The consequence is backwards from what you want: **the better the position
@@ -141,3 +141,34 @@ now run them; CI skips them because its export is a random-init net (see
 Still open: 0.25 is untuned. Sweep it in the arena before trusting it, and
 re-run the decisive comparisons — every result before this date was measured
 with the collapse in effect.
+
+Same-net sanity check, 2026-09-04: R2 with this fix against R2 without it, both
+sides otherwise identical (`sparring/agent-r2-new` vs `sparring/agent-r2-old`,
+the latter frozen at `a66083f`), 30 s + 0.3 s, standard start, two lanes of
+eight games in parallel, colours alternating (`sparring/arena_fpu_cache`).
+
+| | games | W-D-L | score |
+|---|---|---|---|
+| fix as White | 8 | +3 =5 -0 | 68.8% |
+| fix as Black | 8 | +4 =3 -1 | 68.8% |
+| **total** | **16** | **+7 =8 -1** | **68.8%** (95% 54-83%) |
+
+Implied +137 Elo for the fix (95% +28 to +281); decisive games 7-1, two-sided
+binomial p = 0.07. Terminations: 8 checkmates, 8 threefold repetitions. Lane 2
+won its first four games outright and then drew four; lane 1's only loss was
+game 8 with the fix as Black.
+
+What it does and does not show. Same net on both sides, so every point of the
+difference is search. At this clock each side gets roughly 150 simulations per
+move, a third of the shipped budget, which makes the collapse *worse* than in
+rated play (the threshold falls as 1/sqrt(N)) and the cache matter *less*
+(short searches transpose less); the direction is right, the size is not
+transferable. Seven of the eight decisive games were won by the fix, which is
+the mechanism at work: finding the low-prior winning move in a position the
+value head already likes is exactly the conversion problem `ARENA2` section 7
+names. Half the games were still threefold draws, so the fix does not remove
+the draw wall; both sides share the draw-seeking rule and the same net. Not
+significant at 5%, no PGNs kept, both lanes shared the machine (contention is
+symmetric under a wall-clock budget). The measurement that would settle it: the
+same pairing at 120 s + 0.5 s with PGNs, and a sweep of `fpu_reduction` over
+{0.15, 0.25, 0.4}.

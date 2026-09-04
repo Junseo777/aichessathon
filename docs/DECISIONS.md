@@ -115,6 +115,12 @@ labels and T=3 collapsed to h2h 0.38, which is hard to explain if the teacher's
 | d192 x b12 | 5.42M | 17.6 | 9.26 | ~260 |
 | d256 x b20 | 15.9M | 47.0 | - | ~53 |
 
+**What ships is the fp32 column.** No trained checkpoint has passed the int8 gate
+(R0-R3: 0.88-0.95 argmax agreement, section 13), so d96 runs at 5.97 ms here, about
+420 simulations per 2.5 s. Measured 2026-09-04 with R2: 470 in the 3.1 s move-one
+budget, 510-620 with the evaluation cache. Read the int8 column as the plan and the
+fp32 column as the agent.
+
 Two shapes in that table decide the question:
 
 1. **Below ~400k parameters, latency is overhead-bound, not compute-bound.** d24 and
@@ -126,8 +132,8 @@ Two shapes in that table decide the question:
 2. **The search benefit is front-loaded.** The reference's own curve: 10 sims is
    *worse* than one-shot (1,310 vs 1,572), then a steep climb to 2,474 at 300. Beyond
    a few hundred simulations the curve flattens. So the ~1,900 sims the 116k model
-   would get on our core are mostly spent on the flat part; the ~700 the 1.4M model
-   gets are still on the steep part.
+   would get on our core are mostly spent on the flat part; the ~420-600 the 1.4M
+   model gets (fp32, see the note under the table) are still on the steep part.
 
 Putting the two together: moving from 116k to 1.4M costs about 1.4 doublings of
 simulations from the flattest region of the curve (estimate: -60 to -100 Elo) and
@@ -171,7 +177,7 @@ matrix trains d64, d96 and d128 for that reason.
 
 **Change made by this review:** the bracket should also include the reference's own
 d32 x b8 as a cheap anchor (it trains in ~20 minutes on the same data). If a 116k
-model with engine labels and ~1,900 simulations beats d96 with ~700 in a 400-game
+model with engine labels and ~1,900 simulations beats d96 with ~420-600 in a 400-game
 arena, that is the model that ships, and the argument above was wrong at our
 training budget. Cheap to test; expensive to assume.
 
@@ -182,7 +188,7 @@ training budget. Cheap to test; expensive to assume.
 **Decision: AlphaZero-style PUCT with the network's own priors and values.**
 
 **Why not alpha-beta with a learned evaluation:** the network is the leaf cost either
-way, so alpha-beta gets the same ~700 evaluations per move. At branching ~30 that is
+way, so alpha-beta gets the same ~500 evaluations per move. At branching ~30 that is
 depth 2-3 full-width, perhaps 4-5 with aggressive pruning - and it needs the policy at
 interior nodes for ordering, so it saves no network calls. Minimax also backs up the
 *maximum* of a noisy evaluation, amplifying value-head noise; PUCT averages it.
@@ -207,7 +213,8 @@ decorrelation and the complexity.
 
 The reference's `mcts.py` does all three of the expensive things; ported naively it
 would spend more per simulation on bookkeeping than on the network. Total measured
-overhead after fixes: ~0.23 ms per simulation, versus 3.77 ms of network.
+overhead after fixes: ~0.23 ms per simulation, versus 3.77 ms of network for int8 and
+5.97 ms for the fp32 that ships.
 
 **Implemented since (all strength-neutral-or-better by construction):**
 
@@ -243,8 +250,8 @@ prediction, no miss penalty. Constraints honoured: one thread only, stopped and
 joined before any own-move work (a join timeout disables pondering for the game
 rather than trusting a possibly-running thread), node budget of 100k so the tree
 cannot approach the 2 GB limit. Combined with subtree reuse this roughly doubles
-effective simulations: estimated +100-150 Elo, to be confirmed by arena once a
-trained model exists.
+effective simulations: estimated +100-150 Elo, still unconfirmed as of 2026-09-04
+(section 13).
 
 ---
 
@@ -253,7 +260,7 @@ trained model exists.
 | Decision | Alternative | Why |
 |---|---|---|
 | onnxruntime | torch | measured 1.1-1.8x faster at batch 1 at every size; faster import; lower RSS |
-| ship int8 **and** fp32, pick at init by timing | pick one | the competition CPU is unknown; the probe measured 3.77 vs 5.97 ms here and chose int8 |
+| ship int8 **and** fp32, pick at init by timing | pick one | the competition CPU is unknown; the probe measured 3.77 vs 5.97 ms here and chose int8 on random weights. Every trained checkpoint since has failed the int8 gate, so only fp32 has ever shipped; the probe stays because it costs nothing and a future net may pass |
 | opset 17 export | newer | supported by any onnxruntime since 2022 |
 | strict int8 gate only for trained checkpoints | always | random-init logits are near-uniform and quantisation flips their argmax freely; the >=99% bar is only meaningful once trained |
 | never import torch at play time | - | the agent depends on the exported graph alone; training-environment drift cannot reach it |
@@ -271,7 +278,7 @@ which truncates the fractional clock and repetition planes to integers - but its
 inference `featurize()` emits the fractional values. Its trained models never see at
 play time what they saw in training. That skew produces no error; it just costs
 strength. Our encoding makes it impossible: `featurize_int8` is canonical, the float
-the model sees is that grid divided by SCALE, and eleven parity tests pin it (mirror
+the model sees is that grid divided by SCALE, and twelve parity tests pin it (mirror
 equivalence, encode/decode round-trips over every legal move including
 underpromotions, en passant and castling, quantisation grid, invariants).
 
@@ -406,7 +413,7 @@ Run R8 tests it. Until then this is the least-evidenced claim in this document, 
 "our policy target now matches the 37M teacher" is not a claim it supports.
 
 **What engine evals structurally cannot give, and we accept:** the value head should
-estimate the outcome when *our* net at ~700 sims plays on; Stockfish estimates it
+estimate the outcome when *our* net at ~500 sims plays on; Stockfish estimates it
 under near-perfect play. `2/(1+exp(-0.00368208 cp))-1` is a function of cp alone, so
 a +3.0 needing six only-moves and a +3.0 that is trivial technique receive identical
 targets. It cannot express sharpness; a teacher's value head, being a function of
@@ -432,7 +439,7 @@ the MultiPV soft target (R8).
 |---|---|
 | loss = policy CE + value_weight x value MSE | the reference's recipe |
 | policy CE over all 4,672 logits, **unmasked at training time** | masking to legal moves removes the gradient that teaches the net which moves are plausible at all; the mask belongs at inference, where `chessml.search` already applies it. Note the soft-policy runs (R8, R9) do mask, since their target is a distribution over legal moves - that asymmetry is deliberate and worth re-testing if R8 disappoints |
-| loader holds the split in RAM, not memmap | measured: `/workspace` is MooseFS over FUSE at ~15 ms per random read - validating 8M rows took 8m25s wall for 13s of CPU. 124 GB of RAM covers the 8M and 40M shards outright; 100M still needs the bit-packed path |
+| loader: X read in 262,144-row blocks with plain file I/O into one preallocated window, shuffled per epoch; RAM only for splits under 12 GB | measured: `/workspace` is MooseFS over FUSE at ~15 ms per random read - validating 8M rows took 8m25s wall for 13s of CPU - so reads must be sequential. The container cap is 61 GB, not the 124 GB `free` reports. The first loader held 40M in RAM and was OOM-killed; the second memory-mapped the shard, which charged every page read to the cgroup and killed four concurrent runs on 2026-09-03. The window is 5.6 GB, flat, plus 0.4 GB of staging; `--prefetch` overlaps the next window's read with training for a second window of RAM |
 | **value_weight tested at 1.0 and 2.5** | the reference tuned 1.0 for single-pass play; we are search-first and the value head is what search amplifies |
 | value target = engine where present, else outcome (masked) | never drop rows lacking evals; their moves still train the policy |
 | AdamW 1e-3, wd 1e-4, batch 1024, BF16, clip 1.0, cosine to zero | the reference's validated settings; BF16 because FP16 silently NaNs deep towers |
@@ -441,7 +448,7 @@ the MultiPV soft target (R8).
 | EMA of weights, decay 0.999 | near-free +10-30 in supervised training |
 | checkpoint every epoch, raw and EMA, selection by *play* | final epoch is not automatically best under search; accuracy is a policy metric and the value head is what matters |
 | val accuracy tracked **split by colour** | a collapse on one colour is a mirror bug, not a training problem |
-| loader: memmap + block shuffle, else bit-pack to ~101 B/row in RAM | the reference stalled at 2k samples/s on disk I/O; at that rate 8 epochs is 44 hours |
+| at 100M, bit-pack to ~101 B/row in RAM | the block loader re-reads 52.7 GB per epoch at 40M; 126 GB at 100M does not fit the cap, and the reference stalled at 2k samples/s on disk I/O, which is 44 hours for 8 epochs |
 | run matrix R0 smoke -> R1 partial labels -> R2-R5 full labels | earlier runs are insurance for later ones; a model on Sept 3 beats a better one on Sept 8 |
 
 ---
@@ -461,11 +468,12 @@ equivalent over a same-strength fragile entry.
 | past ply 240, material balance drives that logic | ply 300 is adjudicated on material |
 | budget = clamp(left / max(14, 46 - move) + 0.4 s, <= 4 s, <= left - 1 s) | flagging is the most common self-inflicted loss |
 | < 2 s: one forward pass; < 0.25 s: first legal move | degraded modes instead of a flag |
-| repo gate: ruff, mypy strict, 40 tests, two clean fast games | the starter's own bar. On random weights the agent loses those games; the gate checks legality and the clock, not strength |
+| repo gate: ruff, mypy strict, pytest (47 tests; the two mate-finding tests only on a trained net), two clean fast games | the starter's own bar. On random weights the agent loses those games; the gate checks legality and the clock, not strength. The gate ran no tests until 2026-09-04, which is how the first-play-urgency bug sat in two failing tests for days |
 
 Verified: a full game at real time control and the gate's fast games completed with
 zero crashes, illegal moves or flags on random weights; search finds mate-in-one for
-both colours from the rules alone.
+both colours from the rules alone on random weights. On trained weights it did not
+until the first-play-urgency fix of 2026-09-04 (`docs/FINDING_fpu.md`).
 
 ---
 
@@ -481,7 +489,7 @@ both colours from the rules alone.
 | Numbfish as a reference | ships Stockfish's NNUE weights: disqualifying on two counts; the architecture without them needs billions of positions |
 | architecture changes | the reference's ablation already settled them |
 | 100M positions | section 7 |
-| committing weights to git | build artifacts; every retrain would add megabytes to history permanently; `make weights` regenerates |
+| committing weights to git | build artifacts; every retrain would add megabytes to history permanently. Exports live in the run store beside the repo with checksums, and `use-weights.sh` switches between them |
 
 ---
 
@@ -495,7 +503,7 @@ both colours from the rules alone.
 | rented compute (RunPod-class), 64 GB+ RAM, many vCPUs, modest GPU | data and labelling are CPU/RAM bound; a 1.4M model cannot saturate a large GPU; the data never has to move - only a <30 MB checkpoint comes back |
 | training-side code in `train/`, own dependency group, outside mypy | torch never enters the submission environment |
 | five commits by layer, each independently green | each boundary is a place the gate passes |
-| no comments in code; rationale lives in commit messages and this file | the starter's 434 lines carry 2 comment lines; the shipped `agent.py` stays plain for a judge |
+| comments in code are rare and one line; rationale lives in commit messages and this file | the starter's 434 lines carry 2 comment lines; the shipped `agent.py` stays plain for a judge |
 | four stop-and-report points in the friend's brief | training on subtly wrong data burns GPU hours producing a model to throw away |
 
 ---
@@ -513,8 +521,9 @@ both colours from the rules alone.
 | int8 accuracy on the trained model | the export parity gate. Measured on the reference's trained 116k hero: **0.863 argmax agreement, well under the 0.99 bar**. Small models may simply not survive dynamic quantisation, in which case fp32 ships and the sims-per-second table's int8 column does not apply |
 | competition core speed | the init-time probe, per game |
 | whether the platform's cores are truly dedicated for pondering | simulation count during the opponent's turn, in the validation log |
+| what pondering is worth | unconfirmed as of 2026-09-04. `docs/ARENA1_R0_LADDER.md` section 5 names the confound (Stockfish does not ponder back); a same-machine run with the ponder thread disabled isolates it |
 | how strong the field is | the ladder from Sept 4; nothing else measures it |
-| whether we are actually at least as good as the reference | head-to-head against `baselines/reference-hero` - the reference's own published 116k hero, converted to our checkpoint format by `train/import_reference_hero.py` and run through our search and runtime unchanged. Model-only (equal sims) isolates training; full-agent at the real clock is the answer to the question as asked. Its capsule was trained under the pre-fix en passant convention, so it sees a slightly different input on ~10% of rows; acceptable for a baseline |
+| whether we are actually at least as good as the reference | head-to-head against `baselines/reference-hero` - the reference's own published 116k hero, converted to our checkpoint format by `train/import_reference_hero.py` and run through our search and runtime unchanged. Model-only (equal sims) isolates training; full-agent at the real clock is the answer to the question as asked. Its capsule was trained under the pre-fix en passant convention, so it sees a slightly different input on ~10% of rows; acceptable for a baseline. The baseline shares the live `chessml` by symlink, so it always searches with the current code: results are comparable only within one search version, and every number before the 2026-09-04 first-play-urgency fix (ARENA1 section 1, STOP2 section 5) predates it |
 
 Expected strength on the reference's Stockfish-anchored scale: ~2,200-2,500 for the
 first working model, 2,600-2,800 if engine labels, tau and the search work all land.

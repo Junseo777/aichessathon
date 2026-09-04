@@ -16,7 +16,8 @@ When you like it, `make zip` and drop `submission.zip` on your dashboard.
 
 ## Writing an agent
 
-`agent.py` is the whole submission. One function:
+`agent.py` is the entry point of the submission; `make zip` adds `chessml/` and `weights/`
+beside it. One function:
 
 ```python
 def get_move(fen: str, time_left_ms: int) -> str:
@@ -67,15 +68,17 @@ harness/sandbox.py   the one process, spoken to as the platform speaks to a cont
 harness/play.py      one game between two agent directories
 harness/arena.py     many games, with a score
 harness/package.py   builds submission.zip with agent.py at the root
-train/               model, ONNX export, supervised trainer - never imported at play time
+train/               model, ONNX export, trainer, provenance check, loader tests - never imported at play time
 pipeline/            data: acquire, filter, shard, Stockfish-label, validate
+provenance/          logs, per-epoch histories and corpus reports for every run
+use-weights.sh       points weights/ at one export in the run store beside the repo
 docs/DECISIONS.md    every material decision, with the evidence behind it
 docs/PIPELINE_BRIEF.md  the data and training runbook
-docs/IDEAS.md        where the strength actually comes from
+docs/IDEAS.md        the starter's general advice; DECISIONS.md is where this project's strength comes from
 docs/PROVENANCE.md   how to check the shipped weights are ours
 docs/STOP<n>_*.md    pipeline stop-and-report points, numbered by PIPELINE_BRIEF §7
 docs/ARENA<n>_*.md   measurement reports: games played, Elo estimated
-docs/FINDING_*.md    a bug or effect worth recording, filed rather than fixed
+docs/FINDING_*.md    a bug or effect worth recording; ends with its resolution once fixed
 ```
 
 **Two numbering schemes, deliberately separate.** `STOP<n>` belongs to the five
@@ -86,8 +89,14 @@ results of games actually played, numbered independently in the order they were
 run. A sparring result is not a stop point, however useful it is: reusing the
 STOP sequence for one makes it ambiguous whether the protocol has advanced.
 
-`weights/` is a build artifact, not in git: `make weights` regenerates it, and
-`make baseline-hero` rebuilds the reference-project opponent. Both `train/` and
+`weights/` is not in git. Trained exports live in a run store beside the repo
+(`../weights/<run>/model.onnx` and `manifest.json`, with a `CHECKSUMS.txt`), and
+`./use-weights.sh <run>` points `weights/` at one of them by symlink; `./use-weights.sh`
+alone lists what is available and what is active. `make weights` exports a random-init
+net for runtime testing and refuses to write through those symlinks, so it cannot
+overwrite a trained export. `make baseline-hero` rebuilds the reference-project
+opponent, which shares the live `chessml/` and so always plays with the current
+search. Both `train/` and
 `pipeline/` need the `train` dependency group and are outside the mypy strict set;
 nothing in either ever enters the submission.
 

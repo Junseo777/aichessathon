@@ -20,7 +20,7 @@ arena:
 	uv run python -m harness.arena --opponent baselines/greedy --games 20
 
 zip:
-	uv run python -m harness.package --include chessml
+	uv run python -m harness.package $(foreach f,$(wildcard chessml/*.py),--include $(f))
 
 test:
 	uv run pytest -q

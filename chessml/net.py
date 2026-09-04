@@ -27,9 +27,7 @@ class PolicyValueNet:
         self.session = session
         self.name = name
         self.cache_size = cache_size
-        # priors and value only: the legal-move list is regenerated on a hit, in the
-        # same order, for ~50 us. Holding the Move objects too made a full cache
-        # cost 246 MB against the 2 GB cap; this way it is under 40 MB.
+        # priors and value only; the move list is regenerated on a hit (35 MB full, not 246)
         self.cache: dict[object, tuple[npt.NDArray[np.float32], float]] = {}
         self.hits = 0
         self.forwards = 0
@@ -40,12 +38,7 @@ class PolicyValueNet:
         return policy[0], float(value[0, 0])
 
     def evaluate(self, board: chess.Board) -> Evaluation:
-        # The key covers everything featurize reads, so a hit is bit-identical to the
-        # forward pass it replaces: the transposition key is pieces, side to move,
-        # castling and en passant; the clocks are quantised exactly as planes 17 and
-        # 18 are; the repetition level is plane 20. Boards with a move stack used to
-        # bypass the cache, which made it dead during search (every simulation
-        # board has one), measured as a 0% hit rate.
+        # the key covers everything featurize reads, plane 20's repetition level included
         key = (
             transposition_key(board),
             min(board.halfmove_clock, 100) // 2,
@@ -103,8 +96,7 @@ def load_fastest(weights_dir: Path) -> tuple[PolicyValueNet, dict[str, Any]]:
     best_ms, best_name = timed[0][0] * 1000.0, timed[0][1]
     manifest["forward_ms"] = round(best_ms, 3)
     manifest["chosen"] = best_name
-    # Identifies the checkpoint in the game log: manifests are identical across
-    # training runs, so nothing else here distinguishes one net from another.
+    # names the net in the game log; manifests exported before 2026-09-04 are identical across runs
     manifest["sha256"] = hashlib.sha256((weights_dir / best_name).read_bytes()).hexdigest()
     print(f"net: {[(n, round(t * 1000, 2)) for t, n in timed]} -> {best_name}")
     return PolicyValueNet(sessions[best_name], best_name), manifest

@@ -9,7 +9,7 @@ from pipeline.shard import SPLIT_TRAIN, SPLIT_VAL, Shard, ShardWriter
 from train.loader import BlockShuffledSplit, RamSplit, side_to_move
 
 N = 1000
-BLOCK = 37  # small enough that a window is a few blocks and the epoch is many windows
+BLOCK = 37
 WINDOW = 3
 BATCH = 16
 

@@ -127,8 +127,7 @@ filtered volume. The emission pattern must depend only on weights and history, n
 on target size, so a 40M shard stays a byte-identical prefix of the 100M one.
 
 **Volume:** 8M smoke shard (validation + first checkpoint), then 40M (~54 GB, the
-ladder model and the size bracket), then 100M (~126 GB, generated Sept 4 while the
-bracket trains). Same seed and sampling throughout so labels join across shards by
+ladder model and the size bracket), then 100M (~126 GB; not built as of Sept 4, gated on STOP #4). Same seed and sampling throughout so labels join across shards by
 `Z.bin` and nothing is computed twice.
 
 **Measured yields (Sept 2).** Elite, six months: 1.31M games kept of 1.71M seen,
@@ -169,6 +168,11 @@ fewer positions), join back onto every row sharing that `Z` in both shards, set
 
 There is no off-by-one risk here (the stored FEN is evaluated directly), but
 assertion 6 still applies to newly filled rows, plus 6c.
+
+**As run.** The 8M shard was labelled at `nodes=25000`; the 40M shard at `depth=8`,
+chosen by the sweep in `docs/STOP2_R0.md` section 4 (857 pos/s against 534, and 0%
+mixed-depth lines against 68%). Each shard is labelled under one regime; the 8M
+labels were not reused for 40M.
 
 ---
 
@@ -228,13 +232,20 @@ and EMA checkpoints every epoch:
 torch.save({"config": asdict(cfg), "model": state_dict}, path)
 ```
 
+Checkpoints since `69e34ee` also carry a `provenance` block: run, epoch, seed, value
+weight, git commit, shard fingerprint and that epoch's metrics (`docs/PROVENANCE.md`
+section 2).
+
 Keep every epoch on the volume — the last epoch is not automatically the best under
 search, and selection happens by play on Junseo's side.
 
 **The loader is the whole battle.** The reference stalled at ~2k samples/s on
 disk-bound loading: 8 epochs over 40M would be 44 hours. Measure throughput in the
-first five minutes of every run. Memmap with block-granularity shuffling may suffice
-at 40M; at 100M bit-pack into RAM (12 piece planes as bitboards + ep square +
+first five minutes of every run. **As built** (`train/loader.py`): X is read in
+262,144-row blocks with plain file I/O into one preallocated window of 16 blocks
+(5.6 GB), shuffled per epoch; `--window-blocks` sizes it and `--prefetch` overlaps the
+next window's read with training. Memory-mapping the shard was tried first and
+OOM-killed concurrent runs (`docs/DECISIONS.md` section 9). At 100M bit-pack into RAM (12 piece planes as bitboards + ep square +
 castling nibble + three scalar planes ~= 101 B/row, so 100M ~= 10 GB resident) and
 unpack per batch on the GPU. If you pack, assert `unpack(pack(x))` equals
 `featurize_int8` output bit-exactly over a large sample first. Target >= 20k
@@ -258,7 +269,8 @@ blend) → R8 (MultiPV soft policy target; R8b keeps a human component at alpha 
 
 R1 vs R2 measures what full engine coverage is worth. R2 vs R3 settles value weight.
 R2/R4/R5/RA settle size — and RA is a real test, not a formality: if a 116k net with
-~1,900 searches per move beats d96 with ~700, that is the model that ships.
+~1,900 searches per move beats d96 with ~420-600 (fp32; no checkpoint has passed the
+int8 gate), that is the model that ships.
 
 **Gates on every run.** Val top-1 policy accuracy 40-55%, tracked **split by the
 original side to move** (a collapse on one colour is a mirror bug, not a training

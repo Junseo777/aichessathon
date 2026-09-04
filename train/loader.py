@@ -41,13 +41,8 @@ def _labels(shard: Shard, idx: np.ndarray, stm: np.ndarray):
 
 
 class _BlockReader:
-    """Reads X in contiguous blocks of rows with plain file I/O into one staging buffer.
-
-    X is never memory-mapped. A mapping of the 52.7 GB shard kept every page a run had
-    read charged to the container until the kernel reclaimed it, which is what made
-    four concurrent runs overcommit a 61 GB cap and get killed. Read this way, a
-    block costs its staging buffer and nothing after it has been consumed.
-    """
+    """Reads X in contiguous row blocks with plain file I/O into one staging buffer. Nothing is
+    memory-mapped, so a consumed block costs nothing afterwards (docs/DECISIONS.md section 9)."""
 
     def __init__(self, x_path: Path, n: int, block_rows: int) -> None:
         self.x_path = x_path
@@ -109,17 +104,9 @@ class RamSplit:
 
 
 class BlockShuffledSplit:
-    """X stays on disk. Each epoch reads it in contiguous blocks whose order is shuffled,
-    `window_blocks` blocks at a time into one preallocated window that is shuffled as a
-    whole; batches are gathered from the window by index, so the window is never
-    copied. Rows left over at the end of a window carry into the next.
-
-    Resident memory is flat and known up front: one window, plus a second if
-    `prefetch` reads the next window in a background thread while this one trains,
-    plus one block of staging. The earlier version reported "5.6 GB buffer" and then
-    used 3-5x that: two copies of the window while concatenating, two more while
-    permuting, and the mapped shard pages on top.
-    """
+    """X stays on disk. Each epoch reads its blocks in shuffled order, `window_blocks` at a time,
+    into one preallocated window that is shuffled whole and gathered by index. Resident memory
+    is one window (two with `prefetch`) plus one block of staging, and it does not grow."""
 
     def __init__(
         self,
