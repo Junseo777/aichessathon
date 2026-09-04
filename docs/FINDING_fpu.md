@@ -94,8 +94,10 @@ WITH FPU (unvisited Q = parent value - 0.25)
 ```
 
 0.25 is a starting point, not a tuned value; Lc0 uses roughly this magnitude for
-absolute FPU. It should be swept in the arena rather than taken on faith, and a
-reduction that is too large will make the search wander.
+absolute FPU. It should be swept in the arena rather than taken on faith. The
+direction matters: a reduction that is too *small* makes the search wander
+(unvisited moves look as good as the parent), and one that is too *large*
+makes it narrow (they look bad, so the visited moves keep the visits).
 
 ## Why this probably matters more than the tests suggest
 
@@ -158,6 +160,21 @@ binomial p = 0.07. Terminations: 8 checkmates, 8 threefold repetitions. Lane 2
 won its first four games outright and then drew four; lane 1's only loss was
 game 8 with the fix as Black.
 
+Exploration profile, measured offline on six positions at 150 and 400 simulations
+(`scratchpad/probe.py`, old vs new search, same R2 net). The old rule was not
+uniformly narrow: scoring an unvisited child 0 is a reduction equal to the
+parent's Q, so it was near zero in level positions and ~0.8 in won ones. The
+constant 0.25 is therefore *more* cautious than before at Q ~ 0 and far less at
+Q ~ 0.8. In the four level positions (start, Italian, a middlegame, a K+P ending)
+the new search leaves one to three more root moves unvisited and the share of
+interior nodes that ever visited only one child rises from 17-20% to 25-29%. In
+the won positions it opens up: the mate-in-one goes from 0 visits to 48% of the
+root's, and interior single-child nodes fall from 25% to 7%. So the arena's
+seven-to-one in decisive games is the won-position half of that trade, and the
+level-position half (slightly narrower search) is what the sanity arena cannot
+see and the full head-to-head must: any harm will show as losses from missed
+defensive resources in equal middlegames, not as failed conversions.
+
 What it does and does not show. Same net on both sides, so every point of the
 difference is search. At this clock each side gets roughly 150 simulations per
 move, a third of the shipped budget, which makes the collapse *worse* than in
@@ -171,4 +188,6 @@ the draw wall; both sides share the draw-seeking rule and the same net. Not
 significant at 5%, no PGNs kept, both lanes shared the machine (contention is
 symmetric under a wall-clock budget). The measurement that would settle it: the
 same pairing at 120 s + 0.5 s with PGNs, and a sweep of `fpu_reduction` over
-{0.15, 0.25, 0.4}.
+{0.15, 0.25, 0.4}, plus one arm with Lc0's scaling (reduction times the square
+root of the visited policy mass), which is near zero while a node is fresh and
+grows as its policy is explored, so it covers both regimes with one constant.
