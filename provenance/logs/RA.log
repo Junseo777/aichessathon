@@ -1,0 +1,196 @@
+model d32 x b8: 118,442 params
+shard /workspace/data/shard_40m n=40,000,000
+  loading train: 39,187,501 rows (block-shuffled memmap, 52.7 GB on disk, 5.6 GB buffer)
+    engine-labelled 100.00%, 153 blocks of 262,144
+  loading val: 812,499 rows (ram)
+    1.1 GB in 71s, engine-labelled 100.00%
+git f08a856705fd  shard meta sha256 03d416be8416aac5
+steps/epoch 38,269  total 306,152
+  e1 step 50/38,269 loss 6.8703 pol 6.7397 val 0.1306 715 samples/s
+  e1 step 2,000/38,269 loss 3.5508 pol 3.4752 val 0.0756 12,896 samples/s
+  e1 step 4,000/38,269 loss 3.2026 pol 3.1329 val 0.0696 16,525 samples/s
+  e1 step 6,000/38,269 loss 2.9979 pol 2.9315 val 0.0664 16,806 samples/s
+  e1 step 8,000/38,269 loss 2.8589 pol 2.7951 val 0.0638 20,326 samples/s
+  e1 step 10,000/38,269 loss 2.7563 pol 2.6947 val 0.0616 17,400 samples/s
+  e1 step 12,000/38,269 loss 2.6759 pol 2.6162 val 0.0597 18,299 samples/s
+  e1 step 14,000/38,269 loss 2.6115 pol 2.5534 val 0.0581 17,411 samples/s
+  e1 step 16,000/38,269 loss 2.5562 pol 2.4995 val 0.0567 18,089 samples/s
+  e1 step 18,000/38,269 loss 2.5070 pol 2.4516 val 0.0554 16,011 samples/s
+  e1 step 20,000/38,269 loss 2.4633 pol 2.4090 val 0.0543 16,508 samples/s
+  e1 step 22,000/38,269 loss 2.4246 pol 2.3713 val 0.0533 16,132 samples/s
+  e1 step 24,000/38,269 loss 2.3899 pol 2.3376 val 0.0523 16,512 samples/s
+  e1 step 26,000/38,269 loss 2.3586 pol 2.3072 val 0.0514 15,469 samples/s
+  e1 step 28,000/38,269 loss 2.3301 pol 2.2795 val 0.0506 15,778 samples/s
+  e1 step 30,000/38,269 loss 2.3040 pol 2.2541 val 0.0498 15,718 samples/s
+  e1 step 32,000/38,269 loss 2.2799 pol 2.2307 val 0.0492 16,012 samples/s
+  e1 step 34,000/38,269 loss 2.2577 pol 2.2092 val 0.0485 16,181 samples/s
+  e1 step 36,000/38,269 loss 2.2372 pol 2.1893 val 0.0479 16,927 samples/s
+  e1 step 38,000/38,269 loss 2.2173 pol 2.1699 val 0.0474 16,970 samples/s
+[RA] epoch 1: train_pol 2.1674 val_pol 1.8263 gap +0.3411 | acc 0.4347 (W 0.4352 / B 0.4342) | val_mse 0.0358 | ema_acc 0.4270 | 16,999/s
+  e2 step 50/38,269 loss 1.8591 pol 1.8222 val 0.0369 1,085 samples/s
+  e2 step 2,000/38,269 loss 1.8548 pol 1.8178 val 0.0369 15,179 samples/s
+  e2 step 4,000/38,269 loss 1.8498 pol 1.8131 val 0.0368 21,043 samples/s
+  e2 step 6,000/38,269 loss 1.8439 pol 1.8071 val 0.0368 15,555 samples/s
+  e2 step 8,000/38,269 loss 1.8381 pol 1.8015 val 0.0366 17,407 samples/s
+  e2 step 10,000/38,269 loss 1.8357 pol 1.7992 val 0.0365 15,725 samples/s
+  e2 step 12,000/38,269 loss 1.8323 pol 1.7961 val 0.0362 14,110 samples/s
+  e2 step 14,000/38,269 loss 1.8286 pol 1.7925 val 0.0361 14,813 samples/s
+  e2 step 16,000/38,269 loss 1.8249 pol 1.7890 val 0.0359 14,936 samples/s
+  e2 step 18,000/38,269 loss 1.8220 pol 1.7863 val 0.0357 15,519 samples/s
+  e2 step 20,000/38,269 loss 1.8190 pol 1.7834 val 0.0356 15,060 samples/s
+  e2 step 22,000/38,269 loss 1.8150 pol 1.7796 val 0.0355 15,780 samples/s
+  e2 step 24,000/38,269 loss 1.8115 pol 1.7761 val 0.0354 15,505 samples/s
+  e2 step 26,000/38,269 loss 1.8089 pol 1.7737 val 0.0352 15,778 samples/s
+  e2 step 28,000/38,269 loss 1.8064 pol 1.7713 val 0.0351 15,339 samples/s
+  e2 step 30,000/38,269 loss 1.8037 pol 1.7687 val 0.0350 15,614 samples/s
+  e2 step 32,000/38,269 loss 1.8011 pol 1.7662 val 0.0349 15,857 samples/s
+  e2 step 34,000/38,269 loss 1.7979 pol 1.7632 val 0.0347 15,787 samples/s
+  e2 step 36,000/38,269 loss 1.7949 pol 1.7603 val 0.0346 16,021 samples/s
+  e2 step 38,000/38,269 loss 1.7925 pol 1.7580 val 0.0345 16,422 samples/s
+[RA] epoch 2: train_pol 1.7576 val_pol 1.7218 gap +0.0358 | acc 0.4548 (W 0.4556 / B 0.4541) | val_mse 0.0319 | ema_acc 0.4656 | 16,514/s
+  e3 step 50/38,269 loss 1.7405 pol 1.7074 val 0.0331 509 samples/s
+  e3 step 2,000/38,269 loss 1.7420 pol 1.7096 val 0.0324 11,172 samples/s
+  e3 step 4,000/38,269 loss 1.7404 pol 1.7082 val 0.0322 14,670 samples/s
+  e3 step 6,000/38,269 loss 1.7395 pol 1.7072 val 0.0323 14,498 samples/s
+  e3 step 8,000/38,269 loss 1.7380 pol 1.7058 val 0.0322 15,890 samples/s
+  e3 step 10,000/38,269 loss 1.7370 pol 1.7048 val 0.0322 15,191 samples/s
+  e3 step 12,000/38,269 loss 1.7353 pol 1.7032 val 0.0321 16,593 samples/s
+  e3 step 14,000/38,269 loss 1.7344 pol 1.7024 val 0.0320 15,733 samples/s
+  e3 step 16,000/38,269 loss 1.7334 pol 1.7015 val 0.0319 17,001 samples/s
+  e3 step 18,000/38,269 loss 1.7314 pol 1.6996 val 0.0319 15,995 samples/s
+  e3 step 20,000/38,269 loss 1.7296 pol 1.6978 val 0.0318 16,407 samples/s
+  e3 step 22,000/38,269 loss 1.7285 pol 1.6968 val 0.0317 16,012 samples/s
+  e3 step 24,000/38,269 loss 1.7275 pol 1.6958 val 0.0317 14,999 samples/s
+  e3 step 26,000/38,269 loss 1.7262 pol 1.6946 val 0.0316 15,547 samples/s
+  e3 step 28,000/38,269 loss 1.7248 pol 1.6933 val 0.0315 15,346 samples/s
+  e3 step 30,000/38,269 loss 1.7239 pol 1.6924 val 0.0315 15,712 samples/s
+  e3 step 32,000/38,269 loss 1.7229 pol 1.6915 val 0.0314 15,444 samples/s
+  e3 step 34,000/38,269 loss 1.7217 pol 1.6904 val 0.0314 15,774 samples/s
+  e3 step 36,000/38,269 loss 1.7205 pol 1.6892 val 0.0313 16,225 samples/s
+  e3 step 38,000/38,269 loss 1.7192 pol 1.6880 val 0.0313 16,215 samples/s
+[RA] epoch 3: train_pol 1.6878 val_pol 1.6717 gap +0.0161 | acc 0.4681 (W 0.4672 / B 0.4691) | val_mse 0.0301 | ema_acc 0.4750 | 16,249/s
+  e4 step 50/38,269 loss 1.6769 pol 1.6469 val 0.0300 386 samples/s
+  e4 step 2,000/38,269 loss 1.6880 pol 1.6577 val 0.0303 12,816 samples/s
+  e4 step 4,000/38,269 loss 1.6869 pol 1.6567 val 0.0302 21,992 samples/s
+  e4 step 6,000/38,269 loss 1.6890 pol 1.6587 val 0.0302 18,271 samples/s
+  e4 step 8,000/38,269 loss 1.6898 pol 1.6596 val 0.0302 19,020 samples/s
+  e4 step 10,000/38,269 loss 1.6913 pol 1.6611 val 0.0302 18,570 samples/s
+  e4 step 12,000/38,269 loss 1.6924 pol 1.6623 val 0.0301 19,026 samples/s
+  e4 step 14,000/38,269 loss 1.6920 pol 1.6620 val 0.0301 17,025 samples/s
+  e4 step 16,000/38,269 loss 1.6917 pol 1.6617 val 0.0300 16,829 samples/s
+  e4 step 18,000/38,269 loss 1.6906 pol 1.6606 val 0.0300 17,199 samples/s
+  e4 step 20,000/38,269 loss 1.6894 pol 1.6595 val 0.0300 16,633 samples/s
+  e4 step 22,000/38,269 loss 1.6879 pol 1.6579 val 0.0300 17,525 samples/s
+  e4 step 24,000/38,269 loss 1.6863 pol 1.6564 val 0.0299 16,818 samples/s
+  e4 step 26,000/38,269 loss 1.6851 pol 1.6552 val 0.0299 17,114 samples/s
+  e4 step 28,000/38,269 loss 1.6839 pol 1.6540 val 0.0299 16,110 samples/s
+  e4 step 30,000/38,269 loss 1.6836 pol 1.6537 val 0.0299 16,321 samples/s
+  e4 step 32,000/38,269 loss 1.6831 pol 1.6533 val 0.0298 16,565 samples/s
+  e4 step 34,000/38,269 loss 1.6830 pol 1.6532 val 0.0298 16,492 samples/s
+  e4 step 36,000/38,269 loss 1.6828 pol 1.6530 val 0.0298 16,934 samples/s
+  e4 step 38,000/38,269 loss 1.6826 pol 1.6529 val 0.0297 17,084 samples/s
+[RA] epoch 4: train_pol 1.6529 val_pol 1.6434 gap +0.0095 | acc 0.4741 (W 0.4738 / B 0.4745) | val_mse 0.0297 | ema_acc 0.4774 | 17,104/s
+  e5 step 50/38,269 loss 1.6668 pol 1.6377 val 0.0292 511 samples/s
+  e5 step 2,000/38,269 loss 1.6668 pol 1.6378 val 0.0290 13,094 samples/s
+  e5 step 4,000/38,269 loss 1.6660 pol 1.6370 val 0.0290 17,331 samples/s
+  e5 step 6,000/38,269 loss 1.6646 pol 1.6355 val 0.0291 13,868 samples/s
+  e5 step 8,000/38,269 loss 1.6636 pol 1.6346 val 0.0290 15,345 samples/s
+  e5 step 10,000/38,269 loss 1.6638 pol 1.6348 val 0.0290 15,290 samples/s
+  e5 step 12,000/38,269 loss 1.6637 pol 1.6348 val 0.0289 17,664 samples/s
+  e5 step 14,000/38,269 loss 1.6637 pol 1.6348 val 0.0289 15,927 samples/s
+  e5 step 16,000/38,269 loss 1.6635 pol 1.6346 val 0.0288 16,482 samples/s
+  e5 step 18,000/38,269 loss 1.6636 pol 1.6348 val 0.0288 15,732 samples/s
+  e5 step 20,000/38,269 loss 1.6634 pol 1.6346 val 0.0288 16,324 samples/s
+  e5 step 22,000/38,269 loss 1.6630 pol 1.6342 val 0.0288 16,161 samples/s
+  e5 step 24,000/38,269 loss 1.6625 pol 1.6337 val 0.0288 16,969 samples/s
+  e5 step 26,000/38,269 loss 1.6625 pol 1.6338 val 0.0287 16,353 samples/s
+  e5 step 28,000/38,269 loss 1.6625 pol 1.6338 val 0.0287 15,807 samples/s
+  e5 step 30,000/38,269 loss 1.6613 pol 1.6327 val 0.0287 16,119 samples/s
+  e5 step 32,000/38,269 loss 1.6603 pol 1.6317 val 0.0287 16,461 samples/s
+  e5 step 34,000/38,269 loss 1.6595 pol 1.6309 val 0.0287 15,536 samples/s
+  e5 step 36,000/38,269 loss 1.6588 pol 1.6301 val 0.0286 15,805 samples/s
+  e5 step 38,000/38,269 loss 1.6581 pol 1.6295 val 0.0286 15,923 samples/s
+[RA] epoch 5: train_pol 1.6295 val_pol 1.6241 gap +0.0054 | acc 0.4784 (W 0.4780 / B 0.4788) | val_mse 0.0287 | ema_acc 0.4830 | 15,962/s
+  e6 step 50/38,269 loss 1.6576 pol 1.6293 val 0.0283 1,038 samples/s
+  e6 step 2,000/38,269 loss 1.6481 pol 1.6200 val 0.0281 16,650 samples/s
+  e6 step 4,000/38,269 loss 1.6481 pol 1.6200 val 0.0281 19,975 samples/s
+  e6 step 6,000/38,269 loss 1.6442 pol 1.6161 val 0.0281 16,288 samples/s
+  e6 step 8,000/38,269 loss 1.6424 pol 1.6142 val 0.0281 17,907 samples/s
+  e6 step 10,000/38,269 loss 1.6423 pol 1.6141 val 0.0281 17,578 samples/s
+  e6 step 12,000/38,269 loss 1.6422 pol 1.6141 val 0.0281 19,717 samples/s
+  e6 step 14,000/38,269 loss 1.6427 pol 1.6146 val 0.0281 19,334 samples/s
+  e6 step 16,000/38,269 loss 1.6430 pol 1.6149 val 0.0280 19,961 samples/s
+  e6 step 18,000/38,269 loss 1.6437 pol 1.6158 val 0.0279 19,936 samples/s
+  e6 step 20,000/38,269 loss 1.6441 pol 1.6162 val 0.0279 19,235 samples/s
+  e6 step 22,000/38,269 loss 1.6434 pol 1.6155 val 0.0279 19,805 samples/s
+  e6 step 24,000/38,269 loss 1.6428 pol 1.6150 val 0.0279 18,736 samples/s
+  e6 step 26,000/38,269 loss 1.6422 pol 1.6144 val 0.0279 19,323 samples/s
+  e6 step 28,000/38,269 loss 1.6417 pol 1.6138 val 0.0278 19,045 samples/s
+  e6 step 30,000/38,269 loss 1.6414 pol 1.6136 val 0.0278 19,511 samples/s
+  e6 step 32,000/38,269 loss 1.6411 pol 1.6133 val 0.0278 19,650 samples/s
+  e6 step 34,000/38,269 loss 1.6408 pol 1.6131 val 0.0278 19,873 samples/s
+  e6 step 36,000/38,269 loss 1.6407 pol 1.6129 val 0.0278 20,207 samples/s
+  e6 step 38,000/38,269 loss 1.6399 pol 1.6121 val 0.0278 20,402 samples/s
+[RA] epoch 6: train_pol 1.6121 val_pol 1.6081 gap +0.0040 | acc 0.4823 (W 0.4816 / B 0.4830) | val_mse 0.0276 | ema_acc 0.4844 | 20,447/s
+  e7 step 50/38,269 loss 1.6336 pol 1.6061 val 0.0275 2,248 samples/s
+  e7 step 2,000/38,269 loss 1.6281 pol 1.6005 val 0.0277 20,327 samples/s
+  e7 step 4,000/38,269 loss 1.6274 pol 1.5997 val 0.0277 21,664 samples/s
+  e7 step 6,000/38,269 loss 1.6302 pol 1.6027 val 0.0275 15,902 samples/s
+  e7 step 8,000/38,269 loss 1.6318 pol 1.6044 val 0.0273 17,274 samples/s
+  e7 step 10,000/38,269 loss 1.6313 pol 1.6040 val 0.0273 17,394 samples/s
+  e7 step 12,000/38,269 loss 1.6310 pol 1.6037 val 0.0273 19,145 samples/s
+  e7 step 14,000/38,269 loss 1.6313 pol 1.6040 val 0.0273 18,475 samples/s
+  e7 step 16,000/38,269 loss 1.6314 pol 1.6041 val 0.0273 19,166 samples/s
+  e7 step 18,000/38,269 loss 1.6304 pol 1.6031 val 0.0273 19,412 samples/s
+  e7 step 20,000/38,269 loss 1.6294 pol 1.6021 val 0.0273 18,927 samples/s
+  e7 step 22,000/38,269 loss 1.6289 pol 1.6016 val 0.0273 19,651 samples/s
+  e7 step 24,000/38,269 loss 1.6284 pol 1.6011 val 0.0273 19,013 samples/s
+  e7 step 26,000/38,269 loss 1.6285 pol 1.6013 val 0.0273 19,859 samples/s
+  e7 step 28,000/38,269 loss 1.6288 pol 1.6015 val 0.0273 19,763 samples/s
+  e7 step 30,000/38,269 loss 1.6284 pol 1.6012 val 0.0272 20,051 samples/s
+  e7 step 32,000/38,269 loss 1.6281 pol 1.6009 val 0.0272 20,326 samples/s
+  e7 step 34,000/38,269 loss 1.6279 pol 1.6007 val 0.0272 19,497 samples/s
+  e7 step 36,000/38,269 loss 1.6278 pol 1.6006 val 0.0272 19,674 samples/s
+  e7 step 38,000/38,269 loss 1.6273 pol 1.6001 val 0.0272 19,772 samples/s
+[RA] epoch 7: train_pol 1.6000 val_pol 1.5997 gap +0.0003 | acc 0.4850 (W 0.4844 / B 0.4856) | val_mse 0.0272 | ema_acc 0.4854 | 19,795/s
+  e8 step 50/38,269 loss 1.6161 pol 1.5891 val 0.0270 704 samples/s
+  e8 step 2,000/38,269 loss 1.6224 pol 1.5956 val 0.0268 13,701 samples/s
+  e8 step 4,000/38,269 loss 1.6233 pol 1.5965 val 0.0268 14,969 samples/s
+  e8 step 6,000/38,269 loss 1.6248 pol 1.5980 val 0.0268 17,520 samples/s
+  e8 step 8,000/38,269 loss 1.6258 pol 1.5990 val 0.0268 17,406 samples/s
+  e8 step 10,000/38,269 loss 1.6249 pol 1.5980 val 0.0268 18,439 samples/s
+  e8 step 12,000/38,269 loss 1.6243 pol 1.5974 val 0.0269 18,209 samples/s
+  e8 step 14,000/38,269 loss 1.6235 pol 1.5967 val 0.0269 19,130 samples/s
+  e8 step 16,000/38,269 loss 1.6227 pol 1.5958 val 0.0269 19,025 samples/s
+  e8 step 18,000/38,269 loss 1.6225 pol 1.5956 val 0.0269 19,808 samples/s
+  e8 step 20,000/38,269 loss 1.6224 pol 1.5955 val 0.0269 18,909 samples/s
+  e8 step 22,000/38,269 loss 1.6216 pol 1.5947 val 0.0269 19,403 samples/s
+  e8 step 24,000/38,269 loss 1.6210 pol 1.5941 val 0.0269 19,278 samples/s
+  e8 step 26,000/38,269 loss 1.6211 pol 1.5942 val 0.0269 19,949 samples/s
+  e8 step 28,000/38,269 loss 1.6213 pol 1.5944 val 0.0269 19,640 samples/s
+  e8 step 30,000/38,269 loss 1.6215 pol 1.5946 val 0.0269 20,068 samples/s
+  e8 step 32,000/38,269 loss 1.6217 pol 1.5948 val 0.0269 19,283 samples/s
+  e8 step 34,000/38,269 loss 1.6212 pol 1.5943 val 0.0269 19,537 samples/s
+  e8 step 36,000/38,269 loss 1.6210 pol 1.5941 val 0.0269 19,761 samples/s
+  e8 step 38,000/38,269 loss 1.6208 pol 1.5939 val 0.0269 19,713 samples/s
+[RA] epoch 8: train_pol 1.5939 val_pol 1.5970 gap -0.0032 | acc 0.4859 (W 0.4857 / B 0.4862) | val_mse 0.0269 | ema_acc 0.4858 | 19,765/s
+{
+  "epoch": 8,
+  "lr": 0.0,
+  "train_loss": 1.6207403271643537,
+  "train_policy_loss": 1.5938531876096298,
+  "train_value_mse": 0.026887139328591776,
+  "samples_per_sec": 19765,
+  "seconds": 1983,
+  "val_policy_loss": 1.5970333337183262,
+  "val_value_mse": 0.026903961116555956,
+  "val_acc": 0.485945213471032,
+  "val_acc_white": 0.4857162425609252,
+  "val_acc_black": 0.4861771015512364,
+  "ema_val_policy_loss": 1.597092729371501,
+  "ema_val_value_mse": 0.026915975486254438,
+  "ema_val_acc": 0.4857975209815643,
+  "ema_val_acc_white": 0.4853224271747293,
+  "ema_val_acc_black": 0.4862786676509495,
+  "train_val_gap": -0.0031801461086964355
+}
