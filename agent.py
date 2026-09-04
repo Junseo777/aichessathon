@@ -18,17 +18,15 @@ _PONDER_NODE_BUDGET = 100_000
 _PONDER_JOIN_S = 2.0
 _PRESEARCH_S = float(os.environ.get("CHESS_PRESEARCH_S", "5"))
 _START_KEY = transposition_key(chess.Board())
-_NET, _MANIFEST = load_fastest(
-    Path(__file__).resolve().parent / "weights", policy_temperature=1.359
-)
+_NET, _MANIFEST = load_fastest(Path(__file__).resolve().parent / "weights", policy_temperature=1.0)
 _MCTS = MCTS(
     _NET,
-    fpu_reduction=0.33,
-    fpu_scaled=True,
-    root_fpu=1.0,
-    proofs=True,
+    fpu_reduction=0.25,
+    fpu_scaled=False,
+    root_fpu=None,
+    proofs=False,
     pruning_factor=1.33,
-    draw_score=0.1,
+    draw_score=0.0,
 )
 print(f"init: {_MANIFEST}")
 

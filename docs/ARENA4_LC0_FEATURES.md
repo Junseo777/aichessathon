@@ -77,6 +77,7 @@ that point.
 | 3 | scaled FPU 0.33 | pruning | +8 =30 −12 | 46.0% | 37.3–54.7% | −28 | 60% | **dropped** |
 | 4 | policy temperature 1.359 | pruning | +11 =25 −14 | 47.0% | 37.2–56.8% | -21 | 50% | **dropped** |
 | 5 | root FPU 1.0 | pruning | +7 =27 −16 | 41.0% | 31.9–50.1% | -63 | 54% | **dropped** |
+| 6 | draw score 0.1 | pruning | +11 =30 −9 | 52.0% | 43.3–60.7% | +14 | 60% | **kept** |
 
 **1. Proofs, dropped at 49.0%.** Eleven decisive games in fifty, five to six, all by
 checkmate; the rest threefold repetitions but one. As White the feature side went
@@ -127,6 +128,14 @@ more likely that every root move then carries a real Q from a single visit, so a
 move's one lucky evaluation can attract PUCT visits it would never have earned from
 its prior. The blind-spot problem it was meant to insure against is already handled
 by the first-play-urgency fix. Dropped.
+
+**6. Draw score 0.1, kept at 52.0%** (+11 =30 −9, Elo +14, 95% -47 to +76; as White
++5 =17 −3, as Black +6 =13 −6; no failures). Inside noise both ways. Chain B dropped it on R1 at
+48.1%. On R3 the ±0.3 gates fire in two fifths of positions, on R1 in half, and
+neither shows a clear effect. Kept by the rule on R3, with no claim behind it.
+
+**Chain A final configuration** (the driver's last line): `fpu_reduction=0.25`,
+`pruning_factor=1.33`, `draw_score=0.1`, everything else off, `policy_temperature=1.0`.
 
 ### Chain B, base R1 (box)
 
@@ -199,7 +208,35 @@ live in most positions, and it did not help. Dropped.
 
 ## 4. What to ship
 
-SHIP_PENDING
+Side by side, the two chains agree on three features and disagree on two:
+
+| feature | R3 at ~600 sims (Mac) | R1 at ~1,400 sims (box) | verdict |
+|---|---|---|---|
+| smart pruning | +49, 57.0% | +125, 67.3% (p < 0.0001) | **ship on any net** |
+| proofs | −7, 49.0% | 0, 50.0% | null; no reason to carry it |
+| scaled FPU 0.33 | −28, 46.0% | −7, 49.0% | drop; the constant 0.25 stays |
+| policy temperature 1.359 | −21, 47.0% | +75, 60.6% (p = 0.003) | net- or budget-specific |
+| root FPU 1.0 | −63, 41.0% | +34, 54.8% | net- or budget-specific, same direction |
+| draw score 0.1 | +14, 52.0% | −13, 48.1% | null either way |
+
+**Pruning is the result of this run.** It is the only feature that won on both nets,
+it did so by the largest margins in either chain, and its mechanism is visible in the
+telemetry (96–98% of searches stopped early, the saved clock spent after move 40). It
+is a clock change, not a search-quality change, so it does not depend on the net or
+the budget. It should go to `main` regardless of which net ships.
+
+**The two exploration knobs are the open question.** Temperature and root FPU both
+widen the root, and both help R1 on the box while hurting R3 on the Mac. The chains
+differ in net and budget at once, so neither this document nor the two chains can say
+which. One 52-game arena of R1 with both knobs against R1 without, at a halved clock
+on the box (roughly the Mac's simulations), separates them. If it is the budget, the
+knobs stay off for the ladder, whose hardware is unknown and probably nearer the
+Mac's. If it is the net, they ship with R1 and not with the R2/R3 family.
+
+**Branch defaults** are set to the set both nets support: `pruning_factor=1.33`, all
+else off, temperature 1.0. The per-net lines from the drivers are recorded above for
+whichever net is chosen; the final step before the zip is one 50-game confirmation of
+the chosen line on the chosen net at the Mac's budget.
 
 ## 5. Artifacts
 
@@ -208,3 +245,8 @@ snapshot with its own `agent.py` line and a symlink to the base net.
 `sparring/feat/<k>_<name>/lane{1,2}/` — 25 PGNs and logs each, `results.csv`, `run.log`.
 `sparring/feat/decisions.txt` — the keep/drop line per feature as the driver wrote it.
 `sparring/feat/driver.log` — the driver's timeline.
+
+Chain B lives on the box under `/workspace/lc0feat/`: `<k>_<name>/{with,without,lane1..4}`,
+`decisions.txt`, `driver.log`, and `harness/` (a copy of this repo's harness, because
+the box's checkout predates `--fen`). The box scripts are mirrored in
+`sparring/feat/box/`.
