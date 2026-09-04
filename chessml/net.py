@@ -23,10 +23,19 @@ _NO_PRIORS: npt.NDArray[np.float32] = np.zeros(0, dtype=np.float32)
 
 
 class PolicyValueNet:
-    def __init__(self, session: ort.InferenceSession, name: str, cache_size: int = 60_000) -> None:
+    def __init__(
+        self,
+        session: ort.InferenceSession,
+        name: str,
+        cache_size: int = 60_000,
+        policy_temperature: float = 1.0,
+    ) -> None:
         self.session = session
         self.name = name
         self.cache_size = cache_size
+        # softmax temperature over the legal logits; Lc0 plays at 1.359, which
+        # flattens the priors so low-ranked moves keep some exploration bonus
+        self.policy_temperature = np.float32(policy_temperature)
         # priors and value only; the move list is regenerated on a hit (35 MB full, not 246)
         self.cache: dict[object, tuple[npt.NDArray[np.float32], float]] = {}
         self.hits = 0
@@ -56,7 +65,7 @@ class PolicyValueNet:
         logits, value = self.raw(featurize(board))
         rotate = board.turn == chess.BLACK
         indices = [encode_move(mirror_move(m) if rotate else m) for m in moves]
-        legal_logits = logits[indices]
+        legal_logits = logits[indices] / self.policy_temperature
         legal_logits -= legal_logits.max()
         priors = np.exp(legal_logits)
         priors /= priors.sum()
@@ -85,7 +94,9 @@ def _time_forward(session: ort.InferenceSession, runs: int = 15) -> float:
     return (time.perf_counter() - start) / runs
 
 
-def load_fastest(weights_dir: Path) -> tuple[PolicyValueNet, dict[str, Any]]:
+def load_fastest(
+    weights_dir: Path, policy_temperature: float = 1.0
+) -> tuple[PolicyValueNet, dict[str, Any]]:
     manifest: dict[str, Any] = json.loads((weights_dir / "manifest.json").read_text())
     names = ("model.int8.onnx", "model.onnx")
     candidates = [name for name in names if (weights_dir / name).exists()]
@@ -99,4 +110,5 @@ def load_fastest(weights_dir: Path) -> tuple[PolicyValueNet, dict[str, Any]]:
     # names the net in the game log; manifests exported before 2026-09-04 are identical across runs
     manifest["sha256"] = hashlib.sha256((weights_dir / best_name).read_bytes()).hexdigest()
     print(f"net: {[(n, round(t * 1000, 2)) for t, n in timed]} -> {best_name}")
-    return PolicyValueNet(sessions[best_name], best_name), manifest
+    net = PolicyValueNet(sessions[best_name], best_name, policy_temperature=policy_temperature)
+    return net, manifest
