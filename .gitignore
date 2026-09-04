@@ -4,6 +4,7 @@ __pycache__/
 .ruff_cache/
 submission.zip
 *.pgn
+!rated-games/*.pgn
 weights/
 !baselines/reference-hero/weights/
 data/
