@@ -112,7 +112,18 @@ constant 0.25 stays.
 
 ### Chain B, base R1 (box)
 
-CHAIN_B_PENDING
+Base net: **R1_e8_ema** (`ea52cc6a…`). 52 games per feature (four lanes of 13),
+otherwise as chain A.
+
+| # | feature | kept so far | W-D-L (with) | score | 95% | Elo | draws | decision |
+|---|---|---|---|---|---|---|---|---|
+| 1 | proofs | none | +2 =48 −2 | 50.0% | 44.6–55.4% | 0 | 92% | **kept** (tie) |
+
+**1. Proofs, kept at exactly 50.0%** (+2 =48 −2, no failures). Four decisive games
+in fifty-two. An R1 mirror at the box's ~1,200 simulations per move is draw-saturated,
+so the arena has almost no power and the verdict is the rule's tie-break, not
+evidence. Chain A dropped the same feature at 49.0%; both are nulls, and the
+difference between "kept" and "dropped" here is one game.
 
 ## 4. What to ship
 
