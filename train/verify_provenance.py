@@ -128,6 +128,7 @@ def main() -> int:
             "epochs_planned",
             "seed",
             "value_weight",
+            "value_source",
             "batch",
             "lr",
             "git_commit",
