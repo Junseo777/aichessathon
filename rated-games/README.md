@@ -10,12 +10,15 @@ clock after it. Time control 120 s + 0.5 s.
 The headers do not say. The clocks do: our spend per move matches `_budget_s` in
 `agent.py` to within 10 ms in every game, the opponent's is off by seconds.
 
-What played is the uploaded `submission_R1_e8_ema.zip` (built Sept 4, 15:29):
-its `_budget_s`, `_hands_over_draw_claim` and `_pick` thresholds are identical
-to the working tree, but its search is the Sept 1 PUCT with the FPU fix and
-none of the Sept 4 features (proofs, smart pruning, scaled FPU, policy
-temperature, in-tree draw score). The games agree: not one of the 373 searched
-moves stopped before its deadline.
+The code in play was `main` at f2a78b8 in both of the day's uploads (R3_e8_ema
+at 02:56, R1_e8_ema built 15:29). Rounds 1 to 8 were downloaded at 15:34, so
+they were almost certainly played by the R3 upload; rounds 9 and 10 (17:34) by
+R1 if that upload went in. The dashboard's per-game log settles which net; the
+code is the same either way. Its `_budget_s`, `_hands_over_draw_claim` and
+`_pick` thresholds are identical to the working tree, but its search is the
+Sept 1 PUCT with the FPU fix and none of the Sept 4 features (proofs, smart
+pruning, scaled FPU, policy temperature, in-tree draw score). The games agree:
+not one of the 373 searched moves stopped before its deadline.
 
 | Round | Opponent | Ours | Result | Termination | Stockfish, our view, at the end or at the slip |
 |---|---|---|---|---|---|
