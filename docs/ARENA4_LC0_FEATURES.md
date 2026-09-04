@@ -63,6 +63,7 @@ that point.
 | # | feature | kept so far | W-D-L (with) | score | 95% | Elo | draws | decision |
 |---|---|---|---|---|---|---|---|---|
 | 1 | proofs | none | +5 =39 −6 | 49.0% | 42.5–55.5% | −7 | 78% | **dropped** |
+| 2 | smart pruning | none | +15 =27 −8 | 57.0% | 47.8–66.2% | +49 | 54% | **kept** |
 
 **1. Proofs, dropped at 49.0%.** Eleven decisive games in fifty, five to six, all by
 checkmate; the rest threefold repetitions but one. As White the feature side went
@@ -73,6 +74,19 @@ says proofs hurt; nothing says they help either. On a same-net mirror at this cl
 78% of games are drawn, so the 95% interval is ±6.5 points of score and a feature
 can register only through conversions, of which there were eleven. Proven results
 were designed to matter in exactly those, and did not produce more of them.
+
+**2. Smart pruning, kept at 57.0%** (+15 =27 −8, Elo +49, 95% −15 to +117; as White
++8 =14 −3, as Black +7 =13 −5; no failures). Not significant at 5%, but the mechanism
+is visible in the telemetry and points one way. The pruned side stopped 98% of its
+searches early and spent 1.41 s per move against the other side's 2.29 s, and still
+got *more* simulations per move, 932 against 589: returning the move sooner starts
+the opponent's clock sooner, the ponder thread then fills the cache and the reused
+subtree for the position that actually arrives, and the next search runs largely on
+hits. The banked clock shows up late: from move 40 onwards the pruned side spent
+1.68 s per move to the other side's 1.11 s, because `_budget_s` scales with the time
+left. That is where games are decided, and this arena had 23 decisive games to the
+proofs arena's 11, with the draw rate down from 78% to 54%. Games averaged
+241 s against 286 s, so the rest of the chain runs faster than planned.
 
 ## 4. What to ship
 
