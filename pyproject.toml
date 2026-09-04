@@ -25,6 +25,9 @@ explicit = true
 dev = ["mypy>=1.18", "ruff>=0.14", "pytest>=8.0"]
 train = ["torch>=2.2", "onnx>=1.16"]
 
+[tool.pytest.ini_options]
+testpaths = ["chessml", "train"]
+
 [tool.ruff]
 line-length = 100
 target-version = "py312"

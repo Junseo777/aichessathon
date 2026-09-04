@@ -83,7 +83,8 @@ def main() -> None:
     args = ap.parse_args()
     model = load_capsule(args.capsule_dir)
     sanity(model)
-    print(export(model, args.out))
+    cap = json.loads((args.capsule_dir / "capsule.json").read_text())
+    print(export(model, args.out, args.capsule_dir / cap["weights_file"]))
     verify_parity(model, args.out, strict_int8=False)
     (args.out / "model.int8.onnx").unlink()
 

@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: setup weights baseline-hero play arena zip gate
+.PHONY: setup weights baseline-hero play arena zip test gate
 
 setup:
 	uv sync
@@ -22,7 +22,11 @@ arena:
 zip:
 	uv run python -m harness.package --include chessml
 
+test:
+	uv run pytest -q
+
 gate:
 	uv run ruff check .
 	uv run mypy
+	uv run pytest -q
 	uv run python -m harness.arena --opponent baselines/random --games 2 --base-ms 5000

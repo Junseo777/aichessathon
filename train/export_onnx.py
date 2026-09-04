@@ -1,4 +1,5 @@
 import argparse
+import hashlib
 import json
 from pathlib import Path
 
@@ -12,7 +13,15 @@ class Int8GateFailure(AssertionError):
     pass
 
 
-def export(model: ChessNet, out_dir: Path) -> dict[str, object]:
+def sha256(path: Path) -> str:
+    h = hashlib.sha256()
+    with open(path, "rb") as fh:
+        for chunk in iter(lambda: fh.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def export(model: ChessNet, out_dir: Path, checkpoint: Path | None = None) -> dict[str, object]:
     out_dir.mkdir(parents=True, exist_ok=True)
     model.eval()
     fp32_path = out_dir / "model.onnx"
@@ -33,11 +42,17 @@ def export(model: ChessNet, out_dir: Path) -> dict[str, object]:
 
     quantize_dynamic(str(fp32_path), str(int8_path), weight_type=QuantType.QInt8)
 
-    manifest = {
+    # The checkpoint entry is what tells two exports of the same architecture apart
+    # in the agent's init line, and what lets the tests know a random-init export
+    # (checkpoint: null) from a trained one.
+    manifest: dict[str, object] = {
         "d_model": model.cfg.d_model,
         "n_heads": model.cfg.n_heads,
         "n_blocks": model.cfg.n_blocks,
         "params": count_params(model),
+        "checkpoint": None
+        if checkpoint is None
+        else {"file": checkpoint.name, "sha256": sha256(checkpoint)},
     }
     (out_dir / "manifest.json").write_text(json.dumps(manifest, indent=1))
     return manifest
@@ -95,7 +110,7 @@ def main() -> None:
         model = ChessNet(cfg)
         print("no checkpoint given: exporting RANDOM weights (runtime testing only)")
 
-    manifest = export(model, args.out)
+    manifest = export(model, args.out, args.checkpoint)
     try:
         verify_parity(model, args.out, strict_int8=args.checkpoint is not None)
     except Int8GateFailure as exc:

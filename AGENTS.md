@@ -71,7 +71,8 @@ and they change, so fetch them before you rely on a number.
 make play      # one game against a baseline, real time control
 make arena     # 20 fast games against a baseline, with a score
 make zip       # build submission.zip with agent.py at the root
-make gate      # ruff, mypy, and two games that have to finish cleanly
+make test      # pytest; the mate-finding tests need a trained net in weights/
+make gate      # ruff, mypy, pytest, and two games that have to finish cleanly
 ```
 
 Nothing here decides whether an upload is accepted. The platform validates on upload and writes a

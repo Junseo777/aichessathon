@@ -9,7 +9,7 @@ import pytest
 from chessml.encoding import transposition_key
 from chessml.net import PolicyValueNet, load_fastest
 from chessml.search import MCTS, Node
-from chessml.tests.weights_fixture import require_weights
+from chessml.tests.weights_fixture import needs_trained_net, require_weights
 
 WEIGHTS = require_weights()
 
@@ -23,6 +23,7 @@ def fresh_counts(board: chess.Board) -> dict[object, int]:
     return {transposition_key(board): 1}
 
 
+@needs_trained_net()
 def test_finds_mate_in_one(net: PolicyValueNet) -> None:
     board = chess.Board("6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1")
     result = MCTS(net).run(board, fresh_counts(board), time.monotonic() + 30.0, max_sims=400)
@@ -30,6 +31,7 @@ def test_finds_mate_in_one(net: PolicyValueNet) -> None:
     assert best == chess.Move.from_uci("a1a8")
 
 
+@needs_trained_net()
 def test_finds_mate_in_one_as_black(net: PolicyValueNet) -> None:
     board = chess.Board("r5k1/5ppp/8/8/8/8/5PPP/6K1 b - - 0 1")
     result = MCTS(net).run(board, fresh_counts(board), time.monotonic() + 30.0, max_sims=400)
