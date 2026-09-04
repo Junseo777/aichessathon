@@ -34,16 +34,15 @@ pruning, scaled FPU, policy temperature, in-tree draw score).
 | 8 | fuzzybot | Black | draw | threefold | +2.2 for us when the draw was declared |
 | 9 | blunder-buss | White | draw | threefold | +4.3 at move 59, +0.3 after 60. Qe7 and 61. c7 |
 | 10 | meshpotato | Black | loss | mate | +1.5 after 14. Bxa7, gone after 14...Qa5; 30...Nd5 lost the ending |
-| 11 | im-master | Black | win | mate | not yet analysed |
-| 12 | zak | White | win | mate | not yet analysed |
-| 13 | alien-gambit | Black | win | mate | not yet analysed |
-| 14 | pgn | Black | draw | stalemate | bare king against king and pawn; the opponent stalemated us at move 111 |
-| 15 | 50centraise | White | win | mate | first game of the pruning build; two queens mated |
+| 11 | im-master | Black | win | mate | +4 by move 35; 35...Bxe5 gave a third back, the opponent's 35. fxe5 and 36. Kf2 gave it all back |
+| 12 | zak | White | win | mate | +6 by move 40 and converted, with 4.1 s left at move 68 |
+| 13 | alien-gambit | Black | win | mate | declined a forced mate at moves 40 and 44 for slower wins; neither is provable within 800 simulations, so proofs would not have changed them |
+| 14 | pgn | Black | draw | stalemate | +4.3 at move 44; 45...fxg2 at 1.6 s with 15.6 s left walked into a queen sacrifice; bare king by move 64, the opponent stalemated us at 111 |
+| 15 | 50centraise | White | win | mate | first game of the pruning build: worst move 5.8%, eval rising throughout, 36 s left at the end |
 
-Score 10.5/15. The first ten games are analysed below; the four wins among them
-were all against opponents who blundered into mate. Rounds 11 to 15 (downloaded
-22:18) are fingerprinted from the clocks only and have not been through
-Stockfish.
+Score 10.5/15. The wins were all against opponents who blundered, seven of the
+eight into mate. Rounds 11 to 15 were downloaded at 22:18 and analysed the same
+way as the first ten.
 
 ## What the games show
 
@@ -112,6 +111,17 @@ Round 10 was lost at full budget: 14...Qa5 (94 s in hand, Stockfish wanted b6,
 +1.5) and 30...Nd5 (46 s in hand, Nd7 held at 0.0) were each searched for the
 formula's 3.4 s. With 6 s the working-tree search finds both b6 and Nd7. Those
 are the first errors in the set that time alone would have fixed.
+
+**Rounds 11 to 15 repeat the pattern and show the pruning build's clock.** Round
+14 is the clearest throw in the set: +4.3 at move 44, then 45...fxg2 at 1.6 s with
+15.6 s left, into 46. Qxf6+ and a lost rook ending. Replaying that position with
+the step-1 search picks fxg2 up to 200 simulations and abandons it at 250, and
+proofs make no difference at any budget, since the refutation is a material win,
+not a mate. Round 15, the first ladder game with pruning, reached move 45 with
+76 s against 16 s in every pre-pruning game, so the same position would have
+had the full 4 s budget. Round 13 is the counter-example for proofs: the bot
+twice declined a forced mate Stockfish sees, but neither is provable within 800
+simulations, so proofs would not have played them either; it won anyway.
 
 **A signature worth acting on.** In every replayed decisive error the
 most-visited move had a lower q than a less-visited rival. Scoring each pick
