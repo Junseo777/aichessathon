@@ -1,0 +1,37 @@
+model d96 x b12: 1,381,050 params
+shard /workspace/data/shard_8m n=8,000,000
+  loading train: 7,837,574 rows (ram)
+    10.5 GB in 34s; value target: lichess on 8.87% of rows, outcome elsewhere; policy target: human move mixed with multipv lines on 100.00% of rows, the human move elsewhere
+  loading val: 162,426 rows (ram)
+    0.2 GB in 2s; value target: lichess on 8.72% of rows, outcome elsewhere; policy target: human move mixed with multipv lines on 100.00% of rows, the human move elsewhere
+git c4b6435547eb  shard meta sha256 55ffa1292d7b9e5d  value source lichess  policy source mix (alpha 0.5, temperature 0.05)
+steps/epoch 7,653  total 7,653
+  e1 step 50/7,653 loss 5.8994 pol 5.1806 val 0.7187 7,704 samples/s
+  e1 step 2,000/7,653 loss 3.8316 pol 3.1996 val 0.6320 13,986 samples/s
+  e1 step 4,000/7,653 loss 3.3839 pol 2.7691 val 0.6149 14,141 samples/s
+  e1 step 6,000/7,653 loss 3.1516 pol 2.5493 val 0.6023 14,186 samples/s
+[R8smoke] epoch 1: train_pol 2.4378 val_pol 1.8258 gap +0.4159 | acc 0.4370 (W 0.4384 / B 0.4356) | val_mse 0.5640 | ema_acc 0.4351 | 14,212/s
+{
+  "epoch": 1,
+  "lr": 0.0,
+  "train_loss": 3.0323377471803203,
+  "train_policy_loss": 2.4378075273492112,
+  "train_value_mse": 0.5945302191301528,
+  "samples_per_sec": 14212,
+  "seconds": 551,
+  "val_policy_loss": 1.8258409027783375,
+  "val_value_mse": 0.5640302156127474,
+  "val_acc": 0.43697437602354305,
+  "val_acc_white": 0.438350631548027,
+  "val_acc_black": 0.4355813780629816,
+  "val_target_loss": 2.0219348796508596,
+  "val_acc_engine": 0.37391796879809885,
+  "ema_val_policy_loss": 1.836873301919901,
+  "ema_val_value_mse": 0.5651976190647989,
+  "ema_val_acc": 0.4351458510337015,
+  "ema_val_acc_white": 0.43650249681778125,
+  "ema_val_acc_black": 0.4337727013701345,
+  "ema_val_target_loss": 2.0311052559306786,
+  "ema_val_acc_engine": 0.3715415019762846,
+  "train_val_gap": 0.41587264769835164
+}

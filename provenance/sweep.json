@@ -1,0 +1,98 @@
+[
+  {
+    "pos_per_sec": 533.9,
+    "seconds": 187.3,
+    "median_nodes": 25015,
+    "p90_nodes": 25029,
+    "median_depth_line1": 10,
+    "mixed_depth_frac": 0.6751,
+    "order_disagree_frac": 0.2092,
+    "mean_lines": 3.94,
+    "config": "nodes=25000",
+    "workers": 16
+  },
+  {
+    "pos_per_sec": 1199.8,
+    "seconds": 83.3,
+    "median_nodes": 10005,
+    "p90_nodes": 10012,
+    "median_depth_line1": 8,
+    "mixed_depth_frac": 0.6881,
+    "order_disagree_frac": 0.2216,
+    "mean_lines": 3.94,
+    "config": "nodes=10000",
+    "workers": 16
+  },
+  {
+    "pos_per_sec": 322.9,
+    "seconds": 309.7,
+    "median_nodes": 39258,
+    "p90_nodes": 80613,
+    "median_depth_line1": 10,
+    "mixed_depth_frac": 0.0025,
+    "order_disagree_frac": 0.0014,
+    "mean_lines": 3.94,
+    "config": "depth=10",
+    "workers": 16
+  },
+  {
+    "pos_per_sec": 142.2,
+    "seconds": 703.0,
+    "median_nodes": 112209,
+    "p90_nodes": 150129,
+    "median_depth_line1": 12,
+    "mixed_depth_frac": 0.2293,
+    "order_disagree_frac": 0.0648,
+    "mean_lines": 3.94,
+    "config": "depth=12",
+    "workers": 16
+  },
+  {
+    "pos_per_sec": 359.3,
+    "seconds": 278.3,
+    "median_nodes": 25015,
+    "p90_nodes": 25029,
+    "median_depth_line1": 10,
+    "mixed_depth_frac": 0.671,
+    "order_disagree_frac": 0.207,
+    "mean_lines": 3.94,
+    "config": "nodes=25000",
+    "workers": 32
+  },
+  {
+    "pos_per_sec": 857.2,
+    "seconds": 116.7,
+    "median_nodes": 10005,
+    "p90_nodes": 10012,
+    "median_depth_line1": 8,
+    "mixed_depth_frac": 0.6864,
+    "order_disagree_frac": 0.2196,
+    "mean_lines": 3.94,
+    "config": "nodes=10000",
+    "workers": 32
+  },
+  {
+    "pos_per_sec": 208.1,
+    "seconds": 480.5,
+    "median_nodes": 39196,
+    "p90_nodes": 80442,
+    "median_depth_line1": 10,
+    "mixed_depth_frac": 0.0025,
+    "order_disagree_frac": 0.0013,
+    "mean_lines": 3.94,
+    "config": "depth=10",
+    "workers": 32
+  },
+  {
+    "pos_per_sec": 88.5,
+    "seconds": 1130.3,
+    "median_nodes": 112083,
+    "p90_nodes": 150128,
+    "median_depth_line1": 12,
+    "mixed_depth_frac": 0.2278,
+    "order_disagree_frac": 0.0635,
+    "mean_lines": 3.94,
+    "config": "depth=12",
+    "workers": 32
+  }
+]

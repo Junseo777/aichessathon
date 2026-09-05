@@ -1,0 +1,5 @@
+[2026-09-05T06:38:56Z] gpu queue start: waiting for the R6b trainer to exit
+[2026-09-05T12:06:57Z] R6b finished: [R6b] epoch 16: train_pol 1.2903 val_pol 1.3285 gap -0.0382 | acc 0.5545 (W 0.5540 / B 0.5550) | val_mse 0.5404 | ema_acc 0.5546 | 30,052/s
+[2026-09-05T12:07:33Z] exported R6b_e16: exported 1,381,050 params to /workspace/weights/R6b_e16/; sha256 30c2bbcb005e0fa6
+[2026-09-05T12:07:47Z] exported R6b_e16_ema: exported 1,381,050 params to /workspace/weights/R6b_e16_ema/; sha256 2059074eed3b5aea
+[2026-09-05T12:07:47Z] === R8: d96 x b12, --value-source lichess --policy-source multipv --policy-temperature 0.05, 8 epochs, seed 0 ===

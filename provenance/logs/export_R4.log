@@ -1,0 +1,18 @@
+--- R4_e8 ---
+/workspace/bracket/repo/train/export_onnx.py:37: DeprecationWarning: You are using the legacy TorchScript-based ONNX export. Starting in PyTorch 2.9, the new torch.export-based ONNX exporter has become the default. Learn more about the new export logic: https://docs.pytorch.org/docs/stable/onnx_export.html. For exporting control flow: https://pytorch.org/tutorials/beginner/onnx/export_control_flow_model_to_onnx_tutorial.html
+  torch.onnx.export(
+/workspace/bracket/repo/train/model.py:44: TracerWarning: Iterating over a tensor might cause the trace to be incorrect. Passing a tensor of different shape won't change the number of iterations executed (and might lead to errors or silently give incorrect results).
+  q, k, v = qkv.permute(2, 0, 3, 1, 4)
+WARNING:root:Please consider to run pre-processing before quantization. Refer to example: https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/image_classification/cpu/ReadMe.md 
+parity: fp32 exact, int8 argmax agreement 0.871, int8 value err 0.0011
+int8 below the gate: int8 argmax agreement too low: 0.87109375. kept fp32, removed model.int8.onnx
+exported 629,498 params to /workspace/weights/R4_e8/
+--- R4_e8_ema ---
+/workspace/bracket/repo/train/export_onnx.py:37: DeprecationWarning: You are using the legacy TorchScript-based ONNX export. Starting in PyTorch 2.9, the new torch.export-based ONNX exporter has become the default. Learn more about the new export logic: https://docs.pytorch.org/docs/stable/onnx_export.html. For exporting control flow: https://pytorch.org/tutorials/beginner/onnx/export_control_flow_model_to_onnx_tutorial.html
+  torch.onnx.export(
+/workspace/bracket/repo/train/model.py:44: TracerWarning: Iterating over a tensor might cause the trace to be incorrect. Passing a tensor of different shape won't change the number of iterations executed (and might lead to errors or silently give incorrect results).
+  q, k, v = qkv.permute(2, 0, 3, 1, 4)
+WARNING:root:Please consider to run pre-processing before quantization. Refer to example: https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/image_classification/cpu/ReadMe.md 
+parity: fp32 exact, int8 argmax agreement 0.879, int8 value err 0.0008
+int8 below the gate: int8 argmax agreement too low: 0.87890625. kept fp32, removed model.int8.onnx
+exported 629,498 params to /workspace/weights/R4_e8_ema/

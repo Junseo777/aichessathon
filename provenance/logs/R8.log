@@ -1,0 +1,5 @@
+model d96 x b12: 1,381,050 params
+shard /workspace/data/shard_40m n=40,000,000
+  loading train: 39,187,501 rows (block-shuffled, 52.7 GB on disk; resident 5.6 GB window x2 + 0.4 GB staging)
+    value target: lichess on 8.84% of rows, outcome elsewhere; policy target: multipv lines on 100.00% of rows, the human move elsewhere; 153 blocks of 262,144
+  loading val: 812,499 rows (ram)
