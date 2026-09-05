@@ -19,33 +19,95 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from chessml.encoding import SCALE
 from pipeline.shard import SPLIT_TRAIN, SPLIT_VAL, Shard
-from train.loader import VALUE_SOURCES, WINDOW_BLOCKS, make_split, side_to_move
-from train.model import ChessNet, Config, count_params
+from train.loader import (
+    POLICY_SOURCES,
+    VALUE_SOURCES,
+    WINDOW_BLOCKS,
+    SoftLabels,
+    make_split,
+    side_to_move,
+)
+from train.model import NUM_MOVES, ChessNet, Config, count_params
+
+SoftTensors = tuple[torch.Tensor, torch.Tensor]  # MultiPV moves (B, 4) long, values (B, 4) float
 
 
-def to_gpu(x: np.ndarray, p: np.ndarray, v: np.ndarray, dev: torch.device):
+def to_gpu(x: np.ndarray, p: np.ndarray, v: np.ndarray, soft: SoftLabels | None, dev: torch.device):
     xt = torch.from_numpy(np.ascontiguousarray(x)).to(dev, non_blocking=True).float().div_(SCALE)
     pt = torch.from_numpy(p).to(dev, non_blocking=True)
     vt = torch.from_numpy(v).to(dev, non_blocking=True)
-    return xt, pt, vt
+    st: SoftTensors | None = None
+    if soft is not None:
+        st = (
+            torch.from_numpy(soft[0]).to(dev, non_blocking=True).long(),
+            torch.from_numpy(soft[1]).to(dev, non_blocking=True).float(),
+        )
+    return xt, pt, vt, st
+
+
+def policy_target(
+    human: torch.Tensor, soft: SoftTensors | None, alpha: float, temperature: float
+) -> torch.Tensor:
+    """The policy distribution one batch is trained towards, (B, NUM_MOVES), rows summing to 1.
+
+    human        the move played, (B,)
+    soft         the MultiPV lines: moves (B, 4) with -1 where absent, values (B, 4) on the
+                 [-1, 1] scale with NaN where absent; or None
+    alpha        the human move's share on rows that have engine lines; the lines share the rest,
+                 softmaxed over value / temperature. Rows without a line, and every row when soft
+                 is None, are one-hot on the human move.
+    """
+    n = human.size(0)
+    rows = torch.arange(n, device=human.device)
+    target = torch.zeros(n, NUM_MOVES, device=human.device)
+    if soft is None:
+        target[rows, human] = 1.0
+        return target
+    moves, values = soft
+    present = moves >= 0
+    has = present.any(dim=1)
+    scores = torch.where(present, values, torch.full_like(values, float("-inf"))) / temperature
+    weight = torch.softmax(scores, dim=1)  # NaN on rows with no line, 0 on absent entries
+    weight = torch.where(present, weight, torch.zeros_like(weight))
+    share = torch.where(
+        has, torch.full((n,), alpha, device=human.device), torch.ones(n, device=human.device)
+    )
+    target.scatter_add_(1, moves.clamp(min=0), (1.0 - share).unsqueeze(1) * weight)
+    target[rows, human] += share
+    return target
 
 
 @torch.no_grad()
-def evaluate(model: torch.nn.Module, val, dev: torch.device, batch: int) -> dict:
+def evaluate(
+    model: torch.nn.Module, val, dev: torch.device, batch: int, alpha: float, temperature: float
+) -> dict:
+    """val_policy_loss and val_acc are always against the human move, so runs stay comparable;
+    under a soft policy source val_target_loss is against the training target and
+    val_acc_engine against the engine's best line."""
     model.eval()
     tot = correct = 0
     correct_w = n_w = correct_b = n_b = 0
-    pol_loss = val_mse = 0.0
+    pol_loss = val_mse = target_loss = 0.0
+    engine_hit = engine_n = 0
     steps = 0
-    for x, p, v, stm in val.batches(batch, None):
-        xt, pt, vt = to_gpu(x, p, v, dev)
+    soft_seen = False
+    for x, p, v, stm, soft in val.batches(batch, None):
+        xt, pt, vt, st = to_gpu(x, p, v, soft, dev)
         with torch.autocast("cuda", dtype=torch.bfloat16):
             logits, value = model(xt)
         logits = logits.float()
         value = value.float().squeeze(-1)
         pol_loss += F.cross_entropy(logits, pt).item()
         val_mse += F.mse_loss(value, vt).item()
-        hit = (logits.argmax(dim=1) == pt).cpu().numpy()
+        top = logits.argmax(dim=1)
+        if st is not None:
+            soft_seen = True
+            target_loss += F.cross_entropy(logits, policy_target(pt, st, alpha, temperature)).item()
+            best = st[0][:, 0]
+            labelled = best >= 0
+            engine_hit += int((top[labelled] == best[labelled]).sum())
+            engine_n += int(labelled.sum())
+        hit = (top == pt).cpu().numpy()
         correct += int(hit.sum())
         tot += hit.size
         w = stm == 1
@@ -55,13 +117,17 @@ def evaluate(model: torch.nn.Module, val, dev: torch.device, batch: int) -> dict
         n_b += int((~w).sum())
         steps += 1
     model.train()
-    return {
+    out = {
         "val_policy_loss": pol_loss / max(steps, 1),
         "val_value_mse": val_mse / max(steps, 1),
         "val_acc": correct / max(tot, 1),
         "val_acc_white": correct_w / max(n_w, 1),
         "val_acc_black": correct_b / max(n_b, 1),
     }
+    if soft_seen:
+        out["val_target_loss"] = target_loss / max(steps, 1)
+        out["val_acc_engine"] = engine_hit / max(engine_n, 1)
+    return out
 
 
 class EMA:
@@ -128,6 +194,28 @@ def main() -> int:
         "lichess = the [%%eval] where present else outcome (R1's target); outcome = the "
         "game result only; blend = 0.5 engine + 0.5 outcome where the engine label exists",
     )
+    ap.add_argument(
+        "--policy-source",
+        choices=POLICY_SOURCES,
+        default="human",
+        help="policy target: human = the move played, one-hot (R0-R7); multipv = the Stockfish "
+        "MultiPV lines softmaxed over value / temperature where they exist, the human move "
+        "elsewhere (R8); mix = alpha x human + (1 - alpha) x multipv where lines exist (R8b)",
+    )
+    ap.add_argument(
+        "--policy-alpha",
+        type=float,
+        default=0.5,
+        help="the human move's share under --policy-source mix (multipv is alpha 0)",
+    )
+    ap.add_argument(
+        "--policy-temperature",
+        type=float,
+        default=0.05,
+        help="softmax temperature over the MultiPV values on the [-1, 1] scale; at 0.05 the second "
+        "line carries 0.6x the first's mass at the shard's median gap of 0.024 and 0.03x at the "
+        "90th-percentile gap of 0.18",
+    )
     ap.add_argument("--epochs", type=int, default=8)
     ap.add_argument("--batch", type=int, default=1024)
     ap.add_argument("--lr", type=float, default=1e-3)
@@ -148,6 +236,11 @@ def main() -> int:
         "one; costs a second window of RAM",
     )
     args = ap.parse_args()
+    if not 0.0 <= args.policy_alpha <= 1.0:
+        ap.error("--policy-alpha must lie in [0, 1]")
+    if args.policy_temperature <= 0.0:
+        ap.error("--policy-temperature must be positive")
+    alpha = {"human": 1.0, "multipv": 0.0, "mix": args.policy_alpha}[args.policy_source]
 
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
@@ -170,8 +263,11 @@ def main() -> int:
         window_blocks=args.window_blocks,
         prefetch=args.prefetch,
         value_source=args.value_source,
+        policy_source=args.policy_source,
     )
-    val = make_split(sh, SPLIT_VAL, stm, "val", value_source=args.value_source)
+    val = make_split(
+        sh, SPLIT_VAL, stm, "val", value_source=args.value_source, policy_source=args.policy_source
+    )
 
     opt = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     steps_per_epoch = train.n // args.batch
@@ -184,9 +280,12 @@ def main() -> int:
     rng = np.random.default_rng(args.seed)
     commit = git_commit()
     fingerprint = shard_fingerprint(args.shard)
+    policy_desc = args.policy_source
+    if args.policy_source != "human":
+        policy_desc += f" (alpha {alpha}, temperature {args.policy_temperature})"
     print(
         f"git {commit[:12]}  shard meta sha256 {fingerprint['meta_sha256'][:16]}  "
-        f"value source {args.value_source}",
+        f"value source {args.value_source}  policy source {policy_desc}",
         flush=True,
     )
     print(f"steps/epoch {steps_per_epoch:,}  total {total_steps:,}", flush=True)
@@ -197,13 +296,16 @@ def main() -> int:
         seen = 0
         run_loss = run_pol = run_val = 0.0
         steps = 0
-        for x, p, v, _ in train.batches(args.batch, rng):
-            xt, pt, vt = to_gpu(x, p, v, dev)
+        for x, p, v, _, soft in train.batches(args.batch, rng):
+            xt, pt, vt, st = to_gpu(x, p, v, soft, dev)
             with torch.autocast("cuda", dtype=torch.bfloat16):
                 logits, value = model(xt)
             logits = logits.float()
             value = value.float().squeeze(-1)
-            pol = F.cross_entropy(logits, pt)
+            if st is None:
+                pol = F.cross_entropy(logits, pt)
+            else:
+                pol = F.cross_entropy(logits, policy_target(pt, st, alpha, args.policy_temperature))
             vl = F.mse_loss(value, vt)
             loss = pol + args.value_weight * vl
             opt.zero_grad(set_to_none=True)
@@ -226,8 +328,8 @@ def main() -> int:
                 )
 
         secs = time.time() - t0
-        m_raw = evaluate(model, val, dev, args.batch)
-        m_ema = evaluate(ema.shadow, val, dev, args.batch)
+        m_raw = evaluate(model, val, dev, args.batch, alpha, args.policy_temperature)
+        m_ema = evaluate(ema.shadow, val, dev, args.batch, alpha, args.policy_temperature)
         row = {
             "epoch": epoch,
             "lr": sched.get_last_lr()[0],
@@ -238,7 +340,8 @@ def main() -> int:
             "seconds": round(secs),
             **m_raw,
             **{f"ema_{k}": v for k, v in m_ema.items()},
-            "train_val_gap": run_pol / max(steps, 1) - m_raw["val_policy_loss"],
+            "train_val_gap": run_pol / max(steps, 1)
+            - m_raw.get("val_target_loss", m_raw["val_policy_loss"]),
         }
         history.append(row)
         print(
@@ -257,6 +360,9 @@ def main() -> int:
             "seed": args.seed,
             "value_weight": args.value_weight,
             "value_source": args.value_source,
+            "policy_source": args.policy_source,
+            "policy_alpha": alpha,
+            "policy_temperature": args.policy_temperature,
             "batch": args.batch,
             "lr": args.lr,
             "git_commit": commit,
