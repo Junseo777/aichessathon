@@ -1,4 +1,4 @@
-# ARENA #11 — step 2: the clock formula, dropped at 44.0% in a measurement a tenth of the platform's speed
+# ARENA #13 — step 2: the clock formula, dropped at 44.0% in a measurement a tenth of the platform's speed
 
 Continues `docs/ARENA10_STEP1_REPETITION.md`. Written to be read cold. Branch `ship-chain`;
 the change is commit `591845d`, reverted to the old constants in `60b7bdf` after this arena.

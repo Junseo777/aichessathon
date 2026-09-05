@@ -1,4 +1,4 @@
-# ARENA #12 — the submission on the Stockfish limit-strength ladder
+# ARENA #14 — the submission on the Stockfish limit-strength ladder
 
 An absolute reference for the build uploaded on 2026-09-05, measured by the ARENA #1
 method on the RunPod box. Written to be read cold.
@@ -68,7 +68,7 @@ convert still applies. **The platform runs this net at 0.37–0.51 of the box's 
 agent's 5-second pre-search at init did 768–1,070 simulations in the platform's match logs
 (dashboard, 2026-09-05) against 1,664–2,304 (median 2,112) in these 90 games, so the box's
 1,337 simulations per move correspond to about 490–680 on the platform, roughly 500: this
-run searched 2–2.7 times deeper than the platform does, 1–1.4 doublings. If ARENA #10's 21 Elo per doubling holds, the platform-budget
+run searched 2–2.7 times deeper than the platform does, 1–1.4 doublings. If ARENA #11's 21 Elo per doubling holds, the platform-budget
 figure sits a few tens of points lower on this scale; the honest correction is to re-run the
 ladder with the bot capped at 500 simulations per move (`max_sims=500` at the `_MCTS.run`
 call in `agent.py`, the clock left as a safety net), which is item 6 in

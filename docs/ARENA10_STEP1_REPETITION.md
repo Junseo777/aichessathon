@@ -67,7 +67,7 @@ are low; both sides shared the conditions.
 against the live build; B is 58.0% with the interval's lower edge at 49.1%, and A
 against the older code is significant on its own. The upload is
 `aichessathon-step1/submission.zip`; it becomes the reference for the chain that
-follows (ARENA #11 onwards: the clock formula, the pick rule, proofs, the d128 net).
+follows (ARENA #13 onwards: the clock formula, the pick rule, proofs, the d128 net).
 
 What would change it: a loss in the rated games to a forced repetition the new rule
 does not see, or a validation failure of the zip on the platform. The zip's `agent.py`

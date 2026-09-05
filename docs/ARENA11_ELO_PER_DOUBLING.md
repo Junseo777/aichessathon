@@ -1,4 +1,4 @@
-# ARENA #10 — what is a doubling of search worth?
+# ARENA #11 — what is a doubling of search worth?
 
 Every size decision in this project trades network accuracy against simulations per
 move, and until now the exchange rate was a guess. ARENA9 needed it: R6a lost by 67 Elo

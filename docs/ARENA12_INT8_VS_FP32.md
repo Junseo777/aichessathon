@@ -1,4 +1,4 @@
-# ARENA #11 — int8 R1 against fp32 R1
+# ARENA #12 — int8 R1 against fp32 R1
 
 Every trained checkpoint has failed the exporter's int8 gate, 99% top-move agreement
 with fp32, so only fp32 has ever played. The gate is a policy, not a measurement of

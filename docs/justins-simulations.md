@@ -45,7 +45,7 @@ Report the point estimate and the interval either way.
   merged; the harness suspends the idle agent between moves, as the platform does). The
   code is `agent.py`, `chessml/`, `harness/` (the referee that mirrors the platform's
   clock and protocol; do not edit it), `docs/` (read `docs/ARENA10_STEP1_REPETITION.md`
-  and `docs/ARENA11_STEP2_CLOCK.md` for the report format and the story so far),
+  and `docs/ARENA13_STEP2_CLOCK.md` for the report format and the story so far),
   `AGENTS.md` (the repo's rules; read it first).
 - `weights/R1_e8_ema/model.onnx` and `manifest.json` — the net. Its sha256 must be
   `ea52cc6aac7704abec84b8628a86cbd9df8999ea178bcf75c199a8f245c9ac5a`; check it.
@@ -116,14 +116,14 @@ sha256, moves print `sims=`, and the game ends with a result line, not a traceba
 
 ## 6. Reporting
 
-For each arena, one file `docs/ARENA<n>_<NAME>.md` in the repo (start at 13; ARENA #12 is
+For each arena, one file `docs/ARENA<n>_<NAME>.md` in the repo (start at 15; ARENA #14 is
 the Stockfish ladder already in `docs/`), in the
 format of ARENA10 and ARENA11: what was tested and why, the result table (W-D-L, score,
 95% interval, Elo, failures and which side), colour split, terminations, mean game
 length, simulations and seconds per move for each side in move brackets (0–19, 20–29,
 30–39, 40–49, 50–59, 60+), the machine's speed, and a decision section that says kept or
 dropped by the rule and what would change the reading. Commit each report on a branch
-`justin-arenas` off `main`, conventional commit style (`docs: ARENA #12, ...`),
+`justin-arenas` off `main`, conventional commit style (`docs: ARENA #14, ...`),
 rationale in the body, no co-author trailers. Do not push. When done, hand back a git
 bundle of the branch and the `sparring/` output directories (PGNs, logs, results,
 summaries) as a zip.
@@ -145,15 +145,15 @@ Also keep a running `sparring/justin/decisions.txt`, one line per arena:
 - The repo's `make zip` is not your job. Nothing you run should touch `main` or any
   upload.
 
-## 8. Added 2026-09-05 after ARENA #12: the Stockfish ladder follow-ups
+## 8. Added 2026-09-05 after ARENA #14: the Stockfish ladder follow-ups
 
-Read `docs/ARENA12_STOCKFISH_LADDER_SUBMISSION.md` first. It measured the 03:26 upload (R1
+Read `docs/ARENA14_STOCKFISH_LADDER_SUBMISSION.md` first. It measured the 03:26 upload (R1
 with pruning, policy temperature and root FPU) at 3077 (2998–3158) on Stockfish 18's
 `UCI_LimitStrength` rungs 2800/3000/3190, 90 games, 120 s + 0.5 s, pondering off, on the
 training box. Two things make that number provisional and two findings need their own runs,
 so the items below go after items 1 to 5 in priority, except item 6, which comes right after
 item 1. Everything in this section is a measurement, not a keep-or-drop: report what you
-read and how it moves the ARENA #12 figure.
+read and how it moves the ARENA #14 figure.
 
 **Fixed facts you need.** The platform's own match logs show the agent's 5-second init
 pre-search at 768–1,070 simulations, against 1,664–2,304 in the box's ladder games, so the
@@ -169,10 +169,10 @@ machine-independent form.
 
 | priority | item | setup | why | what to read |
 |---|---|---|---|---|
-| 6 (run right after item 1) | **ladder at the platform's budget** | reference with `max_sims=500` vs Stockfish 18 at `UCI_Elo` 2800, 3000, 3190; 30 games per rung, the fifteen curated positions in `sparring/openings_ladder.tsv`, each with both colours; then, if the 3190 score is 50% or more, a fourth rung with `UCI_LimitStrength` off | ARENA #12 searched 2.7x deeper than the platform; with the cap, the bot's side no longer depends on this PC's speed, so this is the competition-relevant absolute number | per-rung W-D-L and score, the joint fit from `ladder_fit.py`, and the bot's mean `sims=` per move (must read ~500); compare rung by rung with ARENA #12 §1 |
+| 6 (run right after item 1) | **ladder at the platform's budget** | reference with `max_sims=500` vs Stockfish 18 at `UCI_Elo` 2800, 3000, 3190; 30 games per rung, the fifteen curated positions in `sparring/openings_ladder.tsv`, each with both colours; then, if the 3190 score is 50% or more, a fourth rung with `UCI_LimitStrength` off | ARENA #14 searched 2.7x deeper than the platform; with the cap, the bot's side no longer depends on this PC's speed, so this is the competition-relevant absolute number | per-rung W-D-L and score, the joint fit from `ladder_fit.py`, and the bot's mean `sims=` per move (must read ~500); compare rung by rung with ARENA #14 §1 |
 | 7 | **fixed-node rungs** | Stockfish at `go nodes` N (`Threads=1`, `Hash=64`, `UCI_LimitStrength` off; in the wrapper replace the clock `Limit` with `chess.engine.Limit(nodes=N)`), reference with `max_sims=500`. Probe first: 8 games at N = 200k; above 70% multiply N by 4, below 30% divide by 4, until bracketed; then 30 games at three rungs a factor of 4 apart around the crossover | both sides then have fixed budgets, so the result reproduces on any machine and has no calibration ceiling; it becomes the yardstick for every later build | score per rung and the N where the bot scores 50%; run the 3000 `UCI_Elo` rung in the same session so the two scales can be linked once |
-| 8 | **colour check on the curated positions** | reference vs an identical copy on `sparring/openings_ladder.tsv`, every position twice with each colour, 60 games; this can double as item 5's calibration if run instead of it | ARENA #12: the bot scored better as Black at every rung (30 points at 3190) and the White side of these positions scored 35–48% whichever engine held it. Either the pool is lopsided or the bot plays the White side badly against a strong engine; bot vs bot separates the two | the White-side score over the 60 games. Book-opening arenas here gave White ~55–63%. Below 45% means the positions; 55% or more means the bot |
-| 9 | **conversion suite, with and without a stalemate veto** | the switch exists on `main` since `a037773` (`_STALEMATE_VETO`, off by default); on a checkout that lacks it, insert the code below. Candidate = reference with `_STALEMATE_VETO = True`. Suite: 20 won positions, the side to move ahead by 5 pawn units or more, in a `suite.tsv` (`name<TAB>fen`): the eight textbook endings KQ v K, KR v K, KRN v K, KBB v K, KBN v K, KQP v KP, KRP v K, KQ v KR, plus twelve middlegame or endgame positions taken from ARENA #12 PGNs where the bot was ahead by 5 or more (`sparring/ladder_box/lanes/L`). The bot with `max_sims=500` plays the side ahead; the defender is Stockfish 18 at full strength (`UCI_LimitStrength` off), one thread. Each position once with the reference and once with the veto candidate, 40 games. Then, whatever the suite says, 30 full games of the veto candidate against Stockfish at `UCI_Elo` 3000 on the curated positions, the ARENA #12 rung 3000 setup, to see the veto in real games | ARENA #12 lost six of 90 games to non-conversion: three stalemates with the bot far ahead (rook and knight against a bare king at ply 225) and three threefold draws while ahead. Stalemate is 1–3% of arena games, so a 50-game arena cannot see the veto; a suite can | conversions (checkmate before the 300-ply cap and the fifty-move rule) out of 20 for each build, and the per-move `q=` on the winning side, which tells whether the net even knows it is winning (ARENA #12's KRN v K read q ≈ +0.1 throughout); for the 30 games, score and the count of stalemates and threefold draws with the bot ahead by 3 or more, against ARENA #12's 1 stalemate and 1 such threefold at rung 3000 |
+| 8 | **colour check on the curated positions** | reference vs an identical copy on `sparring/openings_ladder.tsv`, every position twice with each colour, 60 games; this can double as item 5's calibration if run instead of it | ARENA #14: the bot scored better as Black at every rung (30 points at 3190) and the White side of these positions scored 35–48% whichever engine held it. Either the pool is lopsided or the bot plays the White side badly against a strong engine; bot vs bot separates the two | the White-side score over the 60 games. Book-opening arenas here gave White ~55–63%. Below 45% means the positions; 55% or more means the bot |
+| 9 | **conversion suite, with and without a stalemate veto** | the switch exists on `main` since `a037773` (`_STALEMATE_VETO`, off by default); on a checkout that lacks it, insert the code below. Candidate = reference with `_STALEMATE_VETO = True`. Suite: 20 won positions, the side to move ahead by 5 pawn units or more, in a `suite.tsv` (`name<TAB>fen`): the eight textbook endings KQ v K, KR v K, KRN v K, KBB v K, KBN v K, KQP v KP, KRP v K, KQ v KR, plus twelve middlegame or endgame positions taken from ARENA #14 PGNs where the bot was ahead by 5 or more (`sparring/ladder_box/lanes/L`). The bot with `max_sims=500` plays the side ahead; the defender is Stockfish 18 at full strength (`UCI_LimitStrength` off), one thread. Each position once with the reference and once with the veto candidate, 40 games. Then, whatever the suite says, 30 full games of the veto candidate against Stockfish at `UCI_Elo` 3000 on the curated positions, the ARENA #14 rung 3000 setup, to see the veto in real games | ARENA #14 lost six of 90 games to non-conversion: three stalemates with the bot far ahead (rook and knight against a bare king at ply 225) and three threefold draws while ahead. Stalemate is 1–3% of arena games, so a 50-game arena cannot see the veto; a suite can | conversions (checkmate before the 300-ply cap and the fifty-move rule) out of 20 for each build, and the per-move `q=` on the winning side, which tells whether the net even knows it is winning (ARENA #14's KRN v K read q ≈ +0.1 throughout); for the 30 games, score and the count of stalemates and threefold draws with the bot ahead by 3 or more, against ARENA #14's 1 stalemate and 1 such threefold at rung 3000 |
 | 10 (only if item 9 converts under 15 of 20 with the veto) | **mate-search fallback** | when the opponent has a bare king or at most three pawn units and the bot is ahead by five or more, run a small iterative alpha-beta mate search (depth 1 to 9 plies, legal moves only, python-chess, capped at 0.5 s) before the MCTS and play a found mate; otherwise fall back to the MCTS pick | the veto keeps the game alive but the value head does not see the mate, so the search cannot steer; a mate solver in the tiny endings is the direct fix | rerun item 9's suite; conversions out of 20; the solver's time per move |
 
 **The stalemate veto, exactly** (this is what `main` carries from `a037773`; needed only on an older
@@ -204,14 +204,14 @@ legal move.
 fit, sims per move; lane directories must be named `<rung>_<x>` with opponent directories
 named `sf<rung>`), `sparring/ladder_box/ladder_lane.py` (the Linux lane runner used on the
 box, pins each side to a core with `taskset`; on another OS write the equivalent loop with
-`harness.play --fen`), `docs/ARENA12_STOCKFISH_LADDER_SUBMISSION.md`. Stockfish 18 is the official release build for this machine's CPU;
+`harness.play --fen`), `docs/ARENA14_STOCKFISH_LADDER_SUBMISSION.md`. Stockfish 18 is the official release build for this machine's CPU;
 check `id name Stockfish 18` and `option name UCI_Elo ... min 1320 max 3190` on the `uci`
 reply before anything else, and note the build in every report. Stockfish is GPL and must
 never enter a candidate directory or the zip.
 
 **Reporting for items 6 to 10.** One `docs/ARENA<n>_<NAME>.md` each, same format, plus this
 machine's Stockfish speed (`nps` from a 1 s `go movetime 1000` at `Threads=1` from the
-start position) beside the bot's forward time. Items 6 and 7 replace ARENA #12's headline
+start position) beside the bot's forward time. Items 6 and 7 replace ARENA #14's headline
 figure in the decisions file if they disagree with it; say so explicitly.
 
 ## 9. Added 2026-09-05 12:45 from the platform match logs: items 12 to 17
@@ -270,10 +270,10 @@ their `CHECKSUMS.txt` lines, `rated-games/*.log`, and commit `59cd491` from `mai
 ## 10. Running on the training box instead of this PC
 
 Any item in sections 1, 8 or 9 may run on the team's rented box rather than here, and
-items 6 to 8 are better there: the box is the machine ARENA #12 was measured on, so
+items 6 to 8 are better there: the box is the machine ARENA #14 was measured on, so
 rung-for-rung comparisons need no speed caveat. Move a run there when this PC cannot give
 each lane two free physical cores for the hours it needs, when an item would take more
-than a day here, or when a result must sit beside ARENA #12. Access is by SSH key; Junseo
+than a day here, or when a result must sit beside ARENA #14. Access is by SSH key; Junseo
 adds your key and gives you the host and port. Nothing about the box's address belongs in
 this file or in a report.
 
@@ -303,12 +303,12 @@ more than four hours, run the item here instead and say so in the report.
 (`stockfish/stockfish-ubuntu-x86-64-vnni512`, the release build for that CPU, tar sha256
 `91d89e0e…`); rung agents `agents/sf2800`, `sf3000`, `sf3190` and `agents/sf_full`
 (`UCI_LimitStrength` off, smoke-tested); `openings_ladder.tsv`; `ladder_lane.py`, the lane
-runner used for ARENA #12 (`--candidate`, `--opponent`, `--cand-core`, `--opp-core`,
+runner used for ARENA #14 (`--candidate`, `--opponent`, `--cand-core`, `--opp-core`,
 `--openings`, `--offset`, `--max-games`, `--hours`, `--out`, `--base-ms`, `--increment-ms`;
 `--repo` defaults to the symlink `repo` → `/workspace/bracket/repo`, the harness pinned at
 `f2a78b8`); `ladder_fit.py`; `build_agent.sh <zip>`, which unpacks a submission zip into
 `agents/sub_np`, sets the ponder budget to 0, verifies the one-line diff and plays a 10 s
-smoke game; `queue_ladder.sh`, the queue that ran ARENA #12, to copy for a new item; and
+smoke game; `queue_ladder.sh`, the queue that ran ARENA #14, to copy for a new item; and
 `agent_main_a037773.py`, the current `main` agent with the veto switch, for building the
 item 9 candidate. The venv is `/workspace/aichessathon/.venv/bin/python` (python-chess
 1.11.2, onnxruntime, numpy). The pinned harness there does not suspend an idle agent, so
@@ -318,7 +318,7 @@ does and which matches the platform. The net is `/workspace/weights/R1_e8_ema/mo
 
 **Building a candidate there.** A candidate directory is `agent.py`, a `chessml` symlink
 to `repo/chessml`, and `weights/` (`model.onnx` + `manifest.json`). Start from
-`agents/sub_np` (the ARENA #12 candidate) and change only the switch lines; for the veto,
+`agents/sub_np` (the ARENA #14 candidate) and change only the switch lines; for the veto,
 start from `agent_main_a037773.py` instead and set `_PONDER_NODE_BUDGET = 0` and
 `_STALEMATE_VETO = True`. `diff` against the base must show only those lines; keep the diff
 in a `BUILD.txt` beside the agent. Speed there: the net forwards in ~2.4 ms on an idle core,
