@@ -19,3 +19,6 @@ sparring/ladder_box/
 sparring/stockfish-agent/
 sparring/chain/
 sparring/step1/
+
+# arena runtime logs
+sparring/justin/*.log
