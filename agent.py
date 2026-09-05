@@ -18,10 +18,10 @@ _PONDER_NODE_BUDGET = 100_000
 _PONDER_JOIN_S = 2.0
 _PRESEARCH_S = float(os.environ.get("CHESS_PRESEARCH_S", "5"))
 # clock: left / (horizon - move) with the divisor floored, and at least the floor while
-# the clock is above 15 s
-_BUDGET_HORIZON = 46
-_BUDGET_DIVISOR_FLOOR = 14
-_BUDGET_FLOOR_S = 0.0
+# the clock is above 15 s; rated rounds 1 to 14 ran 46 / 14 / no floor and hit 16 s by move 45
+_BUDGET_HORIZON = 60
+_BUDGET_DIVISOR_FLOOR = 20
+_BUDGET_FLOOR_S = 1.0
 _BUDGET_FLOOR_ABOVE_S = 15.0
 # pick: a root move with this share of the top visits is a candidate; the search runs on
 # to _EXTEND_FACTOR x budget while the visit leader is not the best-q candidate, and
