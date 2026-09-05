@@ -257,3 +257,65 @@ searches stopped early, forward 4.5 to 6.2 ms across ten machines.
 
 **Bundle additions for this section.** `weights/R7a_e8_ema/` and `weights/R7a_e8/` with
 their `CHECKSUMS.txt` lines, `rated-games/*.log`, and commit `59cd491` from `main`.
+
+## 10. Running on the training box instead of this PC
+
+Any item in sections 1, 8 or 9 may run on the team's rented box rather than here, and
+items 6 to 8 are better there: the box is the machine ARENA #12 was measured on, so
+rung-for-rung comparisons need no speed caveat. Move a run there when this PC cannot give
+each lane two free physical cores for the hours it needs, when an item would take more
+than a day here, or when a result must sit beside ARENA #12. Access is by SSH key; Junseo
+adds your key and gives you the host and port. Nothing about the box's address belongs in
+this file or in a report.
+
+**What the box is.** A RunPod container on an AMD Ryzen 9 7950X: 32 vCPUs visible, but the
+cgroup grants **13.6 cores and 61 GB**. Read `/sys/fs/cgroup/cpu.max` and
+`/sys/fs/cgroup/memory.max`; never trust `free`, `nproc` or `lscpu`, which report the host.
+Physical cores are 0–15 with hyperthread siblings 16–31; pin one side of a game to one
+physical core with `taskset -c N` and never share a core between two agents. A trainer
+usually holds cores 12–15 and the GPU; leave them. `nr_throttled` in
+`/sys/fs/cgroup/cpu.stat` is the check that the quota did not bite: read it before and
+after a run and report both. The box has no `rsync` and no `unzip`: copy with `scp`, extract
+with `python -m zipfile -e`. Its git checkout cannot fetch (the deploy key is rejected), so
+code arrives by `scp` or a git bundle, never by `git pull` there.
+
+**Sharing it.** Other sessions queue work there in `tmux` sessions and gate on a clear box.
+Before launching anything: `tmux ls`, then `pgrep -af "harness/runner.py"` to see live games
+and `taskset -cp <pid>` to see who holds which core, and the marker files
+`/workspace/bracket/{PHASE,DONE,ABORT}_*` and `/workspace/ladder/{PHASE,DONE,ABORT}_ladder`.
+Follow the convention exactly: your queue script waits until no `harness/runner.py` process
+exists, launches at most six lanes on cores 0–11 with the lane drivers on 12–15, logs to
+`<dir>/queue_<name>.log` with UTC timestamps, and writes `PHASE_<name>` at start and
+`DONE_<name>` or `ABORT_<name>` at the end so the others can wait on you. Never kill or
+detach another session's tmux, never launch while games run, and if the box stays busy for
+more than four hours, run the item here instead and say so in the report.
+
+**What is already there, under `/workspace/ladder/`.** Stockfish 18
+(`stockfish/stockfish-ubuntu-x86-64-vnni512`, the release build for that CPU, tar sha256
+`91d89e0e…`); rung agents `agents/sf2800`, `sf3000`, `sf3190` and `agents/sf_full`
+(`UCI_LimitStrength` off, smoke-tested); `openings_ladder.tsv`; `ladder_lane.py`, the lane
+runner used for ARENA #12 (`--candidate`, `--opponent`, `--cand-core`, `--opp-core`,
+`--openings`, `--offset`, `--max-games`, `--hours`, `--out`, `--base-ms`, `--increment-ms`;
+`--repo` defaults to the symlink `repo` → `/workspace/bracket/repo`, the harness pinned at
+`f2a78b8`); `ladder_fit.py`; `build_agent.sh <zip>`, which unpacks a submission zip into
+`agents/sub_np`, sets the ponder budget to 0, verifies the one-line diff and plays a 10 s
+smoke game; `queue_ladder.sh`, the queue that ran ARENA #12, to copy for a new item; and
+`agent_main_a037773.py`, the current `main` agent with the veto switch, for building the
+item 9 candidate. The venv is `/workspace/aichessathon/.venv/bin/python` (python-chess
+1.11.2, onnxruntime, numpy). The pinned harness there does not suspend an idle agent, so
+every candidate built on the box carries `_PONDER_NODE_BUDGET = 0`, which `build_agent.sh`
+does and which matches the platform. The net is `/workspace/weights/R1_e8_ema/model.onnx`
+(check the sha256).
+
+**Building a candidate there.** A candidate directory is `agent.py`, a `chessml` symlink
+to `repo/chessml`, and `weights/` (`model.onnx` + `manifest.json`). Start from
+`agents/sub_np` (the ARENA #12 candidate) and change only the switch lines; for the veto,
+start from `agent_main_a037773.py` instead and set `_PONDER_NODE_BUDGET = 0` and
+`_STALEMATE_VETO = True`. `diff` against the base must show only those lines; keep the diff
+in a `BUILD.txt` beside the agent. Speed there: the net forwards in ~2.4 ms on an idle core,
+about 2–2.7x the platform, so use the `max_sims=500` cap for every bot side (section 8).
+
+**Results.** Keep each item under `/workspace/justin/<item>/` with the lanes, `results.csv`,
+per-game logs and the summary, pull them to this PC with `scp -r` into `sparring/justin/`,
+and write the ARENA report here as in section 6. The box is shared storage on a network
+filesystem; do not leave anything there that is not a result.
