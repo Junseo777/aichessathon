@@ -16,7 +16,12 @@ Which upload played which round (Junseo, Sept 4 evening): rounds 1 to 8 the
 R3_e8_ema upload of 02:56; rounds 9 to 14 R1_e8_ema on the same code; round 15
 onwards R1 with smart pruning. The clocks agree: not one of the 722 searched
 moves in rounds 1 to 14 stopped before its deadline, and in round 15 the bot
-stopped 62 of 63 searches early and spent 47% of its budget. The code before
+stopped 62 of 63 searches early and spent 47% of its budget. The moves agree
+too: replaying the 210 search-decided positions of rounds 1 to 10 at 300
+simulations under each net, R3 matches the bot's move more often in rounds 3
+to 8 (78/67/79/74/73/69% against R1's 67/39/67/68/55/62%) and R1 in rounds 9
+and 10 (73/71% against 42/54%); where the two searches choose different moves,
+round 9 goes to R1 eleven to one and round 7 to R3 ten to four. The code before
 pruning was `main` at f2a78b8: its `_budget_s`, `_hands_over_draw_claim` and
 `_pick` thresholds are identical to the working tree, but its search is the
 Sept 1 PUCT with the FPU fix and none of the Sept 4 features (proofs, smart
