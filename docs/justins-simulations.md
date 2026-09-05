@@ -161,23 +161,24 @@ machine-independent form.
 | 6 (run right after item 1) | **ladder at the platform's budget** | reference with `max_sims=500` vs Stockfish 18 at `UCI_Elo` 2800, 3000, 3190; 30 games per rung, the fifteen curated positions in `sparring/openings_ladder.tsv`, each with both colours; then, if the 3190 score is 50% or more, a fourth rung with `UCI_LimitStrength` off | ARENA #12 searched 2.7x deeper than the platform; with the cap, the bot's side no longer depends on this PC's speed, so this is the competition-relevant absolute number | per-rung W-D-L and score, the joint fit from `ladder_fit.py`, and the bot's mean `sims=` per move (must read ~500); compare rung by rung with ARENA #12 §1 |
 | 7 | **fixed-node rungs** | Stockfish at `go nodes` N (`Threads=1`, `Hash=64`, `UCI_LimitStrength` off; in the wrapper replace the clock `Limit` with `chess.engine.Limit(nodes=N)`), reference with `max_sims=500`. Probe first: 8 games at N = 200k; above 70% multiply N by 4, below 30% divide by 4, until bracketed; then 30 games at three rungs a factor of 4 apart around the crossover | both sides then have fixed budgets, so the result reproduces on any machine and has no calibration ceiling; it becomes the yardstick for every later build | score per rung and the N where the bot scores 50%; run the 3000 `UCI_Elo` rung in the same session so the two scales can be linked once |
 | 8 | **colour check on the curated positions** | reference vs an identical copy on `sparring/openings_ladder.tsv`, every position twice with each colour, 60 games; this can double as item 5's calibration if run instead of it | ARENA #12: the bot scored better as Black at every rung (30 points at 3190) and the White side of these positions scored 35–48% whichever engine held it. Either the pool is lopsided or the bot plays the White side badly against a strong engine; bot vs bot separates the two | the White-side score over the 60 games. Book-opening arenas here gave White ~55–63%. Below 45% means the positions; 55% or more means the bot |
-| 9 | **conversion suite, with and without a stalemate veto** | build `_STALEMATE_VETO = True` as a switch (code below). Suite: 20 won positions, the side to move ahead by 5 pawn units or more, in a `suite.tsv` (`name<TAB>fen`): the eight textbook endings KQ v K, KR v K, KRN v K, KBB v K, KBN v K, KQP v KP, KRP v K, KQ v KR, plus twelve middlegame or endgame positions taken from ARENA #12 PGNs where the bot was ahead by 5 or more (`sparring/ladder_box/lanes/L`). The bot with `max_sims=500` plays the side ahead; the defender is Stockfish 18 at full strength (`UCI_LimitStrength` off), one thread. Each position once with the reference and once with the veto candidate, 40 games | ARENA #12 lost six of 90 games to non-conversion: three stalemates with the bot far ahead (rook and knight against a bare king at ply 225) and three threefold draws while ahead. Stalemate is 1–3% of arena games, so a 50-game arena cannot see the veto; a suite can | conversions (checkmate before the 300-ply cap and the fifty-move rule) out of 20 for each build, and the per-move `q=` on the winning side, which tells whether the net even knows it is winning (ARENA #12's KRN v K read q ≈ +0.1 throughout) |
+| 9 | **conversion suite, with and without a stalemate veto** | the switch exists on `main` since `a037773` (`_STALEMATE_VETO`, off by default); on a checkout that lacks it, insert the code below. Candidate = reference with `_STALEMATE_VETO = True`. Suite: 20 won positions, the side to move ahead by 5 pawn units or more, in a `suite.tsv` (`name<TAB>fen`): the eight textbook endings KQ v K, KR v K, KRN v K, KBB v K, KBN v K, KQP v KP, KRP v K, KQ v KR, plus twelve middlegame or endgame positions taken from ARENA #12 PGNs where the bot was ahead by 5 or more (`sparring/ladder_box/lanes/L`). The bot with `max_sims=500` plays the side ahead; the defender is Stockfish 18 at full strength (`UCI_LimitStrength` off), one thread. Each position once with the reference and once with the veto candidate, 40 games. Then, whatever the suite says, 30 full games of the veto candidate against Stockfish at `UCI_Elo` 3000 on the curated positions, the ARENA #12 rung 3000 setup, to see the veto in real games | ARENA #12 lost six of 90 games to non-conversion: three stalemates with the bot far ahead (rook and knight against a bare king at ply 225) and three threefold draws while ahead. Stalemate is 1–3% of arena games, so a 50-game arena cannot see the veto; a suite can | conversions (checkmate before the 300-ply cap and the fifty-move rule) out of 20 for each build, and the per-move `q=` on the winning side, which tells whether the net even knows it is winning (ARENA #12's KRN v K read q ≈ +0.1 throughout); for the 30 games, score and the count of stalemates and threefold draws with the bot ahead by 3 or more, against ARENA #12's 1 stalemate and 1 such threefold at rung 3000 |
 | 10 (only if item 9 converts under 15 of 20 with the veto) | **mate-search fallback** | when the opponent has a bare king or at most three pawn units and the bot is ahead by five or more, run a small iterative alpha-beta mate search (depth 1 to 9 plies, legal moves only, python-chess, capped at 0.5 s) before the MCTS and play a found mate; otherwise fall back to the MCTS pick | the veto keeps the game alive but the value head does not see the mate, so the search cannot steer; a mate solver in the tiny endings is the direct fix | rerun item 9's suite; conversions out of 20; the solver's time per move |
 
-**The stalemate veto, exactly.** In `agent.py`, next to the other switches: `_STALEMATE_VETO = False`
-(reference) or `True` (candidate). In `_pick`, immediately after `order` is computed and before
-any other use of it:
+**The stalemate veto, exactly** (this is what `main` carries from `a037773`; needed only on an older
+checkout). In `agent.py`, next to the other switches: `_STALEMATE_VETO = False` (reference) or `True`
+(candidate). In `_pick`, immediately after `order` is computed and before any other use of it:
 
 ```python
-if _STALEMATE_VETO and _material_for_mover(board) > 0:
-    kept = []
-    for idx in order:
-        after = board.copy(stack=False)
-        after.push(result.moves[idx])
-        if not after.is_stalemate():
-            kept.append(idx)
-    if kept:
-        order = kept
+def _stalemates(board: chess.Board, move: chess.Move) -> bool:
+    after = board.copy(stack=False)
+    after.push(move)
+    return after.is_stalemate()
+
+# in _pick, right after `order = [int(i) for i in np.argsort(-result.visits)]`:
+    if _STALEMATE_VETO and _material_for_mover(board) > 0:
+        kept = [idx for idx in order if not _stalemates(board, result.moves[idx])]
+        if kept:
+            order = kept
 ```
 
 `_material_for_mover` already exists in `agent.py` (it feeds the `near_adjudication` rule).
