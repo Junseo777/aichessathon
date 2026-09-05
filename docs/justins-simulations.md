@@ -339,3 +339,68 @@ about 2–2.7x the platform, so use the `max_sims=500` cap for every bot side (s
 per-game logs and the summary, pull them to this PC with `scp -r` into `sparring/justin/`,
 and write the ARENA report here as in section 6. The box is shared storage on a network
 filesystem; do not leave anything there that is not a result.
+
+## 11. Added 2026-09-05 22:00 UTC: what the box measured tonight, and what it withdraws
+
+A new net exists. **R8** is R1's recipe with the policy head trained on Stockfish's
+MultiPV top-four lines instead of the human move (`--policy-source multipv`, value target
+unchanged). On the box at the platform setting, 500 simulations a side with pondering off,
+100 games on `openings102.tsv`, **R8 beat R1 61.5%** (+38 =47 −15, 95% 51.7–70.4%, +81 Elo;
+phase U0, `lanes/U0/summary.txt`). It is the ship candidate unless tonight's repeat (phase U)
+overturns it. `weights/R8_e8_ema/model.onnx`, sha256 `fff49e848ecf…`, is in the run store.
+
+**Withdrawn, do not run:**
+
+- **Item 16 (R7a vs R1) and item 17 (R7a's knobs).** R7a only tied R1; R8 beats it. R7a is
+  no longer a candidate for anything.
+- **Item 6 and item 7 on the R1 reference.** The ladder yardsticks are wanted on the final
+  build, not on R1. Run them last, on whichever build ships, or not at all if time is short.
+
+**Re-based:**
+
+- **Item 12.** The ship question is now the R8 build (the reference's code with
+  `weights/R8_e8_ema`) against the uploaded zip, not the fixes alone. Build the R8 side
+  exactly as section 4 describes with only the weights directory swapped.
+- **Items 2 and 15 (pick rule, extension).** Measure them on R1 as written; whichever
+  passes gets one more 100-game arena on the R8 build before it ships, because both read
+  the net's outputs (root value variance, visit-leader vs best-q disagreement) and R8's
+  engine-ranked policy changes how often they fire.
+
+**Unchanged and still wanted, in this order:** 12 (re-based), 1, 2, 15, 13, 14, then 5 or 8,
+then 9 and 10. These are time management, move selection and conversion; they carry to any net.
+
+**Already covered on the box tonight, do not repeat:** R8's two knobs (P2 phases V and W,
+50 games each, at the cap); R8 at 16 epochs (P3); R8 on the pure engine value target (R8g,
+queue g8). Read `lanes/U`, `lanes/V`, `lanes/W`, `lanes/U8C`, `lanes/R8G` before starting
+anything that overlaps.
+
+**The box is booked through 2026-09-06 midday UTC** by queues S, P2, P3, gpu2, gpu5 and g8
+(six lanes on cores 0–11 back to back, the GPU on R8c then R8g and its follow-ups). Section
+10's four-hour rule does not apply tonight: run every item on this PC.
+
+### 11.1 Added 22:15 UTC: the box queue of items 6, 7, 8, 9 and 16 — cancel it
+
+Justin's agent reports items 6, 7, 8, 9 and 16 queued for the box, about five hours. The
+verdict per item, applying section 11:
+
+| item | verdict | where |
+|---|---|---|
+| 16 R7a vs R1 | **withdrawn** — R7a tied R1, R8 beats R1 61.5% | nowhere |
+| 6 ladder at 500 sims, on R1 | **deferred** — a yardstick for the final build, which will not be R1; run it once at the end on whatever ships | later, final build only |
+| 7 fixed-node rungs, on R1 | **deferred**, same reason, and the slowest item | later, final build only |
+| 8 colour check, 60 games | keep — net-independent, cheap | this PC |
+| 9 conversion suite ± stalemate veto | keep — net-independent, a known loss source | this PC |
+
+**The box is closed to Justin's queues until `/workspace/bracket/DONE_g8` exists, or
+2026-09-06 12:00 UTC, whichever is first.** Between our phases the box is briefly clear
+(for example between P3's arena and the R8g arena, about 03:15–04:00 UTC); a queue that
+launches in such a gap holds the cores for hours, delays the R8g arena and makes gpu5's
+eight-hour wait fall through onto the wrong branch. A clear box tonight is a gap, not an
+invitation. Section 10's convention (wait for no `harness/runner.py`) is necessary but not
+sufficient tonight: also wait for `DONE_g8`.
+
+Before doing anything else, the agent must confirm nothing of its own is on the box:
+`tmux ls` shows only `g8 gpu2 gpu5 p2 p3 s`; `pgrep -af "harness/runner.py"` shows only
+`/workspace/bracket/agents/*` sides; no `/workspace/justin/`, no `PHASE_justin_*` marker,
+no queue script of its own under `/workspace`. If any exists, stop it (its own tmux session
+only, never ours), write `ABORT_justin_<item>` for each started item, and say so in the report.
