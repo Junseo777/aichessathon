@@ -16,7 +16,11 @@ them cold. Nothing here changes the code except one-line switches that already e
 
 The agent is `agent.py` plus `chessml/` (a small ONNX policy-value net, 1.4M params,
 searched by PUCT MCTS). The platform gives each side 120 s + 0.5 s per move on one core,
-about 10 ms per simulation. The shipped build ("step 1") is the reference. Each candidate
+about 6 ms per fresh simulation (measured in the platform's own match logs). The reference is
+`main` at `691a904`: R1 with pruning 1.33, policy temperature 1.359 and root FPU 1.0, the
+repetition and opening-adoption fixes, and every switch at its reference value. The build on
+the ladder since 2026-09-05 (`bbc55a9`) is the same without the two fixes; item 12 measures
+exactly that difference and runs first. Each candidate
 below is the reference with one switch flipped at the top of `agent.py`:
 
 | priority | candidate | switch | why it needs measuring |
@@ -37,7 +41,8 @@ Report the point estimate and the interval either way.
 
 ## 2. What you were given
 
-- `aichessathon/` — the repo checked out at branch `ship-chain`, commit `70f8a38`. The
+- `aichessathon/` — the repo checked out at branch `main`, commit `691a904` (`ship-chain`
+  merged; the harness suspends the idle agent between moves, as the platform does). The
   code is `agent.py`, `chessml/`, `harness/` (the referee that mirrors the platform's
   clock and protocol; do not edit it), `docs/` (read `docs/ARENA10_STEP1_REPETITION.md`
   and `docs/ARENA11_STEP2_CLOCK.md` for the report format and the story so far),
@@ -80,13 +85,19 @@ in section 1; `diff -r` against the reference must show only those lines. Write 
 The switches, with their reference values, are at the top of `agent.py`:
 
 ```
+_STALEMATE_VETO = False
 _BUDGET_HORIZON = 46
 _BUDGET_DIVISOR_FLOOR = 14
 _BUDGET_FLOOR_S = 0.0
+_BUDGET_FLOOR_ABOVE_S = 15.0
 _CANDIDATE_SHARE = 0.2
 _EXTEND_FACTOR: float | None = None
 _LCB_Z: float | None = None
 ```
+
+and, a few lines below them, the two knobs that are part of the reference and stay on
+unless an item says otherwise: `load_fastest(..., policy_temperature=1.359)` and
+`root_fpu=1.0` inside `MCTS(...)`.
 
 ## 5. Running an arena
 
@@ -112,7 +123,7 @@ format of ARENA10 and ARENA11: what was tested and why, the result table (W-D-L,
 length, simulations and seconds per move for each side in move brackets (0–19, 20–29,
 30–39, 40–49, 50–59, 60+), the machine's speed, and a decision section that says kept or
 dropped by the rule and what would change the reading. Commit each report on a branch
-`justin-arenas` off `ship-chain`, conventional commit style (`docs: ARENA #12, ...`),
+`justin-arenas` off `main`, conventional commit style (`docs: ARENA #12, ...`),
 rationale in the body, no co-author trailers. Do not push. When done, hand back a git
 bundle of the branch and the `sparring/` output directories (PGNs, logs, results,
 summaries) as a zip.
@@ -208,21 +219,19 @@ figure in the decisions file if they disagree with it; say so explicitly.
 Two corrections before anything in this file is run, then six arenas. Nothing below starts on
 the laptop; it is written for this PC.
 
-**Correction A: the harness must suspend the idle agent.** On 2026-09-05 the platform began
-suspending the agent process while the opponent moves; the match logs show pondered
-simulations per move falling from 199–473 (rounds 10–15) to 7–23 (round 16 on). `main`
-mirrors this since `59cd491` (`harness/sandbox.py` sends SIGSTOP between moves). Branch
-`ship-chain` predates it, so every arena on it would let both sides ponder, which the
-platform no longer allows. Cherry-pick `59cd491` onto the branch (or rebase `ship-chain`
-onto `main`) and confirm that a game's `pondered=` reads under 30 before the first arena.
-Results with pondering (ARENA #10, the E and D arenas below) are not comparable with results
-without it.
+**Correction A, resolved by the merge: the harness suspends the idle agent.** On 2026-09-05
+the platform began suspending the agent process while the opponent moves; the match logs
+show pondered simulations per move falling from 199–473 (rounds 10–15) to 7–23 (round 16
+on). `main` mirrors this since `59cd491` (`harness/sandbox.py` sends SIGSTOP between
+moves), and `ship-chain` is now merged into `main`, so nothing needs cherry-picking. Still
+confirm on the first game that both sides' `pondered=` reads under 30. Results with
+pondering (ARENA #10, the E and D arenas below) are not comparable with results without it.
 
-**Correction B: the reference in section 1 is not what is on the ladder.** The uploaded zip
-(`main` `bbc55a9`, md5 `93ce8c23`) is R1 with pruning 1.33, **policy temperature 1.359 and
-root FPU 1.0**, and without the repetition and opening-adoption fixes. `ship-chain`'s
-reference has the fixes and neither knob. Item 12 is the arena that resolves this; until it
-is run, "kept" against `ship-chain`'s reference says nothing about the ladder build.
+**Correction B, now a definition: the reference is the ladder build plus the two fixes.**
+The uploaded zip (`bbc55a9`, md5 `93ce8c23`) is R1 with pruning 1.33, policy temperature
+1.359 and root FPU 1.0, and without the repetition and opening-adoption fixes. `main` at
+`691a904` is that build with the fixes. So the reference already carries the live knobs,
+and item 12 is simply the reference against the uploaded zip.
 
 **Results that already exist, so they are not repeated** (50 games each unless stated; the
 pondering column says which harness):
@@ -240,7 +249,7 @@ pondering column says which harness):
 
 | priority | candidate | switch or build | why it needs measuring | what to report |
 |---|---|---|---|---|
-| 12 (before items 2–5) | **the ship question on the live build** | `ship-chain` reference with `load_fastest(..., policy_temperature=1.359)` and `MCTS(..., root_fpu=1.0)` added, vs the uploaded zip unpacked as the opponent directory; suspend harness; `sparring/openings_ladder.tsv`; 50 games | The fixes scored 58% against pruning-only with pondering on. The ladder then lost a half point to exactly the bug they fix: round 19, our search at +0.46 to +0.57 from move 39, five queen checks, threefold declared with 53 s on our clock. The live build has two knobs the reference lacks, so the fixes have never been measured on top of what actually plays, nor without pondering | the usual table, plus, from the game logs, every threefold where the losing side's `q=` was above +0.3 at the repetition; a kept result means the fixes go into the next zip on top of the live knobs |
+| 12 (before items 2–5) | **the ship question on the live build** | the reference exactly as built from `main` `691a904`, vs the uploaded zip unpacked as the opponent directory (or `git archive bbc55a9` plus the R1 weights); `sparring/openings_ladder.tsv`; 50 games | The fixes scored 58% against pruning-only with pondering on. The ladder then lost a half point to exactly the bug they fix: round 19, our search at +0.46 to +0.57 from move 39, five queen checks, threefold declared with 53 s on our clock. The live build has two knobs the reference lacks, so the fixes have never been measured on top of what actually plays, nor without pondering | the usual table, plus, from the game logs, every threefold where the losing side's `q=` was above +0.3 at the repetition; a kept result means the fixes go into the next zip on top of the live knobs |
 | 13 | **pruning guard** | one line in `chessml/search.py`, `MCTS._cannot_be_overtaken`, before the rate estimate: `if sims < 0.25 * root.total: return False` (fresh simulations must be at least a quarter of the tree's visits before the stop rule may fire); vs the reference of item 12 | The rule compares the visit lead, which includes the reused subtree's inherited visits, with a rate measured on new simulations only. In round 17 it stopped move 28 after 32 new simulations on a reused tree of 888 and move 37 after 32 on 1,266, both with over a minute in hand; 4 of 48 searches ended under 200 simulations with 60 s or more left. With pondering gone the reused tree is our own previous search, so this fires on the ladder every game | the table, plus per side from the logs: searches under 200 simulations with more than 60 s left, median simulations per move, mean seconds per move by bracket. The guard should cost time on easy moves only; if seconds per move rise by more than 20% in the 0–19 bracket, say so |
 | 14 (after 13) | **cap 8 s while the clock is healthy** | in `_budget_s`: `cap = 8.0 if left > 60.0 else 4.0` and `min(cap, budget, left - 1.0)`; keep everything else, including pruning; vs item 12's reference. Different from item 1: that reshapes the curve, this only lets a hard move run long while the clock is rich | The pruning build ends games with 30 to 58 s unused (rounds 15–20: 36, 10, 31, 58, 53, 16 s) and the 4 s cap bound five times in round 17. Against this: the three round-18 slips replayed from 150 to 2,500 simulations never change move, so the return is the round-14 kind of error (flips at 250) rather than the round-18 kind. Cheap, so measure it | the table, seconds per move by bracket, clock left at the end for each side, and how many moves hit the new cap |
 | 15 (instead of, or before, item 3) | **extension at 1.0x** | `_EXTEND_FACTOR = 1.0`; vs item 12's reference | Item 3 proposes 2.0x. The only measured value is 1.0x: 57.0% with pondering, firing on 26% of moves at 5.0 s mean against a 3.4 s budget. Without pondering the tree at move start is smaller, so disagreement may be more frequent and the time cost larger; 1.0x is the safer first point | the table, the share of moves that extended and their mean seconds, and clock left at the end |
