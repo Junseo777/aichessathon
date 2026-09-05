@@ -137,6 +137,19 @@ def test_node_budget_bounds_expansion(net: PolicyValueNet) -> None:
     assert result.simulations <= 5
 
 
+def test_variance_of_backed_up_values_is_tracked(net: PolicyValueNet) -> None:
+    board = chess.Board()
+    result = MCTS(net).run(board, fresh_counts(board), time.monotonic() + 30.0, max_sims=100)
+    assert result.var is not None and (result.var >= 0).all()
+    root = result.root
+    visited = root.n > 0
+    mean = root.w[visited] / root.n[visited]
+    expected = np.maximum(root.w2[visited] / root.n[visited] - mean * mean, 0.0)
+    assert np.allclose(result.var[visited], expected, atol=1e-6)
+    assert (result.var[~visited] == 0).all()
+    assert (result.var[visited] > 0).any()
+
+
 def test_node_arrays_align() -> None:
     moves = [chess.Move.from_uci("e2e4"), chess.Move.from_uci("d2d4")]
     node = Node(moves, np.array([0.7, 0.3], dtype=np.float32), 0.1)

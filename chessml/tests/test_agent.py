@@ -115,6 +115,7 @@ def _result(
     q: list[float],
     proofs: list[float] | None = None,
     moves: list[chess.Move] | None = None,
+    var: list[float] | None = None,
 ) -> SearchResult:
     if moves is None:
         moves = list(board.legal_moves)[: len(visits)]
@@ -128,7 +129,87 @@ def _result(
         expanded=0,
         root=Node(moves, priors, q[0]),
         proofs=np.array(proofs if proofs is not None else [np.nan] * len(moves), dtype=np.float32),
+        var=None if var is None else np.array(var, dtype=np.float32),
     )
+
+
+def _extension_setup(
+    monkeypatch: pytest.MonkeyPatch, agree_after: int
+) -> tuple[chess.Board, SearchResult, list[float]]:
+    board = chess.Board("8/5pk1/6p1/8/3K4/8/5PP1/8 w - - 0 45")
+    deadlines: list[float] = []
+
+    def run(*args: object, **kwargs: object) -> SearchResult:
+        deadline = float(args[2])  # type: ignore[arg-type]
+        deadlines.append(deadline)
+        time.sleep(max(0.0, deadline - time.monotonic()))
+        if len(deadlines) >= agree_after:
+            return _result(board, visits=[100, 50], q=[0.3, 0.1])
+        return _result(board, visits=[100, 50], q=[0.1, 0.3])
+
+    monkeypatch.setattr(agent._MCTS, "run", run)
+    return board, _result(board, visits=[100, 50], q=[0.1, 0.3]), deadlines
+
+
+def test_extension_runs_in_slices_until_the_leaders_agree(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(agent, "_EXTEND_FACTOR", 2.0)
+    board, first, deadlines = _extension_setup(monkeypatch, agree_after=2)
+    started = time.monotonic()
+    result = agent._extend(board, {}, first, started, 1.0, 60.0)
+    assert len(deadlines) == 2 and not agent._leaders_disagree(result)
+    assert result.simulations == 450
+    assert all(started + 0.2 <= d <= started + 2.0 for d in deadlines)
+
+
+def test_extension_stops_at_twice_the_budget(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(agent, "_EXTEND_FACTOR", 2.0)
+    board, first, deadlines = _extension_setup(monkeypatch, agree_after=99)
+    started = time.monotonic() - 1.0
+    result = agent._extend(board, {}, first, started, 1.0, 60.0)
+    assert deadlines and max(deadlines) <= started + 2.0 + 1e-6
+    assert time.monotonic() <= started + 2.1
+    assert agent._leaders_disagree(result)
+
+
+def test_extension_respects_the_clock_guard_and_is_off_by_default(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    board, first, deadlines = _extension_setup(monkeypatch, agree_after=99)
+    started = time.monotonic() - 1.0  # the budget of 1 s is spent
+    assert agent._extend(board, {}, first, started, 1.0, 60.0) is first
+    monkeypatch.setattr(agent, "_EXTEND_FACTOR", 2.0)
+    assert agent._extend(board, {}, first, started, 1.0, 1.5) is first
+    assert deadlines == []
+
+
+def test_leaders_disagree_only_among_candidates() -> None:
+    board = chess.Board("8/5pk1/6p1/8/3K4/8/5PP1/8 w - - 0 45")
+    assert agent._leaders_disagree(_result(board, visits=[100, 20], q=[0.1, 0.3]))
+    assert not agent._leaders_disagree(_result(board, visits=[100, 19], q=[0.1, 0.3]))
+    assert not agent._leaders_disagree(_result(board, visits=[100, 50], q=[0.3, 0.1]))
+
+
+def test_pick_by_lower_bound(monkeypatch: pytest.MonkeyPatch) -> None:
+    board = chess.Board("8/5pk1/6p1/8/3K4/8/5PP1/8 w - - 0 45")
+    better = _result(board, visits=[100, 20], q=[0.1, 0.3], var=[0.01, 0.01])
+    assert agent._pick(board, {}, better) == better.moves[0]
+    monkeypatch.setattr(agent, "_LCB_Z", 2.0)
+    assert agent._pick(board, {}, better) == better.moves[1]
+    few_visits = _result(board, visits=[100, 19], q=[0.1, 0.3], var=[0.01, 0.01])
+    assert agent._pick(board, {}, few_visits) == few_visits.moves[0]
+    noisy = _result(board, visits=[100, 20], q=[0.1, 0.3], var=[0.01, 1.0])
+    assert agent._pick(board, {}, noisy) == noisy.moves[0]
+
+
+def test_pick_by_lower_bound_still_avoids_a_repetition_when_winning(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(agent, "_LCB_Z", 2.0)
+    board = chess.Board("8/5pk1/6p1/8/3K4/8/5PP1/8 w - - 0 45")
+    result = _result(board, visits=[100, 20, 10], q=[0.5, 0.8, 0.4], var=[0.01, 0.01, 0.01])
+    after = board.copy(stack=False)
+    after.push(result.moves[1])
+    assert agent._pick(board, {transposition_key(after): 1}, result) == result.moves[0]
 
 
 def test_pick_prefers_a_proven_win_over_visits() -> None:

@@ -17,6 +17,18 @@ _PLY_CAP = 300
 _PONDER_NODE_BUDGET = 100_000
 _PONDER_JOIN_S = 2.0
 _PRESEARCH_S = float(os.environ.get("CHESS_PRESEARCH_S", "5"))
+# clock: left / (horizon - move) with the divisor floored, and at least the floor while
+# the clock is above 15 s
+_BUDGET_HORIZON = 46
+_BUDGET_DIVISOR_FLOOR = 14
+_BUDGET_FLOOR_S = 0.0
+_BUDGET_FLOOR_ABOVE_S = 15.0
+# pick: a root move with this share of the top visits is a candidate; the search runs on
+# to _EXTEND_FACTOR x budget while the visit leader is not the best-q candidate, and
+# _LCB_Z picks by q minus that many standard errors instead of by visits
+_CANDIDATE_SHARE = 0.2
+_EXTEND_FACTOR: float | None = None
+_LCB_Z: float | None = None
 _START_KEY = transposition_key(chess.Board())
 _NET, _MANIFEST = load_fastest(Path(__file__).resolve().parent / "weights")
 _MCTS = MCTS(_NET, fpu_reduction=0.25, proofs=False, pruning_factor=1.33)
@@ -184,8 +196,54 @@ def _reusable_root(game: _Game, opponent_move: chess.Move | None) -> Node | None
 
 def _budget_s(time_left_ms: int, move_number: int) -> float:
     left = time_left_ms / 1000.0
-    budget = left / max(14, 46 - move_number) + 0.4
+    budget = left / max(_BUDGET_DIVISOR_FLOOR, _BUDGET_HORIZON - move_number) + 0.4
+    if left > _BUDGET_FLOOR_ABOVE_S:
+        budget = max(budget, _BUDGET_FLOOR_S)
     return max(0.05, min(4.0, budget, left - 1.0))
+
+
+def _candidates(result: SearchResult, order: list[int]) -> list[int]:
+    top = float(result.visits[order[0]])
+    return [idx for idx in order if float(result.visits[idx]) >= _CANDIDATE_SHARE * top]
+
+
+def _leaders_disagree(result: SearchResult) -> bool:
+    order = [int(i) for i in np.argsort(-result.visits)]
+    best_q = max(_candidates(result, order), key=lambda idx: float(result.q[idx]))
+    return best_q != order[0]
+
+
+def _extend(
+    board: chess.Board,
+    key_counts: dict[object, int],
+    result: SearchResult,
+    started: float,
+    budget: float,
+    left: float,
+) -> SearchResult:
+    # in slices of a quarter budget, so the search stops as soon as the leaders agree;
+    # never past the clock guard the budget itself respects
+    if _EXTEND_FACTOR is None:
+        return result
+    limit = started + min(_EXTEND_FACTOR * budget, left - 1.0)
+    step = max(0.1, budget / 4.0)
+    while _leaders_disagree(result):
+        now = time.monotonic()
+        if now + 0.05 >= limit:
+            break
+        more = _MCTS.run(board, key_counts, min(now + step, limit), root=result.root)
+        more.simulations += result.simulations
+        result = more
+    return result
+
+
+def _lower_bound_best(result: SearchResult, order: list[int]) -> int:
+    # KataGo's selection: the best lower confidence bound on q among the candidates
+    if _LCB_Z is None:
+        return order[0]
+    var = result.var if result.var is not None else np.zeros_like(result.q)
+    bound = result.q - _LCB_Z * np.sqrt(var / np.maximum(result.visits, 1.0))
+    return max(_candidates(result, order), key=lambda idx: float(bound[idx]))
 
 
 def _material_for_mover(board: chess.Board) -> int:
@@ -233,7 +291,9 @@ def _pick(board: chess.Board, key_counts: dict[object, int], result: SearchResul
         order = safe
     if float(result.visits[order].max()) <= 0.0:
         return result.moves[order[int(np.argmax(result.root.priors[order]))]]
-    best = order[0]
+    best = _lower_bound_best(result, order)
+    order.remove(best)
+    order.insert(0, best)
     q_best = float(result.q[best])
 
     near_adjudication = board.ply() >= _PLY_CAP - 60
@@ -270,9 +330,11 @@ def _play(fen: str, time_left_ms: int) -> str:
         moves, priors, _ = _NET.evaluate(board)
         move = moves[int(np.argmax(priors))]
     else:
-        deadline = started + _budget_s(time_left_ms, board.fullmove_number)
+        budget = _budget_s(time_left_ms, board.fullmove_number)
         inherited = root.total if root is not None else 0
-        result = _MCTS.run(board, game.key_counts, deadline, root=root)
+        result = _MCTS.run(board, game.key_counts, started + budget, root=root)
+        searched = result.simulations
+        result = _extend(board, game.key_counts, result, started, budget, time_left_ms / 1000.0)
         move = _pick(board, game.key_counts, result)
         child = result.root.children[result.moves.index(move)]
         elapsed = time.monotonic() - started
@@ -282,6 +344,7 @@ def _play(fen: str, time_left_ms: int) -> str:
             f"reused={inherited} pondered={pondered} "
             f"q={result.q[result.moves.index(move)]:+.2f} t={elapsed:.2f}s"
             f"{' pruned' if result.pruned else ''}"
+            f"{' extended' if result.simulations > searched else ''}"
         )
 
     game.board.push(move)
