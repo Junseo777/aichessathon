@@ -243,7 +243,7 @@ pondering column says which harness):
 | D | proofs on top of B's winner | 52.0%, +14 Elo | yes |
 | E | search extension 1.0x on top | 57.0%, +49 Elo (+17 =23 −10) | yes |
 | ARENA #11 | clock 60/20/1.0 | 44.0%, contended laptop, void | mixed |
-| F | LCB pick, z = 0.6 on q − z/√visits | pending, `sparring/step1/F_lcb_vs_step1/summary.txt` | no |
+| F | LCB pick, q − 0.6/√visits (≈ z 1.5 in `main`'s standard-error units) | 70.0% (+28 =14 −8) but **void**: median 32 simulations per move on a laptop running other jobs, and the LCB side lost one game on time; item 2 is its rerun, at both z = 1.5 and z = 5.0 | no |
 | box H (ARENA #9) | R6a d128 with R1's target vs R1, 100 games | 40.5%, −67 Elo | yes |
 | box I | R7a d128 value blend vs R1, 100 games | 51.0%, +7 Elo, at 72% of R1's simulations | yes |
 
