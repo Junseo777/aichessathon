@@ -206,6 +206,32 @@ live in most positions, and it did not help. Dropped.
 `proofs=True`, `pruning_factor=1.33`, `root_fpu=1.0`, `policy_temperature=1.359`,
 `fpu_scaled=False`, `draw_score=0.0`.
 
+### Disambiguation: net or budget?
+
+Chains A and B disagreed on policy temperature and root FPU, and differed in net and
+budget at once. This arena holds the net at R1 and lowers the budget to the Mac's:
+R1 with both knobs (temperature 1.359, root FPU 1.0) against R1 without, smart pruning
+on both sides, proofs off, at **60 s + 0.25 s** on the box (421 simulations per move
+measured, against ~1,400 at the full clock there and ~600 on the Mac). Four lanes of
+13 on cores 4–11, 2026-09-05 01:44–02:15 UTC.
+
+| | games | W-D-L (knobs on) | score | 95% | Elo |
+|---|---|---|---|---|---|
+| all | 52 | +11 =37 −4 | **56.7%** | 49.7–63.8% | **+47** (−2 to +98) |
+| knobs as White | 26 | +6 =19 −1 | 59.6% | | |
+| knobs as Black | 26 | +5 =18 −3 | 53.8% | | |
+
+No failures; 31 threefold, 15 checkmates, 6 insufficient material.
+
+**Reading.** At a Mac-like budget the knobs are still positive on R1 (+47, the interval
+just touching zero), where on R3 at that budget they were clearly negative (47.0% and
+41.0%). Across the three R1 arenas, 156 games, they never had a losing record:
+60.6% (temperature alone, 1,400 sims), 54.8% (root FPU on top, 1,400 sims), 56.7% (both,
+421 sims). So the disagreement was the **net**, not the budget: a wider root suits the
+outcome-trained value head, which ranks the extra candidates decisively, and not the
+engine-trained one. Consequence: the two knobs are safe to ship with R1 at either
+budget and probably worth about +50; they should not ship with R2, R3 or R5.
+
 ## 4. What to ship
 
 Side by side, the two chains agree on three features and disagree on two:
@@ -225,15 +251,13 @@ telemetry (96–98% of searches stopped early, the saved clock spent after move 
 is a clock change, not a search-quality change, so it does not depend on the net or
 the budget. It should go to `main` regardless of which net ships.
 
-**The two exploration knobs are the open question.** Temperature and root FPU both
-widen the root, and both help R1 on the box while hurting R3 on the Mac. The chains
-differ in net and budget at once, so neither this document nor the two chains can say
-which. One 52-game arena of R1 with both knobs against R1 without, at a halved clock
-on the box (roughly the Mac's simulations), separates them. If it is the budget, the
-knobs stay off for the ladder, whose hardware is unknown and probably nearer the
-Mac's. If it is the net, they ship with R1 and not with the R2/R3 family.
+**The two exploration knobs are net-specific, and the disambiguation arena above
+settled it.** Temperature and root FPU widen the root; they help R1 at both the box's
+and the Mac's budget (+75, +34, +47) and hurt R3 (−21, −63). With R1 as the shipped
+net they are a probable +50 at no measured risk; with an engine-labelled net they
+stay off.
 
-**Branch defaults** are set to the set both nets support: `pruning_factor=1.33`, all
+**Defaults on `main`** are the set both nets support: `pruning_factor=1.33`, all
 else off, temperature 1.0. The box's arm A has since shown R1's edge over R2 survives with the draw rule off
 (ARENA #3 addendum), so R1 is the net to plan around. The per-net lines from the
 drivers are recorded above for whichever net is chosen; the final step before the zip is one 50-game confirmation of
