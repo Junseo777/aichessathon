@@ -3,13 +3,19 @@ from __future__ import annotations
 import threading
 import time
 from collections.abc import Iterator
+from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
 
 from pipeline.shard import ARRAYS, Shard
 
-Batch = tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]
+# The MultiPV lines of some rows: moves int16 (n, 4), -1 where absent; values float16 (n, 4) on the
+# [-1, 1] scale, NaN where absent; sorted best first (pipeline/shard.py).
+SoftLabels = tuple[np.ndarray, np.ndarray]
+# x, the human move, the value target, side to move, and the MultiPV lines when the policy source
+# asks for them (None under "human").
+Batch = tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, SoftLabels | None]
 
 BLOCK_ROWS = 262_144
 WINDOW_BLOCKS = 16
@@ -31,13 +37,86 @@ def side_to_move(shard_dir: Path, n: int) -> np.ndarray:
     return stm
 
 
-def _labels(shard: Shard, idx: np.ndarray, stm: np.ndarray):
+VALUE_SOURCES = ("engine", "lichess", "outcome", "blend")
+POLICY_SOURCES = ("human", "multipv", "mix")
+
+
+@dataclass(frozen=True)
+class Labels:
+    policy: np.ndarray  # the human move, int64 (n,)
+    value: np.ndarray  # the value target, float32 (n,)
+    stm: np.ndarray  # side to move, int8 (n,)
+    value_labelled: int  # rows whose value came from the chosen source, not the outcome
+    soft: SoftLabels | None  # the MultiPV lines, or None under policy_source "human"
+    policy_labelled: int  # rows with at least one engine line (0 when soft is None)
+
+
+def _labels(
+    shard: Shard,
+    idx: np.ndarray,
+    stm: np.ndarray,
+    value_source: str = "engine",
+    policy_source: str = "human",
+) -> Labels:
+    """Policy and value targets, side to move, and how many rows took a label from the chosen
+    sources rather than the game record.
+
+    Value:
+    engine   the Stockfish label where one exists, else the outcome (R2-R5)
+    lichess  the Lichess [%eval] where one exists, else the outcome (R1's target)
+    outcome  the game outcome on every row
+    blend    0.5 engine + 0.5 outcome where the engine label exists, else the outcome (R7)
+
+    Policy:
+    human    the move played, as a one-hot index (R0-R7)
+    multipv  the Stockfish MultiPV lines where they exist, the human move elsewhere (R8)
+    mix      both, weighted by the trainer's alpha where lines exist (R8b)
+    The lines ship raw; the trainer turns them into a distribution (train.train.policy_target).
+    """
+    if value_source not in VALUE_SOURCES:
+        raise ValueError(f"value_source must be one of {VALUE_SOURCES}, not {value_source!r}")
+    if policy_source not in POLICY_SOURCES:
+        raise ValueError(f"policy_source must be one of {POLICY_SOURCES}, not {policy_source!r}")
     policy = np.asarray(shard.Y_policy)[idx].astype(np.int64)
     outcome = np.asarray(shard.Y_value)[idx].astype(np.float32)
-    engine = np.asarray(shard.Y_value_engine)[idx].astype(np.float32)
-    value = np.where(np.isnan(engine), outcome, engine).astype(np.float32)
-    labelled = int((~np.isnan(engine)).sum())
-    return policy, value, stm[idx], labelled
+    soft = None
+    policy_labelled = 0
+    if policy_source != "human":
+        moves = np.asarray(shard.Y_policy_engine4)[idx]
+        values = np.asarray(shard.Y_value_engine4)[idx]
+        soft = (moves, values)
+        policy_labelled = int((moves[:, 0] >= 0).sum())
+    if value_source == "outcome":
+        return Labels(policy, outcome, stm[idx], 0, soft, policy_labelled)
+    column = shard.Y_value_lichess if value_source == "lichess" else shard.Y_value_engine
+    label = np.asarray(column)[idx].astype(np.float32)
+    present = ~np.isnan(label)
+    target = 0.5 * label + 0.5 * outcome if value_source == "blend" else label
+    value = np.where(present, target, outcome).astype(np.float32)
+    return Labels(policy, value, stm[idx], int(present.sum()), soft, policy_labelled)
+
+
+def _pick(soft: SoftLabels | None, pos: np.ndarray) -> SoftLabels | None:
+    return None if soft is None else (soft[0][pos], soft[1][pos])
+
+
+def describe_target(value_source: str, labelled: int, n: int) -> str:
+    if value_source == "outcome":
+        return "value target: game outcome on every row"
+    return (
+        f"value target: {value_source} on {100 * labelled / max(n, 1):.2f}% of rows, "
+        "outcome elsewhere"
+    )
+
+
+def describe_policy(policy_source: str, labelled: int, n: int) -> str:
+    if policy_source == "human":
+        return "policy target: the human move on every row"
+    what = "multipv lines" if policy_source == "multipv" else "human move mixed with multipv lines"
+    return (
+        f"policy target: {what} on {100 * labelled / max(n, 1):.2f}% of rows, "
+        "the human move elsewhere"
+    )
 
 
 class _BlockReader:
@@ -75,6 +154,8 @@ class RamSplit:
         name: str,
         *,
         block_rows: int = BLOCK_ROWS,
+        value_source: str = "engine",
+        policy_source: str = "human",
     ) -> None:
         mask = np.asarray(shard.split) == which
         idx = np.flatnonzero(mask)
@@ -88,10 +169,18 @@ class RamSplit:
             for b in range(len(reader.blocks)):
                 fill += reader.rows(fh, b, mask, self.x[fill:])
         assert fill == self.n
-        self.policy, self.value, self.stm, labelled = _labels(shard, idx, stm)
+        labels = _labels(shard, idx, stm, value_source, policy_source)
+        self.policy, self.value, self.stm, self.soft = (
+            labels.policy,
+            labels.value,
+            labels.stm,
+            labels.soft,
+        )
         print(
-            f"    {self.x.nbytes / 1e9:.1f} GB in {time.time() - t:.0f}s, "
-            f"engine-labelled {100 * labelled / max(self.n, 1):.2f}%",
+            f"    {self.x.nbytes / 1e9:.1f} GB in {time.time() - t:.0f}s; "
+            + describe_target(value_source, labels.value_labelled, self.n)
+            + "; "
+            + describe_policy(policy_source, labels.policy_labelled, self.n),
             flush=True,
         )
 
@@ -100,7 +189,13 @@ class RamSplit:
         stop = self.n - (batch - 1) if rng is not None else self.n
         for s in range(0, stop, batch):
             sel = order[s : s + batch]
-            yield self.x[sel], self.policy[sel], self.value[sel], self.stm[sel]
+            yield (
+                self.x[sel],
+                self.policy[sel],
+                self.value[sel],
+                self.stm[sel],
+                _pick(self.soft, sel),
+            )
 
 
 class BlockShuffledSplit:
@@ -118,12 +213,20 @@ class BlockShuffledSplit:
         window_blocks: int = WINDOW_BLOCKS,
         block_rows: int = BLOCK_ROWS,
         prefetch: bool = False,
+        value_source: str = "engine",
+        policy_source: str = "human",
     ) -> None:
         self.mask = np.asarray(shard.split) == which
         idx = np.flatnonzero(self.mask)
         self.n = idx.size
         self.row_of = idx
-        self.policy, self.value, self.stm, labelled = _labels(shard, idx, stm)
+        labels = _labels(shard, idx, stm, value_source, policy_source)
+        self.policy, self.value, self.stm, self.soft = (
+            labels.policy,
+            labels.value,
+            labels.stm,
+            labels.soft,
+        )
         self.pos_of = np.full(shard.n, -1, dtype=np.int64)
         self.pos_of[idx] = np.arange(self.n)
         self.reader = _BlockReader(shard.root / "X.bin", shard.n, block_rows)
@@ -140,7 +243,8 @@ class BlockShuffledSplit:
             flush=True,
         )
         print(
-            f"    engine-labelled {100 * labelled / max(self.n, 1):.2f}%, "
+            f"    {describe_target(value_source, labels.value_labelled, self.n)}; "
+            f"{describe_policy(policy_source, labels.policy_labelled, self.n)}; "
             f"{len(self.reader.blocks):,} blocks of {block_rows:,}",
             flush=True,
         )
@@ -211,7 +315,13 @@ class BlockShuffledSplit:
                     for s in range(0, full, batch):
                         sel = perm[s : s + batch]
                         pos = p[sel]
-                        yield x[sel], self.policy[pos], self.value[pos], self.stm[pos]
+                        yield (
+                            x[sel],
+                            self.policy[pos],
+                            self.value[pos],
+                            self.stm[pos],
+                            _pick(self.soft, pos),
+                        )
                     if not self.prefetch and next_window is not None:
                         pending = start(slot, next_window, carry_x, carry_p)
             finally:
@@ -221,7 +331,13 @@ class BlockShuffledSplit:
         if len(carry_x) and rng is None:
             for s in range(0, len(carry_x), batch):
                 pos = carry_p[s : s + batch]
-                yield carry_x[s : s + batch], self.policy[pos], self.value[pos], self.stm[pos]
+                yield (
+                    carry_x[s : s + batch],
+                    self.policy[pos],
+                    self.value[pos],
+                    self.stm[pos],
+                    _pick(self.soft, pos),
+                )
 
 
 def make_split(
@@ -233,10 +349,20 @@ def make_split(
     window_blocks: int = WINDOW_BLOCKS,
     block_rows: int = BLOCK_ROWS,
     prefetch: bool = False,
+    value_source: str = "engine",
+    policy_source: str = "human",
 ):
     idx_bytes = int((np.asarray(shard.split) == which).sum()) * ROW_BYTES
     if idx_bytes <= RAM_LIMIT_BYTES:
-        return RamSplit(shard, which, stm, name, block_rows=block_rows)
+        return RamSplit(
+            shard,
+            which,
+            stm,
+            name,
+            block_rows=block_rows,
+            value_source=value_source,
+            policy_source=policy_source,
+        )
     return BlockShuffledSplit(
         shard,
         which,
@@ -245,4 +371,6 @@ def make_split(
         window_blocks=window_blocks,
         block_rows=block_rows,
         prefetch=prefetch,
+        value_source=value_source,
+        policy_source=policy_source,
     )

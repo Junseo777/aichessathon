@@ -33,8 +33,21 @@ def shard(tmp_path_factory: pytest.TempPathFactory) -> Shard:
                 fen=f"8/8/8/8/8/8/8/8 {'w' if i % 2 else 'b'} - - 0 1",
                 split=SPLIT_VAL if i % 7 == 0 else SPLIT_TRAIN,
                 y_value_engine=float("nan") if i % 2 == 0 else float(i % 3 - 1),
+                y_value_lichess=float("nan") if i % 3 else (i % 7 - 3) / 4,
             )
         writer.write_meta({})
+    rw = Shard(root, "r+")
+    moves, values = rw.Y_policy_engine4, rw.Y_value_engine4
+    for i in range(N):
+        if i % 4 == 0:
+            continue  # a quarter of the rows carry no engine lines
+        lines = 2 if i % 5 == 0 else 4  # some positions have fewer than four legal moves
+        for k in range(lines):
+            # column 0 is the best line; the human move (i) sits in column 1 on every third row
+            moves[i, k] = i if (k == 1 and i % 3 == 0) else (i + 1 + 2 * k) % N
+            values[i, k] = (i % 7 - 3) / 8 - 0.15 * k
+    moves.flush()
+    values.flush()
     return Shard(root)
 
 
@@ -50,7 +63,7 @@ def drain(split: BlockShuffledSplit | RamSplit, rng: np.random.Generator | None)
     value: list[float] = []
     stm: list[int] = []
     sizes: list[int] = []
-    for x, p, v, s in split.batches(BATCH, rng):
+    for x, p, v, s, _ in split.batches(BATCH, rng):
         ids.extend(row_id(row) for row in x)
         policy.extend(p.tolist())
         value.extend(v.tolist())
@@ -136,3 +149,110 @@ def test_ram_split_reads_the_rows_of_its_split(shard: Shard) -> None:
     want_value, want_stm = expected_labels(shard, rows)
     np.testing.assert_array_equal(value, want_value)
     np.testing.assert_array_equal(side, want_stm)
+
+
+def expected_target(shard: Shard, rows: np.ndarray, source: str) -> np.ndarray:
+    outcome = np.asarray(shard.Y_value)[rows].astype(np.float32)
+    engine = np.asarray(shard.Y_value_engine)[rows].astype(np.float32)
+    lichess = np.asarray(shard.Y_value_lichess)[rows].astype(np.float32)
+    want = {
+        "engine": np.where(np.isnan(engine), outcome, engine),
+        "lichess": np.where(np.isnan(lichess), outcome, lichess),
+        "outcome": outcome,
+        "blend": np.where(np.isnan(engine), outcome, 0.5 * engine + 0.5 * outcome),
+    }[source]
+    return want.astype(np.float32)
+
+
+@pytest.mark.parametrize("source", ["engine", "lichess", "outcome", "blend"])
+def test_value_source_selects_the_target(shard: Shard, source: str) -> None:
+    stm = side_to_move(shard.root, N)
+    ram = RamSplit(shard, SPLIT_TRAIN, stm, "train", block_rows=BLOCK, value_source=source)
+    ids, _, value, _, _ = drain(ram, None)
+    np.testing.assert_array_equal(value, expected_target(shard, ids, source))
+    assert not np.isnan(value).any()
+    block = BlockShuffledSplit(
+        shard,
+        SPLIT_TRAIN,
+        stm,
+        "train",
+        window_blocks=WINDOW,
+        block_rows=BLOCK,
+        value_source=source,
+    )
+    ids, _, value, _, _ = drain(block, np.random.default_rng(1))
+    np.testing.assert_array_equal(value, expected_target(shard, ids, source))
+
+
+def test_lichess_source_differs_from_engine_where_both_exist(shard: Shard) -> None:
+    rows = np.flatnonzero(np.asarray(shard.split) == SPLIT_TRAIN)
+    engine = expected_target(shard, rows, "engine")
+    lichess = expected_target(shard, rows, "lichess")
+    both = ~np.isnan(np.asarray(shard.Y_value_engine)[rows]) & ~np.isnan(
+        np.asarray(shard.Y_value_lichess)[rows]
+    )
+    assert both.any()
+    assert (engine[both] != lichess[both]).any()
+
+
+def test_unknown_value_source_is_refused(shard: Shard) -> None:
+    with pytest.raises(ValueError, match="value_source"):
+        RamSplit(shard, SPLIT_TRAIN, side_to_move(shard.root, N), "train", value_source="deep")
+
+
+def expected_lines(shard: Shard, rows: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    return np.asarray(shard.Y_policy_engine4)[rows], np.asarray(shard.Y_value_engine4)[rows]
+
+
+def drain_lines(split: BlockShuffledSplit | RamSplit, rng: np.random.Generator | None):
+    """Row ids and the MultiPV lines each batch carried, concatenated."""
+    ids: list[int] = []
+    moves: list[np.ndarray] = []
+    values: list[np.ndarray] = []
+    for x, _, _, _, soft in split.batches(BATCH, rng):
+        assert soft is not None
+        ids.extend(row_id(row) for row in x)
+        moves.append(soft[0])
+        values.append(soft[1])
+    return np.array(ids), np.concatenate(moves), np.concatenate(values)
+
+
+def test_human_policy_source_ships_no_lines(shard: Shard) -> None:
+    stm = side_to_move(shard.root, N)
+    ram = RamSplit(shard, SPLIT_VAL, stm, "v", block_rows=BLOCK)
+    block = BlockShuffledSplit(shard, SPLIT_TRAIN, stm, "t", window_blocks=WINDOW, block_rows=BLOCK)
+    for split in (ram, block):
+        assert all(soft is None for *_, soft in split.batches(BATCH, None))
+
+
+@pytest.mark.parametrize("source", ["multipv", "mix"])
+def test_policy_source_ships_the_lines_aligned_with_x(shard: Shard, source: str) -> None:
+    stm = side_to_move(shard.root, N)
+    ram = RamSplit(shard, SPLIT_TRAIN, stm, "train", block_rows=BLOCK, policy_source=source)
+    ids, moves, values = drain_lines(ram, None)
+    want_moves, want_values = expected_lines(shard, ids)
+    np.testing.assert_array_equal(moves, want_moves)
+    np.testing.assert_array_equal(values, want_values)  # NaN in the same places counts as equal
+    assert moves.dtype == np.int16 and values.dtype == np.float16
+    assert int((moves[:, 0] >= 0).sum()) == int(np.count_nonzero(ids % 4 != 0))
+    assert np.isnan(values[moves < 0]).all()
+    assert not np.isnan(values[moves >= 0]).any()
+    block = BlockShuffledSplit(
+        shard,
+        SPLIT_TRAIN,
+        stm,
+        "train",
+        window_blocks=WINDOW,
+        block_rows=BLOCK,
+        prefetch=True,
+        policy_source=source,
+    )
+    ids, moves, values = drain_lines(block, np.random.default_rng(3))
+    want_moves, want_values = expected_lines(shard, ids)
+    np.testing.assert_array_equal(moves, want_moves)
+    np.testing.assert_array_equal(values, want_values)
+
+
+def test_unknown_policy_source_is_refused(shard: Shard) -> None:
+    with pytest.raises(ValueError, match="policy_source"):
+        RamSplit(shard, SPLIT_TRAIN, side_to_move(shard.root, N), "train", policy_source="teacher")

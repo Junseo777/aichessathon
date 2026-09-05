@@ -223,6 +223,24 @@ value_loss   = mse(value_head, value_target)
 loss         = policy_loss + VALUE_WEIGHT * value_loss
 ```
 
+`--value-source` picks the value target: `engine` is the line above (R2-R5); `lichess`
+takes the `[%eval]` where one exists and the outcome elsewhere, which is what R1 saw
+because it trained before the Stockfish pass finished; `outcome` uses the game result
+on every row; `blend` averages engine and outcome where the engine label exists (R7).
+The checkpoint's provenance block records the choice.
+
+`--policy-source` picks the policy target: `human` is the line above (R0-R7); `multipv`
+softmaxes the four Stockfish lines over value / `--policy-temperature` (0.05 on the
+[-1, 1] scale by default: the second line carries 0.6x the first's mass at the 40M
+shard's median gap of 0.024 and 0.03x at its 90th-percentile gap of 0.18) where lines
+exist and keeps the human one-hot elsewhere (R8); `mix` gives the human move
+`--policy-alpha` (0.5 by default) of the mass and the lines the rest (R8b). The loss stays
+unmasked under every source: the target puts mass only on legal moves, so the cross-entropy
+keeps teaching the net which moves are illegal, as under `human`. The history adds
+`val_target_loss` (against the training target, which the train-val gap then uses) and
+`val_acc_engine` (top-1 against the engine's best line); `val_policy_loss` and `val_acc`
+stay against the human move so runs compare.
+
 **Schedule.** AdamW lr 1e-3, weight decay 1e-4, batch 1024, BF16, gradient clipping
 at norm 1.0, cosine decay to zero **across the epochs actually run**. 8 epochs over
 40M. Shuffle every epoch, fixed seeds. EMA of weights (decay 0.999), saving both raw

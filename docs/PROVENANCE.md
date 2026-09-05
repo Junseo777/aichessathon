@@ -51,7 +51,10 @@ weights fails with named missing and unexpected tensors, not a vague warning.
 Checkpoints written after `69e34ee` carry a `provenance` block: run name, epoch,
 seed, value weight, batch, learning rate, git commit, the shard path with a
 SHA-256 of its `meta.json` and its row count, that epoch's metrics, a UTC
-timestamp, torch version, and host.
+timestamp, torch version, and host. Runs trained with `--value-source` also record
+`value_source` (`engine`, `lichess`, `outcome` or `blend`); its absence means `engine`.
+Runs trained with `--policy-source` also record `policy_source` (`human`, `multipv` or
+`mix`), `policy_alpha` and `policy_temperature`; their absence means `human`.
 
 R0, R1 and R2 predate this and carry only `config` and `model`. Their evidence
 is section 3.
