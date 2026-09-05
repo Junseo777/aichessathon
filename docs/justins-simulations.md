@@ -203,3 +203,58 @@ never enter a candidate directory or the zip.
 machine's Stockfish speed (`nps` from a 1 s `go movetime 1000` at `Threads=1` from the
 start position) beside the bot's forward time. Items 6 and 7 replace ARENA #12's headline
 figure in the decisions file if they disagree with it; say so explicitly.
+
+## 9. Added 2026-09-05 12:45 from the platform match logs: items 12 to 17
+
+Two corrections before anything in this file is run, then six arenas. Nothing below starts on
+the laptop; it is written for this PC.
+
+**Correction A: the harness must suspend the idle agent.** On 2026-09-05 the platform began
+suspending the agent process while the opponent moves; the match logs show pondered
+simulations per move falling from 199–473 (rounds 10–15) to 7–23 (round 16 on). `main`
+mirrors this since `59cd491` (`harness/sandbox.py` sends SIGSTOP between moves). Branch
+`ship-chain` predates it, so every arena on it would let both sides ponder, which the
+platform no longer allows. Cherry-pick `59cd491` onto the branch (or rebase `ship-chain`
+onto `main`) and confirm that a game's `pondered=` reads under 30 before the first arena.
+Results with pondering (ARENA #10, the E and D arenas below) are not comparable with results
+without it.
+
+**Correction B: the reference in section 1 is not what is on the ladder.** The uploaded zip
+(`main` `bbc55a9`, md5 `93ce8c23`) is R1 with pruning 1.33, **policy temperature 1.359 and
+root FPU 1.0**, and without the repetition and opening-adoption fixes. `ship-chain`'s
+reference has the fixes and neither knob. Item 12 is the arena that resolves this; until it
+is run, "kept" against `ship-chain`'s reference says nothing about the ladder build.
+
+**Results that already exist, so they are not repeated** (50 games each unless stated; the
+pondering column says which harness):
+
+| arena | sides | result | pondering |
+|---|---|---|---|
+| A | fixes + pruning vs pre-pruning zip | 64.0%, +100 Elo | yes |
+| B (ARENA #10) | fixes + pruning vs pruning only | 58.0%, +56 Elo | yes |
+| D | proofs on top of B's winner | 52.0%, +14 Elo | yes |
+| E | search extension 1.0x on top | 57.0%, +49 Elo (+17 =23 −10) | yes |
+| ARENA #11 | clock 60/20/1.0 | 44.0%, contended laptop, void | mixed |
+| F | LCB pick, z = 0.6 on q − z/√visits | pending, `sparring/step1/F_lcb_vs_step1/summary.txt` | no |
+| box H (ARENA #9) | R6a d128 with R1's target vs R1, 100 games | 40.5%, −67 Elo | yes |
+| box I | R7a d128 value blend vs R1, 100 games | 51.0%, +7 Elo, at 72% of R1's simulations | yes |
+
+| priority | candidate | switch or build | why it needs measuring | what to report |
+|---|---|---|---|---|
+| 12 (before items 2–5) | **the ship question on the live build** | `ship-chain` reference with `load_fastest(..., policy_temperature=1.359)` and `MCTS(..., root_fpu=1.0)` added, vs the uploaded zip unpacked as the opponent directory; suspend harness; `sparring/openings_ladder.tsv`; 50 games | The fixes scored 58% against pruning-only with pondering on. The ladder then lost a half point to exactly the bug they fix: round 19, our search at +0.46 to +0.57 from move 39, five queen checks, threefold declared with 53 s on our clock. The live build has two knobs the reference lacks, so the fixes have never been measured on top of what actually plays, nor without pondering | the usual table, plus, from the game logs, every threefold where the losing side's `q=` was above +0.3 at the repetition; a kept result means the fixes go into the next zip on top of the live knobs |
+| 13 | **pruning guard** | one line in `chessml/search.py`, `MCTS._cannot_be_overtaken`, before the rate estimate: `if sims < 0.25 * root.total: return False` (fresh simulations must be at least a quarter of the tree's visits before the stop rule may fire); vs the reference of item 12 | The rule compares the visit lead, which includes the reused subtree's inherited visits, with a rate measured on new simulations only. In round 17 it stopped move 28 after 32 new simulations on a reused tree of 888 and move 37 after 32 on 1,266, both with over a minute in hand; 4 of 48 searches ended under 200 simulations with 60 s or more left. With pondering gone the reused tree is our own previous search, so this fires on the ladder every game | the table, plus per side from the logs: searches under 200 simulations with more than 60 s left, median simulations per move, mean seconds per move by bracket. The guard should cost time on easy moves only; if seconds per move rise by more than 20% in the 0–19 bracket, say so |
+| 14 (after 13) | **cap 8 s while the clock is healthy** | in `_budget_s`: `cap = 8.0 if left > 60.0 else 4.0` and `min(cap, budget, left - 1.0)`; keep everything else, including pruning; vs item 12's reference. Different from item 1: that reshapes the curve, this only lets a hard move run long while the clock is rich | The pruning build ends games with 30 to 58 s unused (rounds 15–20: 36, 10, 31, 58, 53, 16 s) and the 4 s cap bound five times in round 17. Against this: the three round-18 slips replayed from 150 to 2,500 simulations never change move, so the return is the round-14 kind of error (flips at 250) rather than the round-18 kind. Cheap, so measure it | the table, seconds per move by bracket, clock left at the end for each side, and how many moves hit the new cap |
+| 15 (instead of, or before, item 3) | **extension at 1.0x** | `_EXTEND_FACTOR = 1.0`; vs item 12's reference | Item 3 proposes 2.0x. The only measured value is 1.0x: 57.0% with pondering, firing on 26% of moves at 5.0 s mean against a 3.4 s budget. Without pondering the tree at move start is smaller, so disagreement may be more frequent and the time cost larger; 1.0x is the safer first point | the table, the share of moves that extended and their mean seconds, and clock left at the end |
+| 16 | **R7a, the d128 value-blend net, vs R1** | `weights/R7a_e8_ema/model.onnx` (sha256 `297ec269e63e…`, now in the run store with `weights/CHECKSUMS.txt`) in a copy of item 12's reference, vs the same reference on R1; (a) 100 games at the real clock on the suspend harness, (b) 100 games with `max_sims=500` on both sides | It tied R1 on the box (51.0%, 100 games) while getting 72% of R1's simulations per move, the first net that has; R6a with R1's plain target lost 40.5%. Its forward is 1.6x R1's on Mac-like cores (DECISIONS §2: d128 9.55 ms vs d96 5.97 ms), so (a) says whether the tie survives the platform's budget and (b) whether the net is better per simulation | both tables; the mean `sims=` per side in (a). R1 has twenty ladder games of evidence behind it, so R7a replaces it only on a clear win in (a), 55% or better, not a tie |
+| 17 (only if 16 passes) | **the two knobs on R7a** | `policy_temperature=1.359` alone, then `root_fpu=1.0` alone, each vs R7a without it, 50 games | ARENA #4's disambiguation arena found both knobs net-specific: kept on R1, lost on R3. A new net inherits nothing | the two tables; switch a knob off for R7a if it loses |
+
+**Reading the logs.** Every `harness.play` game log prints one line per move for each side:
+`move N: <uci> sims=<n> reused=<n> pondered=<n> q=<v> t=<s>s[ pruned][ extended]`. The
+regex `^  move (\d+): (\S+) sims=(\d+) reused=(\d+) pondered=(\d+) q=([-+\d.]+) t=([\d.]+)s( pruned)?( extended)?`
+recovers the telemetry the items above ask for. The platform's own match logs for rounds
+10 to 20 (`rated-games/*.log`, same format under OUTPUT plus a per-move clock table) are the
+baseline: median 480 simulations per move on the pruning build, 33 of 34 to 66 of 70
+searches stopped early, forward 4.5 to 6.2 ms across ten machines.
+
+**Bundle additions for this section.** `weights/R7a_e8_ema/` and `weights/R7a_e8/` with
+their `CHECKSUMS.txt` lines, `rated-games/*.log`, and commit `59cd491` from `main`.
