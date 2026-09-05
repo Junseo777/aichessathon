@@ -64,7 +64,8 @@ baselines/           random, greedy, minimax, numba, reference-hero; each a dir 
 harness/runner.py    the process the platform runs your agent in
 harness/referee.py   the clock, legality, draw and adjudication rules
 harness/rules.py     the event constants the harness enforces
-harness/sandbox.py   the one process, spoken to as the platform speaks to a container
+harness/sandbox.py   the one process, spoken to as the platform speaks to a container and
+                     stopped between its moves as the platform stops it
 harness/play.py      one game between two agent directories
 harness/arena.py     many games, with a score
 harness/package.py   builds submission.zip with agent.py at the root

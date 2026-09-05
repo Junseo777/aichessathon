@@ -1,5 +1,8 @@
+import contextlib
 import json
+import os
 import queue
+import signal
 import subprocess
 import sys
 import threading
@@ -11,6 +14,11 @@ from harness.rules import STDOUT_CAP, WATCHDOG_GRACE_MS
 
 RUNNER = Path(__file__).resolve().parent / "runner.py"
 DRAIN_GRACE_S = 0.2
+# the platform suspends an agent between its own moves, so nothing it leaves running gets CPU;
+# Windows has no stop signal, so there the idle process keeps running
+_STOP: signal.Signals | None = getattr(signal, "SIGSTOP", None)
+_CONTINUE: signal.Signals | None = getattr(signal, "SIGCONT", None)
+SUSPEND_IDLE = _STOP is not None and _CONTINUE is not None
 
 
 class AgentFailure(Exception):
@@ -25,10 +33,18 @@ def local(directory: Path) -> "Agent":
 
 
 class Agent:
-    """One agent process, spoken to exactly as the platform speaks to a container."""
+    """One agent process, spoken to exactly as the platform speaks to a container.
 
-    def __init__(self, command: list[str]) -> None:
+    The process runs only while a move is being asked of it. From the ready line to its first
+    request, and between a reply and the next request, it is stopped with SIGSTOP, as the
+    platform suspends it while the opponent thinks. Only the process itself is stopped, not
+    anything it forked. A referee that dies without stop() leaves it stopped: `pkill -CONT -f
+    runner.py` frees it.
+    """
+
+    def __init__(self, command: list[str], suspend_idle: bool = SUSPEND_IDLE) -> None:
         self.command = command
+        self.suspend_idle = suspend_idle
         self.stderr_tail = ""
         self._process: subprocess.Popen[bytes] | None = None
         self._chunks: queue.Queue[tuple[str, bytes]] = queue.Queue()
@@ -54,11 +70,13 @@ class Agent:
             raise AgentFailure("init" if process.poll() is None else "crash")
         if not _is_ready(ready):
             raise AgentFailure("init")
+        self._suspend()
 
     def move(self, fen: str, time_left_ms: int) -> str:
         if self._process is None:
             raise RuntimeError("agent moved before start")
         request = json.dumps({"fen": fen, "time_left_ms": time_left_ms}).encode()
+        self._resume()
         try:
             _pipe(self._process.stdin).write(request + b"\n")
         except BrokenPipeError:
@@ -66,6 +84,7 @@ class Agent:
         line = self._await_line(time.monotonic() + (time_left_ms + WATCHDOG_GRACE_MS) / 1000.0)
         if line is None:
             raise AgentFailure("flag")
+        self._suspend()
         return _parse_move(line)
 
     def stop(self) -> None:
@@ -80,6 +99,20 @@ class Agent:
         self._process.wait()
         self._process = None
         self._readers = []
+
+    def _suspend(self) -> None:
+        self._signal(_STOP)
+
+    def _resume(self) -> None:
+        self._signal(_CONTINUE)
+
+    # SIGKILL in stop() acts on a stopped process, so nothing resumes it before the kill
+    def _signal(self, signum: signal.Signals | None) -> None:
+        process = self._process
+        if not self.suspend_idle or signum is None or process is None or process.poll() is not None:
+            return
+        with contextlib.suppress(ProcessLookupError):
+            os.kill(process.pid, signum)
 
     def _reader(self, stream: IO[bytes], name: str) -> threading.Thread:
         reader = threading.Thread(target=self._forward, args=(stream, name), daemon=True)
