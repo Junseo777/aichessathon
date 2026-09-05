@@ -1,0 +1,79 @@
+AI CHESSATHON MATCH LOG
+=======================
+
+MATCH
+  Round          Rated 1
+  Team           Team1
+  Colour         White
+  Opponent       keep kann and caro on
+  Opening        Petroff Defence
+  Start FEN      rnbqkb1r/ppp2ppp/8/3p4/3Pn3/P4N2/1PP2PPP/RNBQKB1R b KQkq - 0 6
+  You moved      Second
+  Machine        w-b5d791
+  Finished       2026-09-04 07:27:09 UTC
+  Match ID       06a169d9-c50e-4f99-b478-b5e74f9e615b
+
+INIT
+  Ready in       NA
+  Budget         90.0 s
+  Used           NA
+
+CLOCK
+  Base           120.0 s plus 0.5 s per move
+  Moves          37
+  Time used      119.5 s
+  Slowest        3.6 s on move 26
+  Fastest        1.9 s on move 37
+  Average        3.2 s
+  Left at end    19.0 s
+
+RESULT
+  Drawn by threefold repetition
+  Game lasted 250.7 s
+
+MOVES
+    #  move          time     clock left
+    1  Bd3           3.5 s      117.0 s
+    2  O-O           3.5 s      114.0 s
+    3  c4            3.5 s      111.0 s
+    4  Bxc4          3.5 s      108.1 s
+    5  Bxe6          3.5 s      105.1 s
+    6  Qb3           3.5 s      102.1 s
+    7  Nc3           3.5 s       99.1 s
+    8  Nxe4          3.5 s       96.1 s
+    9  Bg5           3.5 s       93.0 s
+   10  Rfe1          3.5 s       90.0 s
+   11  Bh4           3.5 s       87.0 s
+   12  Qxe6          3.5 s       84.0 s
+   13  Rxe6          3.5 s       81.0 s
+   14  Rc1           3.5 s       78.0 s
+   15  Bg3           3.5 s       74.9 s
+   16  Kf1           3.5 s       71.9 s
+   17  hxg3          3.5 s       68.9 s
+   18  Ne5           3.5 s       65.8 s
+   19  Rc6           3.5 s       62.8 s
+   20  Ke2           3.5 s       59.8 s
+   21  Kd3           3.6 s       56.7 s
+   22  Kc4           3.6 s       53.7 s
+   23  Kb5           3.6 s       50.6 s
+   24  Kxa4          3.6 s       47.5 s
+   25  Kb5           3.6 s       44.4 s
+   26  Rc1           3.6 s       41.4 s
+   27  Nc6           3.4 s       38.5 s
+   28  Nxd4          3.2 s       35.9 s
+   29  Nf3+          3.0 s       33.4 s
+   30  a4            2.8 s       31.1 s
+   31  b4            2.6 s       29.0 s
+   32  Nh4           2.5 s       27.0 s
+   33  Rc4           2.3 s       25.2 s
+   34  Kc6           2.2 s       23.5 s
+   35  Kb5           2.1 s       21.9 s
+   36  Rc6           2.0 s       20.4 s
+   37  Rc4           1.9 s       19.0 s
+
+OUTPUT
+  NA. This game was played before agent logs were kept, so the output
+  and the init time were never recorded. Everything above comes from
+  the clocks in the game itself.
+
+Email hello@aichessathon.com with this file if anything here is unclear.

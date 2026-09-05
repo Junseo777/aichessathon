@@ -1,0 +1,62 @@
+AI CHESSATHON MATCH LOG
+=======================
+
+MATCH
+  Round          Rated 2
+  Team           Team1
+  Colour         Black
+  Opponent       Bishop
+  Opening        English Symmetrical
+  Start FEN      r1bq1rk1/1p2ppbp/p1np1np1/2p5/2P4P/2NP1NP1/PP2PPB1/1RBQK2R w K - 0 9
+  You moved      Second
+  Machine        w-ce5f0d
+  Finished       2026-09-04 08:24:58 UTC
+  Match ID       a84c1989-7c49-4f1b-865b-4758bd6b7aad
+
+INIT
+  Ready in       NA
+  Budget         90.0 s
+  Used           NA
+
+CLOCK
+  Base           120.0 s plus 0.5 s per move
+  Moves          20
+  Time used      73.6 s
+  Slowest        3.7 s on move 20
+  Fastest        3.6 s on move 1
+  Average        3.7 s
+  Left at end    56.4 s
+
+RESULT
+  Won by checkmate
+  Game lasted 130.7 s
+
+MOVES
+    #  move          time     clock left
+    1  Rb8           3.6 s      116.9 s
+    2  b5            3.7 s      113.7 s
+    3  axb5          3.7 s      110.5 s
+    4  Bd7           3.7 s      107.4 s
+    5  b4            3.7 s      104.2 s
+    6  Bxf6          3.7 s      101.1 s
+    7  Bg7           3.7 s       97.9 s
+    8  e6            3.7 s       94.7 s
+    9  Qa5           3.7 s       91.6 s
+   10  Bxc6          3.7 s       88.4 s
+   11  Ra8           3.7 s       85.2 s
+   12  fxe6          3.7 s       82.0 s
+   13  Rf7           3.7 s       78.8 s
+   14  Bb7           3.7 s       75.6 s
+   15  Qxa2          3.7 s       72.4 s
+   16  Qd5           3.7 s       69.2 s
+   17  Qg2+          3.7 s       66.0 s
+   18  h5+           3.7 s       62.8 s
+   19  Qd5+          3.7 s       59.6 s
+   20  Qf5#          3.7 s       56.4 s
+
+OUTPUT
+  NA. This game was played before agent logs were kept, so the output
+  and the init time were never recorded. Everything above comes from
+  the clocks in the game itself.
+
+Email hello@aichessathon.com with this file if anything here is unclear.

@@ -1,0 +1,79 @@
+AI CHESSATHON MATCH LOG
+=======================
+
+MATCH
+  Round          Rated 3
+  Team           Team1
+  Colour         White
+  Opponent       hyperfish
+  Opening        French Winawer
+  Start FEN      rnbqk2r/pp2nppp/4p3/2ppP3/3P4/P1P5/2P2PPP/1RBQKBNR b Kkq - 2 7
+  You moved      Second
+  Machine        w-69d466
+  Finished       2026-09-04 09:14:21 UTC
+  Match ID       fdbdb960-8b53-41fb-a4a9-d3f4d865ad53
+
+INIT
+  Ready in       NA
+  Budget         90.0 s
+  Used           NA
+
+CLOCK
+  Base           120.0 s plus 0.5 s per move
+  Moves          37
+  Time used      120.3 s
+  Slowest        3.7 s on move 25
+  Fastest        1.8 s on move 37
+  Average        3.3 s
+  Left at end    18.2 s
+
+RESULT
+  Won by checkmate
+  Game lasted 128.3 s
+
+MOVES
+    #  move          time     clock left
+    1  cxd4          3.6 s      116.9 s
+    2  Nf3           3.6 s      113.9 s
+    3  c3            3.6 s      110.8 s
+    4  Bd3           3.6 s      107.7 s
+    5  Qxf3          3.6 s      104.7 s
+    6  O-O           3.6 s      101.6 s
+    7  Qh3           3.6 s       98.5 s
+    8  Qg3           3.6 s       95.4 s
+    9  a4            3.6 s       92.3 s
+   10  Ra1           3.6 s       89.2 s
+   11  Ba3           3.6 s       86.2 s
+   12  Qh3           3.6 s       83.1 s
+   13  Bc1           3.6 s       80.0 s
+   14  Bxh6          3.6 s       76.9 s
+   15  Bxg7          3.6 s       73.7 s
+   16  exf6          3.6 s       70.6 s
+   17  fxg7          3.6 s       67.5 s
+   18  Qh7+          3.6 s       64.4 s
+   19  f4            3.6 s       61.3 s
+   20  Qg6+          3.6 s       58.1 s
+   21  f5            3.6 s       55.0 s
+   22  Rae1+         3.6 s       51.9 s
+   23  Bxf5          3.6 s       48.7 s
+   24  Bxe6+         3.7 s       45.6 s
+   25  Rxe6          3.7 s       42.4 s
+   26  Rf7+          3.4 s       39.5 s
+   27  Rf6           3.2 s       36.7 s
+   28  Rxe6+         3.0 s       34.2 s
+   29  Re7+          2.9 s       31.9 s
+   30  Rxd7+         2.7 s       29.7 s
+   31  h4            2.5 s       27.7 s
+   32  h5            2.4 s       25.8 s
+   33  h6            2.2 s       24.0 s
+   34  h7            2.1 s       22.4 s
+   35  h8=Q          2.0 s       20.9 s
+   36  Qhh7+         1.9 s       19.5 s
+   37  Qgg8#         1.8 s       18.2 s
+
+OUTPUT
+  NA. This game was played before agent logs were kept, so the output
+  and the init time were never recorded. Everything above comes from
+  the clocks in the game itself.
+
+Email hello@aichessathon.com with this file if anything here is unclear.

@@ -1,0 +1,81 @@
+AI CHESSATHON MATCH LOG
+=======================
+
+MATCH
+  Round          Rated 6
+  Team           Team1
+  Colour         White
+  Opponent       AI Fellows
+  Opening        English Symmetrical
+  Start FEN      r1bqk2r/pp1pppbp/2n2np1/2p5/2P5/2N1PNP1/PP1P1PBP/R1BQK2R b KQkq - 0 6
+  You moved      Second
+  Machine        w-1af86c
+  Finished       2026-09-04 12:05:13 UTC
+  Match ID       66389284-4a12-4633-a9de-a08560d1d788
+
+INIT
+  Ready in       NA
+  Budget         90.0 s
+  Used           NA
+
+CLOCK
+  Base           120.0 s plus 0.5 s per move
+  Moves          39
+  Time used      122.9 s
+  Slowest        3.6 s on move 26
+  Fastest        1.7 s on move 39
+  Average        3.2 s
+  Left at end    16.6 s
+
+RESULT
+  Won by checkmate
+  Game lasted 251.1 s
+
+MOVES
+    #  move          time     clock left
+    1  cxd5          3.5 s      117.0 s
+    2  O-O           3.5 s      114.0 s
+    3  d4            3.5 s      111.0 s
+    4  h3            3.5 s      108.0 s
+    5  Ne2           3.5 s      105.1 s
+    6  dxc5          3.5 s      102.1 s
+    7  Nf4           3.5 s       99.0 s
+    8  Nd4           3.5 s       96.0 s
+    9  Qe2           3.5 s       93.0 s
+   10  Nxc6          3.5 s       90.0 s
+   11  Kh2           3.5 s       87.0 s
+   12  Nd3           3.5 s       84.0 s
+   13  Nf4           3.5 s       81.0 s
+   14  Rb1           3.5 s       78.0 s
+   15  Bd2           3.5 s       74.9 s
+   16  Ba5           3.5 s       71.9 s
+   17  exf4          3.5 s       68.9 s
+   18  b4            3.5 s       65.8 s
+   19  Bxe4          3.5 s       62.8 s
+   20  Bxf5          3.6 s       59.7 s
+   21  Rfe1          3.6 s       56.7 s
+   22  Rbd1          3.6 s       53.6 s
+   23  Rxd4          3.6 s       50.6 s
+   24  a3            3.6 s       47.5 s
+   25  Kg2           3.6 s       44.4 s
+   26  fxg3          3.6 s       41.3 s
+   27  Rd1           3.4 s       38.5 s
+   28  Bd8           3.2 s       35.8 s
+   29  Rd6           3.0 s       33.3 s
+   30  Rd2           2.8 s       31.1 s
+   31  Qd3           2.6 s       28.9 s
+   32  Qa6           2.5 s       26.9 s
+   33  Rd6           2.3 s       25.1 s
+   34  Qxc6          2.2 s       23.4 s
+   35  Rxc6          2.1 s       21.8 s
+   36  Bf6           2.0 s       20.4 s
+   37  Rc8           1.9 s       19.0 s
+   38  f5            1.8 s       17.7 s
+   39  Rh8#          1.7 s       16.6 s
+
+OUTPUT
+  NA. This game was played before agent logs were kept, so the output
+  and the init time were never recorded. Everything above comes from
+  the clocks in the game itself.
+
+Email hello@aichessathon.com with this file if anything here is unclear.

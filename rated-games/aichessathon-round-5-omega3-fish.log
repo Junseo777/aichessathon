@@ -1,0 +1,120 @@
+AI CHESSATHON MATCH LOG
+=======================
+
+MATCH
+  Round          Rated 5
+  Team           Team1
+  Colour         Black
+  Opponent       omega3 fish
+  Opening        English Symmetrical
+  Start FEN      r1bq1rk1/pp1pppbp/2n2np1/2p5/2P5/2NP1NP1/PP2PPBP/R1BQ1RK1 b - - 2 7
+  You moved      First
+  Machine        w-909a54
+  Finished       2026-09-04 11:06:13 UTC
+  Match ID       411e488c-465b-45b8-be26-4125fa219c4d
+
+INIT
+  Ready in       NA
+  Budget         90.0 s
+  Used           NA
+
+CLOCK
+  Base           120.0 s plus 0.5 s per move
+  Moves          78
+  Time used      156.9 s
+  Slowest        3.6 s on move 26
+  Fastest        0.6 s on move 78
+  Average        2.0 s
+  Left at end    2.1 s
+
+RESULT
+  Drawn by insufficient material
+  Game lasted 311.7 s
+
+MOVES
+    #  move          time     clock left
+    1  d5            3.5 s      117.0 s
+    2  d4            3.5 s      114.0 s
+    3  e5            3.5 s      111.0 s
+    4  h6            3.5 s      108.0 s
+    5  Re8           3.5 s      105.0 s
+    6  Qc7           3.5 s      102.0 s
+    7  Nxe4          3.5 s       99.0 s
+    8  Bh3           3.5 s       96.0 s
+    9  f5            3.5 s       93.0 s
+   10  Kh7           3.5 s       90.0 s
+   11  Rad8          3.5 s       87.0 s
+   12  dxe3          3.5 s       84.0 s
+   13  Nd4           3.5 s       81.0 s
+   14  f4            3.5 s       78.0 s
+   15  Bf5           3.5 s       74.9 s
+   16  Rxe5          3.5 s       71.9 s
+   17  Rf8           3.5 s       68.9 s
+   18  Rxd5          3.5 s       65.8 s
+   19  Qf7           3.5 s       62.8 s
+   20  Qxd5+         3.5 s       59.7 s
+   21  Bd7           3.6 s       56.7 s
+   22  Kh8           3.6 s       53.6 s
+   23  Bc6           3.6 s       50.6 s
+   24  Qh5           3.6 s       47.5 s
+   25  Bxe4          3.6 s       44.4 s
+   26  Ne2+          3.6 s       41.4 s
+   27  Nxc1          3.4 s       38.5 s
+   28  Qf5           3.2 s       35.8 s
+   29  Qxe4          3.0 s       33.4 s
+   30  Re8           2.8 s       31.1 s
+   31  Re6           2.6 s       28.9 s
+   32  Rxg6+         2.5 s       27.0 s
+   33  Rg4           2.3 s       25.1 s
+   34  Kg8           2.2 s       23.4 s
+   35  Kf7           2.1 s       21.9 s
+   36  Ke6           2.0 s       20.4 s
+   37  Rg3           1.9 s       19.0 s
+   38  Rd3           1.8 s       17.7 s
+   39  Rh3           1.7 s       16.6 s
+   40  Kf5           1.6 s       15.5 s
+   41  Ke4           1.5 s       14.5 s
+   42  Rh2+          1.4 s       13.5 s
+   43  Bf8           1.4 s       12.6 s
+   44  h5            1.3 s       11.8 s
+   45  h4            1.3 s       11.1 s
+   46  c4            1.2 s       10.4 s
+   47  Bc5+          1.2 s        9.7 s
+   48  Rh1           1.1 s        9.1 s
+   49  Bxe7          1.1 s        8.6 s
+   50  Rb1           1.0 s        8.1 s
+   51  b5            1.0 s        7.6 s
+   52  a5            1.0 s        7.1 s
+   53  b4            0.9 s        6.7 s
+   54  axb4          0.9 s        6.3 s
+   55  c3            0.9 s        6.0 s
+   56  b3            0.8 s        5.6 s
+   57  b2            0.8 s        5.3 s
+   58  Rxb2          0.8 s        5.0 s
+   59  Ke5           0.8 s        4.8 s
+   60  Rf2           0.8 s        4.5 s
+   61  Ke4           0.7 s        4.3 s
+   62  Ke5           0.7 s        4.1 s
+   63  Kd6           0.7 s        3.9 s
+   64  Rg2+          0.7 s        3.7 s
+   65  Rf2+          0.7 s        3.5 s
+   66  Re2+          0.7 s        3.4 s
+   67  Rd2+          0.6 s        3.2 s
+   68  Rd1           0.6 s        3.1 s
+   69  Ke7           0.6 s        2.9 s
+   70  Kf6           0.6 s        2.8 s
+   71  Ra1           0.6 s        2.7 s
+   72  Ra4+          0.6 s        2.6 s
+   73  Kxf5          0.6 s        2.5 s
+   74  Ra8           0.6 s        2.4 s
+   75  Kf6           0.6 s        2.3 s
+   76  Ke7           0.6 s        2.3 s
+   77  Kd7           0.6 s        2.2 s
+   78  Rxc8          0.6 s        2.1 s
+
+OUTPUT
+  NA. This game was played before agent logs were kept, so the output
+  and the init time were never recorded. Everything above comes from
+  the clocks in the game itself.
+
+Email hello@aichessathon.com with this file if anything here is unclear.

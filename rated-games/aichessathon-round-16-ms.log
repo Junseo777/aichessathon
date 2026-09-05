@@ -1,0 +1,191 @@
+AI CHESSATHON MATCH LOG
+=======================
+
+MATCH
+  Round          Rated 16
+  Team           Team1
+  Colour         White
+  Opponent       ms
+  Opening        Italian Game
+  Start FEN      r1bq1rk1/ppp2ppp/2np1n2/2b1p3/2B1P3/2PP1N2/PP1N1PPP/R1BQ1RK1 b - - 3 7
+  You moved      Second
+  Machine        w-97a7fd
+  Finished       2026-09-05 07:06:32 UTC
+  Match ID       79abebb8-61b3-49e1-81d7-548cbce3de73
+
+INIT
+  Ready in       23.6 s
+  Budget         90.0 s
+  Used           26 percent
+
+CLOCK
+  Base           120.0 s plus 0.5 s per move
+  Moves          70
+  Time used      145.1 s
+  Slowest        3.8 s on move 32
+  Fastest        0.5 s on move 14
+  Average        2.1 s
+  Left at end    9.9 s
+
+RESULT
+  Won by checkmate
+  Game lasted 292.1 s
+
+MOVES
+    #  move          time     clock left
+    1  Re1           2.9 s      117.6 s
+    2  Bb5           1.8 s      116.3 s
+    3  Re2           2.1 s      114.7 s
+    4  Nf1           2.6 s      112.6 s
+    5  d4            2.3 s      110.8 s
+    6  cxd4          1.3 s      110.0 s
+    7  Ng3           3.0 s      107.4 s
+    8  Bg5           3.5 s      104.5 s
+    9  Bxf6          2.3 s      102.7 s
+   10  gxf3          1.6 s      101.6 s
+   11  Qd2           3.6 s       98.4 s
+   12  Qh6           1.3 s       97.7 s
+   13  Qxf6+         1.3 s       96.9 s
+   14  Nh5           0.5 s       96.9 s
+   15  Qxf5          1.5 s       95.8 s
+   16  Nf6           2.0 s       94.4 s
+   17  Nxg8          1.3 s       93.6 s
+   18  Kh1           0.9 s       93.2 s
+   19  Qxg6          2.6 s       91.1 s
+   20  Rd1           2.2 s       89.5 s
+   21  Rc2           3.6 s       86.4 s
+   22  Kg2           2.5 s       84.3 s
+   23  f4            3.5 s       81.3 s
+   24  Kf3           3.5 s       78.3 s
+   25  Kg3           3.6 s       75.2 s
+   26  e5            3.6 s       72.2 s
+   27  h4            2.7 s       69.9 s
+   28  Kg4           2.5 s       67.9 s
+   29  a4            3.6 s       64.8 s
+   30  b3            3.7 s       61.6 s
+   31  Rd3           3.7 s       58.4 s
+   32  Rc1           3.8 s       55.1 s
+   33  Rh1           3.6 s       52.0 s
+   34  Rdh3          3.2 s       49.3 s
+   35  Kf3           3.8 s       46.0 s
+   36  h5            3.4 s       43.1 s
+   37  fxg5          1.9 s       41.7 s
+   38  Rg3           2.3 s       39.9 s
+   39  Ke2           2.9 s       37.5 s
+   40  Rf3+          2.9 s       35.0 s
+   41  h6            2.6 s       32.9 s
+   42  e6            2.5 s       30.9 s
+   43  Re3+          2.6 s       28.8 s
+   44  h7            1.9 s       27.4 s
+   45  Kd3           2.4 s       25.6 s
+   46  Rf3+          2.2 s       23.9 s
+   47  Rh6+          1.1 s       23.3 s
+   48  Rf5           1.2 s       22.5 s
+   49  Rxd5          1.6 s       21.5 s
+   50  Rg5           1.4 s       20.6 s
+   51  Rxg4          0.9 s       20.2 s
+   52  Kc4           1.5 s       19.1 s
+   53  Kb5           1.2 s       18.4 s
+   54  Rh5           1.6 s       17.3 s
+   55  Kc6           1.5 s       16.4 s
+   56  axb5          1.1 s       15.7 s
+   57  bxa4          1.0 s       15.2 s
+   58  b6            1.2 s       14.5 s
+   59  Kxb6          0.6 s       14.4 s
+   60  Rb4           1.4 s       13.5 s
+   61  Rh1           1.4 s       12.6 s
+   62  Rxh7          0.7 s       12.4 s
+   63  a5            1.1 s       11.9 s
+   64  Rxb2          0.9 s       11.5 s
+   65  a6            0.6 s       11.3 s
+   66  a7            0.7 s       11.1 s
+   67  a8=Q+         0.8 s       10.9 s
+   68  Qf3           1.2 s       10.2 s
+   69  Rg2+          0.6 s       10.1 s
+   70  Qh3#          0.7 s        9.9 s
+
+OUTPUT
+  5,241 bytes on stderr
+
+  net: [('model.onnx', 4.84)] -> model.onnx
+  init: {'d_model': 96, 'n_heads': 4, 'n_blocks': 12, 'params': 1381050, 'forward_ms': 4.841, 'chosen': 'model.onnx', 'sha256': 'ea52cc6aac7704abec84b8628a86cbd9df8999ea178bcf75c199a8f245c9ac5a'}
+  init: opening pre-search sims=960
+  move 8: f1e1 sims=640 reused=0 pondered=0 q=+0.04 t=2.91s pruned
+  move 9: c4b5 sims=416 reused=59 pondered=7 q=+0.05 t=1.80s pruned
+  move 10: e1e2 sims=416 reused=54 pondered=8 q=+0.09 t=2.08s pruned
+  move 11: d2f1 sims=576 reused=5 pondered=7 q=+0.11 t=2.62s pruned
+  move 12: d3d4 sims=544 reused=16 pondered=7 q=+0.13 t=2.31s pruned
+  move 13: c3d4 sims=256 reused=185 pondered=6 q=+0.14 t=1.30s pruned
+  move 14: f1g3 sims=640 reused=44 pondered=7 q=+0.14 t=3.04s pruned
+  move 15: c1g5 sims=800 reused=96 pondered=8 q=+0.08 t=3.47s pruned
+  move 16: g5f6 sims=512 reused=130 pondered=7 q=+0.06 t=2.30s pruned
+  move 17: g2f3 sims=384 reused=139 pondered=7 q=+0.10 t=1.59s pruned
+  move 18: d1d2 sims=832 reused=108 pondered=10 q=+0.55 t=3.62s pruned
+  move 19: d2h6 sims=288 reused=264 pondered=8 q=+0.60 t=1.29s pruned
+  move 20: h6f6 sims=288 reused=267 pondered=8 q=+0.60 t=1.29s pruned
+  move 21: g3h5 sims=96 reused=515 pondered=7 q=+0.64 t=0.47s pruned
+  move 22: f6f5 sims=320 reused=146 pondered=7 q=+0.64 t=1.54s pruned
+  move 23: h5f6 sims=416 reused=92 pondered=9 q=+0.77 t=1.99s pruned
+  move 24: f6g8 sims=288 reused=279 pondered=9 q=+0.75 t=1.26s pruned
+  move 25: g1h1 sims=192 reused=477 pondered=9 q=+0.75 t=0.85s pruned
+  move 26: f5g6 sims=576 reused=43 pondered=7 q=+0.79 t=2.61s pruned
+  move 27: a1d1 sims=544 reused=292 pondered=8 q=+0.80 t=2.17s pruned
+  move 28: e2c2 sims=992 reused=163 pondered=8 q=+0.80 t=3.60s pruned
+  move 29: h1g2 sims=640 reused=240 pondered=7 q=+0.78 t=2.52s pruned
+  move 30: f3f4 sims=832 reused=73 pondered=8 q=+0.77 t=3.51s pruned
+  move 31: g2f3 sims=800 reused=18 pondered=7 q=+0.76 t=3.49s pruned
+  move 32: f3g3 sims=832 reused=102 pondered=7 q=+0.76 t=3.59s pruned
+  move 33: e4e5 sims=832 reused=144 pondered=7 q=+0.71 t=3.57s pruned
+  move 34: h2h4 sims=704 reused=48 pondered=8 q=+0.73 t=2.72s pruned
+  move 35: g3g4 sims=608 reused=185 pondered=9 q=+0.73 t=2.54s pruned
+  move 36: a2a4 sims=832 reused=19 pondered=8 q=+0.78 t=3.57s pruned
+  move 37: b2b3 sims=864 reused=61 pondered=7 q=+0.74 t=3.75s pruned
+  move 38: d1d3 sims=928 reused=29 pondered=8 q=+0.75 t=3.69s pruned
+  move 39: c2c1 sims=1024 reused=22 pondered=7 q=+0.75 t=3.77s pruned
+  move 40: c1h1 sims=928 reused=37 pondered=8 q=+0.79 t=3.58s pruned
+  move 41: d3h3 sims=800 reused=48 pondered=7 q=+0.82 t=3.25s pruned
+  move 42: g4f3 sims=832 reused=18 pondered=12 q=+0.82 t=3.75s pruned
+  move 43: h4h5 sims=800 reused=42 pondered=9 q=+0.75 t=3.44s pruned
+  move 44: f4g5 sims=480 reused=202 pondered=10 q=+0.79 t=1.94s pruned
+  move 45: h3g3 sims=608 reused=386 pondered=9 q=+0.83 t=2.29s pruned
+  move 46: f3e2 sims=640 reused=15 pondered=8 q=+0.91 t=2.91s pruned
+  move 47: g3f3 sims=672 reused=67 pondered=7 q=+0.91 t=2.92s pruned
+  move 48: h5h6 sims=672 reused=120 pondered=9 q=+0.90 t=2.60s pruned
+  move 49: e5e6 sims=672 reused=121 pondered=8 q=+0.90 t=2.55s pruned
+  move 50: f3e3 sims=576 reused=97 pondered=7 q=+0.89 t=2.58s pruned
+  move 51: h6h7 sims=384 reused=90 pondered=9 q=+0.90 t=1.86s pruned
+  move 52: e2d3 sims=509 reused=50 pondered=10 q=+0.90 t=2.36s
+  move 53: e3f3 sims=448 reused=18 pondered=7 q=+0.90 t=2.20s pruned
+  move 54: h1h6 sims=224 reused=114 pondered=7 q=+0.93 t=1.12s pruned
+  move 55: f3f5 sims=256 reused=48 pondered=7 q=+0.95 t=1.21s pruned
+  move 56: f5d5 sims=352 reused=30 pondered=7 q=+0.92 t=1.57s pruned
+  move 57: d5g5 sims=320 reused=106 pondered=8 q=+0.93 t=1.40s pruned
+  move 58: g5g4 sims=192 reused=71 pondered=7 q=+0.95 t=0.89s pruned
+  move 59: d3c4 sims=320 reused=38 pondered=7 q=+0.96 t=1.53s pruned
+  move 60: c4b5 sims=256 reused=23 pondered=8 q=+0.96 t=1.19s pruned
+  move 61: h6h5 sims=352 reused=33 pondered=8 q=+0.97 t=1.62s pruned
+  move 62: b5c6 sims=320 reused=11 pondered=7 q=+0.97 t=1.47s pruned
+  move 63: a4b5 sims=256 reused=0 pondered=7 q=+0.98 t=1.11s pruned
+  move 64: b3a4 sims=224 reused=17 pondered=9 q=+0.97 t=1.04s pruned
+  move 65: b5b6 sims=224 reused=8 pondered=7 q=+0.98 t=1.16s pruned
+  move 66: c6b6 sims=128 reused=35 pondered=7 q=+0.97 t=0.64s pruned
+  move 67: g4b4 sims=310 reused=88 pondered=8 q=+0.97 t=1.43s
+  move 68: h5h1 sims=282 reused=26 pondered=7 q=+0.97 t=1.36s
+  move 69: h1h7 sims=160 reused=7 pondered=7 q=+0.98 t=0.65s pruned
+  move 70: a4a5 sims=480 reused=103 pondered=14 q=+0.98 t=1.06s pruned
+  move 71: b4b2 sims=480 reused=126 pondered=21 q=+0.98 t=0.90s pruned
+  move 72: a5a6 sims=224 reused=19 pondered=23 q=+0.98 t=0.63s pruned
+  move 73: a6a7 sims=224 reused=53 pondered=13 q=+0.97 t=0.70s pruned
+  move 74: a7a8q sims=192 reused=7 pondered=17 q=+0.98 t=0.76s pruned
+  move 75: a8f3 sims=311 reused=40 pondered=9 q=+1.00 t=1.18s
+  move 76: b2g2 sims=352 reused=12 pondered=48 q=+1.00 t=0.62s pruned
+  move 77: f3h3 sims=1920 reused=110 pondered=124 q=+1.00 t=0.68s pruned
+  Traceback (most recent call last):
+    File "/agent/agent.py", line 100, in _ponder
+      result = _MCTS.run(
+               ^^^^^^^^^^
+    File "/agent/chessml/search.py", line 175, in run
+      raise ValueError("no legal moves at search root")
+  ValueError: no legal moves at search root
+
+Email hello@aichessathon.com with this file if anything here is unclear.

@@ -47,8 +47,10 @@ pruning, scaled FPU, policy temperature, in-tree draw score).
 | 16 | ms | White | win | mate | +2.6 from move 20 after the opponent's 19...Kh8, converted over 77 moves with 9.9 s left |
 | 17 | mate-in-one | Black | loss | mate | −0.9 at move 12 already; every bot move from 12 to 24 within a quarter pawn of Stockfish's; outplayed, 30.7 s left |
 | 18 | sobriety | White | loss | mate | three 0.6-pawn slips at 15, 20 and 22 (Rab1, Ng3, Kg1 were better), then a melee played at Stockfish's first choice from 27 on; 57.9 s left |
+| 19 | gijs-smit | Black | draw | threefold | repeated queen checks from move 39 with our own q at +0.5 and 53 s left: the round-8 rule mismatch again, on the build without the fix; PGN not yet in the folder |
+| 20 | checkers | White | win | mate | q rising from move 24, mated at 72 with 16 s left; not yet through Stockfish |
 
-Score 11.5/18. The wins were all against opponents who blundered, eight of the
+Score 13/20. The wins were all against opponents who blundered, eight of the
 nine into mate; the two losses to leaders in rounds 17 and 18 came from
 accumulated small errors, not a blunder. Rounds 11 to 18 were analysed the same
 way as the first ten; rounds 16 to 18 were played by the Sept 5 upload
@@ -169,6 +171,34 @@ of 48 moves, four times under 200 simulations with more than a minute in hand
 binding on five moves. Time used was 113 s of 144 s available, and round 18
 ended with 58 s unused. Whether more search would have changed the drift
 moves is the replay question recorded below.
+
+## What the match logs add
+
+The platform's per-game logs sit beside the PGNs from round 1. Our stdout is
+captured only from round 10 on, so rounds 1 to 9 carry the clock table and the
+result but no search telemetry. What the captured games show:
+
+- **Pondering stopped between rounds 15 and 16.** Pondered simulations per move
+  were 199 to 473 in rounds 10 to 15 and 7 to 23 from round 16 (Sept 5, 07:06 UTC),
+  which dates the platform's suspension rule and the harness change that mirrors it.
+- **The machines are alike.** Ten machine ids over eleven games: init forward time
+  4.5 to 6.2 ms, pre-search 768 to 1,070 simulations in 5 s, about 150 to 210 fresh
+  simulations per second. The 10 ms per simulation inferred from clock overruns was
+  the in-game figure with tree bookkeeping, not the raw forward.
+- **The pruning build leaves time.** Time used and left at the end: round 15 115 s
+  and 36 s, 16 145 s and 10 s, 17 113 s and 31 s, 18 79 s and 58 s, 19 86 s and
+  53 s, 20 136 s and 16 s. The pre-pruning games used 120 to 169 s and ended at
+  2 to 19 s. Pruning stopped 33 of 34 to 66 of 70 searches; the 4 s cap bound on
+  five moves in round 17.
+- **The decisions we replayed, as the search saw them.** Round 14 move 45 had
+  209 simulations at q +0.73, and the replay's flip point was 250. Round 18 moves
+  15, 20 and 22 had 672 to 736 simulations each at 3.0 to 3.9 s, and the replay
+  finds no better move up to 2,500, so those were the net's opinion, not a budget
+  shortfall. Round 10 move 14 had 670 simulations plus a reused subtree of 1,055.
+- **Round 19 lost a half point to the repetition rule.** From move 39 the search
+  rated the position +0.46 to +0.57 and played Qg5, Qg1+, Qf1+, Qg1+, Qf1+; the
+  referee declared the threefold with 53 s on our clock. The fix in
+  `ship-step1`/`ship-combined` was not in the build that played.
 
 ## What the clocks say about the platform's core
 
