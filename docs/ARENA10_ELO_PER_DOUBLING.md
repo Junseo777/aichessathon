@@ -50,13 +50,73 @@ question asked. Kept here so the mistake is not repeated: **any budget experimen
 this agent must fix the node count, not the time, because the time formula feeds back
 through the clock.**
 
-## 2. Phase J2 — fixed node caps
+## 2. Phase J2 — fixed node caps: a doubling is worth about 160 Elo
 
-PENDING: R1 capped at 800 simulations per move against R1 capped at 400, the clock
-deadline left as a safety net, pondering off, six lanes, 200 games; queued behind
-ARENA11 (phase K).
+Second design: `_MCTS.run(..., max_sims=800)` on one side and `max_sims=400` on the
+other, the clock deadline left in place as a safety net, pondering off on both sides,
+thresholds at the shipped ±0.30. Six lanes on cores 0–11, 200 games, 2026-09-05
+10:13–11:42 UTC, nothing else on the box, 0 throttled periods. Every move on every
+side hit its cap exactly: mean 800 and 400 simulations per move over 11,400 moves a
+side, at about 1.7 s and 0.9 s of thinking.
 
-## 3. Artifacts
+```
+games 200   800-side +99 =89 -12   score 71.8%   (95% Wilson 65.1%-77.5%)
+implied 800 - 400: +162 Elo (95% +109 to +215)
+800-side as White: +50 =50 -0, 75.0%      as Black: +49 =39 -12, 68.5%
+terminations: checkmate 111, threefold 89   (threefold 44%)
+failed games: none; distinct games 100+ of 200
+```
+
+**Between 400 and 800 simulations per move, a doubling of search is worth about
+160 Elo** (95% about 110 to 215). Two things to carry with the number: it was measured
+without pondering, so the budgets are lower than the shipped agent's effective ones,
+and doublings usually buy less as the budget rises, so treat 160 as the value at the
+low end of the range the box plays in and as an upper bound for the box's late-evening
+rate of 1,500.
+
+## 3. What the number does to the week's results
+
+With an exchange rate, every arena that compared nets at different search budgets can
+be read for what it says about the net itself:
+
+| pairing | search ratio | expected from search alone | observed | net quality per node |
+|---|---|---|---|---|
+| R6a vs R1 (ARENA9, 200 games) | 0.65× | about −100 | −44 | R6a ≈ +55 |
+| int8 R1 vs fp32 R1 (ARENA11) | 1.41× | about +80 | −28 | quantisation ≈ −110 |
+| R5 vs R2 (ARENA6, loaded box) | 0.86× | about −35 | −10 | R5 ≈ +25 |
+| R4 vs R2 (ARENA6, loaded box) | 1.18× | about +40 | −56 | R4 ≈ −95 |
+| RA vs R2 (ARENA6, loaded box) | 1.26× | about +55 | −372 | RA ≈ −425 |
+
+Read with the usual ±70 Elo on each 100-game entry. The picture is consistent: the
+d128 nets are better per node and lose on cost; d64 and d32 are worse per node and
+their extra search never covers it; int8's rounding costs far more than its speed
+returns.
+
+1. **Search speed is the largest lever in the project.** Ten percent more simulations
+   is about 22 Elo. That reverses the ARENA9 dismissal of the expansion-path work: on a
+   quiet core the Python around the network is about 10% of a simulation, worth about
+   20 Elo, and any gain in cache hits, tree reuse or forward cost is worth the same
+   rate. It also means the platform's absolute speed, still unread from the validation
+   log, sets the whole field's strength.
+2. **R6a is the better network per position.** It loses only because d128 costs 35% of
+   the search on a quiet core. A d128 forward pass at d96 cost, through a cheaper trunk
+   or a quantisation that spares the value head, would put it ahead of R1 by roughly the
+   margin R1 has over R2. Nothing available today does that.
+3. **Time management barely matters; node count does.** Phase J's front-loaded versus
+   back-loaded allocation moved the score by +21 ± 48 Elo at equal total search; phase
+   J2's halving moved it by 162.
+4. **What is not measured:** the next doubling, 800 against 1,600, which says whether
+   the value of search saturates at the box's budget, and the worth of pondering itself,
+   which the shipped agent relies on and which doubles the effective budget.
+
+## 4. Decision this supports
+
+**Optimise simulations per move before optimising the network, and read the platform's
+budget from the validation log before deciding anything about size.** Sample: 200
+games at the competition clock with exact node caps, no failures. What would refine
+it: the 800-vs-1,600 doubling, and the same design with pondering on.
+
+## 5. Artifacts
 
 `sparring/bracket_box/lanes/J/` (and `J2/` when played): per lane `results.csv`,
 `meta.json`, one PGN and one log per game with both agents' per-move telemetry;
