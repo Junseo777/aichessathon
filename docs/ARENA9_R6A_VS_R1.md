@@ -28,7 +28,8 @@ Exported on the box by the f2a78b8 exporter; int8 failed the gate (0.91), fp32 p
 ## 1. Headline
 
 **R6a loses to R1: 40.5% over 100 games, −67 Elo (95% −136 to +2), while searching
-68% as many nodes per move.**
+68% as many nodes per move.** A 100-game replay (§5) scored 47.0%; pooled, 43.8% over
+200 games, −44 Elo.
 
 ```
 games 100   R6a +11 =59 -30   score 40.5%   (95% Wilson 31.4%-50.3%)
@@ -101,10 +102,24 @@ games at the competition clock, no failures. What would change it: R6a at a fixe
 simulation count beating R1 by more than the search deficit costs, with Elo per
 doubling measured, and a cheaper expansion path or a passing int8 export.
 
-## 5. Phase H2
+## 5. Phase H2 — the replay
 
-PENDING: the same pairing with two lanes on an otherwise idle box, 100 games, started
-2026-09-05 01:06 UTC, to replicate the result at a higher and less contended budget.
+Two lanes on cores 0–3, 100 games, 2026-09-05 01:06–05:14 UTC, started as a quiet-box
+replay; the other session's four-lane arena and a training run joined the box at
+01:43, so it was quiet for its first 37 minutes only.
+
+```
+games 100   R6a +19 =56 -25   score 47.0%   (95% Wilson 37.5%-56.7%)
+implied R6a - R1: -21 Elo (95% -89 to +47)
+R6a as White: +11 =32 -7, 54.0%      R6a as Black: +8 =24 -18, 40.0%
+terminations: checkmate 44, threefold 49, insufficient material 6, stalemate 1
+sims/move: R6a 1,007 (pondered 866), R1 1,428 (pondered 1,302)   ratio 0.71
+failed games: none; 105 throttled periods
+```
+
+Softer than phase H but the same sign, at the same 0.7 simulation share. Pooled over the
+two phases, 200 games: **R6a +30 =115 −55, 43.8%, −44 Elo (95% about −90 to 0)**.
+The interval no longer reaches zero. R6a is behind R1 at this clock.
 
 ## 6. Artifacts
 
