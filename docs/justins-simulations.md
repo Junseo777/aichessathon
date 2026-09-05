@@ -144,8 +144,10 @@ so the items below go after items 1 to 5 in priority, except item 6, which comes
 item 1. Everything in this section is a measurement, not a keep-or-drop: report what you
 read and how it moves the ARENA #12 figure.
 
-**Fixed facts you need.** The platform's own match logs show about **500 simulations per
-move**; the box run had 1,337. The bot is capped at a fixed number of simulations by one
+**Fixed facts you need.** The platform's own match logs show the agent's 5-second init
+pre-search at 768–1,070 simulations, against 1,664–2,304 in the box's ladder games, so the
+platform runs the net at 0.37–0.51 of the box's speed and the box's 1,337 simulations per
+move correspond to about **500 per move on the platform** (490–680); use 500, the low end. The bot is capped at a fixed number of simulations by one
 argument at the search call in `agent.py`, `result = _MCTS.run(board, game.key_counts,
 deadline, root=root)` → add `max_sims=500`; the clock stays as a safety net. Stockfish's
 `UCI_Elo` 3190 is *not* full strength: in `search.h`, `Skill` maps 3190 to level 18.4 of 20,
