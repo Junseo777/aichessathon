@@ -1,0 +1,132 @@
+AI CHESSATHON MATCH LOG
+=======================
+
+MATCH
+  Round          Rated 28
+  Team           Team1
+  Colour         Black
+  Opponent       Make_no_mistakes
+  Opening        French Classical
+  Start FEN      r1bqk2r/pp1n1ppp/2n1p3/2bpP3/5P2/2NB1N2/PPP3PP/R1BQK2R b KQkq - 1 8
+  You moved      First
+  Machine        w-228221
+  Finished       2026-09-05 19:04:51 UTC
+  Match ID       6ac3b6f9-cdfc-4789-9d7e-3c7fbbaccaf4
+
+INIT
+  Ready in       5.5 s
+  Budget         90.0 s
+  Used           6 percent
+
+CLOCK
+  Base           120.0 s plus 0.5 s per move
+  Moves          44
+  Time used      103.5 s
+  Slowest        4.0 s on move 40
+  Fastest        0.2 s on move 14
+  Average        2.4 s
+  Left at end    38.5 s
+
+RESULT
+  Lost by checkmate
+  Game lasted 200.3 s
+
+MOVES
+    #  move          time     clock left
+    1  f6            2.7 s      117.8 s
+    2  Nxf6          2.1 s      116.2 s
+    3  O-O           2.6 s      114.0 s
+    4  Nb4           3.2 s      111.3 s
+    5  Nxd3+         1.7 s      110.2 s
+    6  b5            2.2 s      108.5 s
+    7  Qc7           2.1 s      106.9 s
+    8  Rb8           2.4 s      105.0 s
+    9  Qa5           1.9 s      103.6 s
+   10  Qxa2          1.6 s      102.5 s
+   11  Rxf6          2.5 s      100.4 s
+   12  Ba6           0.8 s      100.2 s
+   13  Qa1+          1.9 s       98.8 s
+   14  Rd8+          0.2 s       99.1 s
+   15  Qa4           1.7 s       98.0 s
+   16  Qd7           2.3 s       96.2 s
+   17  Bxd4          0.9 s       95.7 s
+   18  Qxd4+         0.8 s       95.4 s
+   19  Rxd4+         0.6 s       95.3 s
+   20  Rdxf4         2.7 s       93.1 s
+   21  Rf8           3.3 s       90.4 s
+   22  Rc8+          2.0 s       88.9 s
+   23  Rf2           1.8 s       87.6 s
+   24  Rxg2          1.1 s       87.0 s
+   25  Rxh2          3.5 s       84.1 s
+   26  Kh8           1.0 s       83.6 s
+   27  Rh3+          3.9 s       80.2 s
+   28  h5            3.1 s       77.5 s
+   29  Kg8           4.0 s       74.0 s
+   30  Kf8           4.0 s       70.5 s
+   31  Re8           2.6 s       68.4 s
+   32  Rb8+          2.2 s       66.8 s
+   33  Rxb5+         2.6 s       64.7 s
+   34  Ke7           2.1 s       63.1 s
+   35  Kd6           3.3 s       60.3 s
+   36  Rh8           2.3 s       58.5 s
+   37  Kd7           2.4 s       56.6 s
+   38  Kc8           3.7 s       53.4 s
+   39  Kb8           1.9 s       52.0 s
+   40  Kc8           4.0 s       48.5 s
+   41  Kd7           3.9 s       45.1 s
+   42  Kd6           1.6 s       44.0 s
+   43  Kd7           3.1 s       41.4 s
+   44  Kd6           3.4 s       38.5 s
+
+OUTPUT
+  3,228 bytes on stderr
+
+  net: [('model.onnx', 4.57)] -> model.onnx
+  init: {'d_model': 96, 'n_heads': 4, 'n_blocks': 12, 'params': 1381050, 'forward_ms': 4.57, 'chosen': 'model.onnx', 'sha256': 'ea52cc6aac7704abec84b8628a86cbd9df8999ea178bcf75c199a8f245c9ac5a'}
+  init: opening pre-search sims=1024
+  move 8: f7f6 sims=576 reused=0 pondered=0 q=-0.04 t=2.72s pruned
+  move 9: d7f6 sims=480 reused=200 pondered=6 q=-0.08 t=2.11s pruned
+  move 10: e8g8 sims=896 reused=42 pondered=6 q=-0.13 t=2.62s pruned
+  move 11: c6b4 sims=736 reused=428 pondered=7 q=-0.12 t=3.22s pruned
+  move 12: b4d3 sims=352 reused=263 pondered=6 q=-0.08 t=1.66s pruned
+  move 13: b7b5 sims=448 reused=318 pondered=7 q=-0.02 t=2.15s pruned
+  move 14: d8c7 sims=480 reused=270 pondered=7 q=+0.02 t=2.10s pruned
+  move 15: a8b8 sims=512 reused=210 pondered=7 q=-0.07 t=2.39s pruned
+  move 16: c7a5 sims=384 reused=305 pondered=8 q=-0.01 t=1.94s pruned
+  move 17: a5a2 sims=320 reused=129 pondered=7 q=-0.15 t=1.62s pruned
+  move 18: f8f6 sims=512 reused=371 pondered=7 q=-0.20 t=2.50s pruned
+  move 19: c8a6 sims=160 reused=559 pondered=7 q=-0.18 t=0.79s pruned
+  move 20: a2a1 sims=640 reused=80 pondered=8 q=-0.05 t=1.85s pruned
+  move 21: b8d8 sims=32 reused=623 pondered=23 q=-0.03 t=0.17s pruned
+  move 22: a1a4 sims=1248 reused=524 pondered=14 q=-0.05 t=1.65s pruned
+  move 23: a4d7 sims=448 reused=162 pondered=6 q=-0.38 t=2.30s pruned
+  move 24: c5d4 sims=192 reused=352 pondered=7 q=-0.45 t=0.94s pruned
+  move 25: d7d4 sims=160 reused=457 pondered=7 q=-0.49 t=0.81s pruned
+  move 26: d8d4 sims=128 reused=509 pondered=6 q=-0.50 t=0.59s pruned
+  move 27: d4f4 sims=576 reused=493 pondered=8 q=-0.57 t=2.70s pruned
+  move 28: f6f8 sims=736 reused=323 pondered=8 q=-0.55 t=3.26s pruned
+  move 29: f8c8 sims=416 reused=207 pondered=7 q=-0.51 t=1.96s pruned
+  move 30: f4f2 sims=384 reused=316 pondered=9 q=-0.53 t=1.78s pruned
+  move 31: f2g2 sims=224 reused=429 pondered=7 q=-0.53 t=1.08s pruned
+  move 32: g2h2 sims=832 reused=330 pondered=9 q=-0.58 t=3.48s pruned
+  move 33: g8h8 sims=224 reused=383 pondered=8 q=-0.59 t=0.96s pruned
+  move 34: h2h3 sims=896 reused=302 pondered=6 q=-0.70 t=3.93s pruned
+  move 35: h7h5 sims=768 reused=256 pondered=9 q=-0.66 t=3.12s pruned
+  move 36: h8g8 sims=834 reused=192 pondered=7 q=-0.70 t=4.00s
+  move 37: g8f8 sims=888 reused=920 pondered=7 q=-0.71 t=4.00s
+  move 38: c8e8 sims=672 reused=1476 pondered=6 q=-0.73 t=2.60s pruned
+  move 39: e8b8 sims=544 reused=32 pondered=7 q=-0.77 t=2.16s pruned
+  move 40: b8b5 sims=640 reused=363 pondered=9 q=-0.80 t=2.59s pruned
+  move 41: f8e7 sims=576 reused=605 pondered=10 q=-0.85 t=2.12s pruned
+  move 42: e7d6 sims=928 reused=5 pondered=6 q=-0.79 t=3.30s pruned
+  move 43: h3h8 sims=576 reused=171 pondered=7 q=-0.82 t=2.28s pruned
+  move 44: d6d7 sims=704 reused=240 pondered=7 q=-0.88 t=2.41s pruned
+  move 45: d7c8 sims=992 reused=512 pondered=6 q=-0.92 t=3.69s pruned
+  move 46: c8b8 sims=640 reused=477 pondered=8 q=-0.94 t=1.90s pruned
+  move 47: b8c8 sims=1323 reused=375 pondered=7 q=-0.96 t=4.00s
+  move 48: c8d7 sims=1533 reused=1678 pondered=7 q=-0.97 t=3.86s
+  move 49: d7d6 sims=736 reused=3023 pondered=8 q=-0.97 t=1.58s pruned
+  move 50: d6d7 sims=1984 reused=46 pondered=7 q=-0.99 t=3.14s pruned
+  move 51: d7d6 sims=10284 reused=998 pondered=7 q=-1.00 t=3.36s
+
+Email hello@aichessathon.com with this file if anything here is unclear.

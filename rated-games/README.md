@@ -1,7 +1,8 @@
 # Rated games
 
 PGN exports from the platform's rated ladder, one file per round, kept exactly as
-downloaded. The platform anonymises the headers, starts each game from a curated
+downloaded. The headers carry the team names (ours is Team1, as the public leaderboard
+lists it); the platform starts each game from a curated
 opening position (the `FEN` tag, move 6 to 9), and stamps every move with the
 clock after it. Time control 120 s + 0.5 s.
 
@@ -14,7 +15,11 @@ the side that never exceeds `_budget_s` and stops most of its searches early.
 
 Which upload played which round (Junseo, Sept 4 evening): rounds 1 to 8 the
 R3_e8_ema upload of 02:56; rounds 9 to 14 R1_e8_ema on the same code; round 15
-onwards R1 with smart pruning. The clocks agree: not one of the 722 searched
+onwards R1 with smart pruning; rounds 16 to 23 the 03:26 upload of Sept 5
+(temperature 1.359, root FPU 1.0, pruning, the old repetition test); rounds 24 to
+30 `submission_fixes_R1_e8_ema_fe58a9c.zip`, built 15:31 and byte-identical to
+`main` at fe58a9c (repetition fix, opening-tree adoption, draw rule on, extension
+and LCB off). The clocks agree: not one of the 722 searched
 moves in rounds 1 to 14 stopped before its deadline, and in round 15 the bot
 stopped 62 of 63 searches early and spent 47% of its budget. The moves agree
 too: replaying the 210 search-decided positions of rounds 1 to 10 at 300
@@ -47,12 +52,28 @@ pruning, scaled FPU, policy temperature, in-tree draw score).
 | 16 | ms | White | win | mate | +2.6 from move 20 after the opponent's 19...Kh8, converted over 77 moves with 9.9 s left |
 | 17 | mate-in-one | Black | loss | mate | −0.9 at move 12 already; every bot move from 12 to 24 within a quarter pawn of Stockfish's; outplayed, 30.7 s left |
 | 18 | sobriety | White | loss | mate | three 0.6-pawn slips at 15, 20 and 22 (Rab1, Ng3, Kg1 were better), then a melee played at Stockfish's first choice from 27 on; 57.9 s left |
-| 19 | gijs-smit | Black | draw | threefold | repeated queen checks from move 39 with our own q at +0.5 and 53 s left: the round-8 rule mismatch again, on the build without the fix; PGN not yet in the folder |
+| 19 | gijs-smit | Black | draw | threefold | repeated queen checks from move 39 with our own q at +0.5 and 53 s left: the round-8 rule mismatch again, on the build without the fix |
 | 20 | checkers | White | win | mate | q rising from move 24, mated at 72 with 16 s left; not yet through Stockfish |
+| 21 | slopfish | White | draw | threefold | level throughout: no move by either side lost more than 35 cp; 51 s left |
+| 22 | Lubina | White | draw | insufficient material | −1.4 at move 27, +1.2 after 27...Ne7, +3.3 by move 60 with our q at +0.5 to +0.8; 68. Rf3 at 1.6 s with 16 s left gave it back (Nc5 kept +2.2); 5.2 s left at move 98 |
+| 23 | No More Ammo | Black | draw | threefold | +5.5 after 59. Bb5, where 59...Bxb5 wins the pawn race; 59...Bf7 at q +0.16 with 28 s left returned 0.0, then the bishops shuffled into the threefold |
+| 24 | THE ROOOOOKKK!!!! | Black | loss | mate | +1.4 at move 41, five bishop shuffles at full budget, then 46...Rd7 at q +0.24 with 38 s left lost the exchange (Rde8 held −0.6); mated at 83 with 9 s |
+| 25 | pheanup | Black | loss | mate | drift to −0.8 by move 22; 28...Rc1+ (−1.6, Bxf3 held) and 33...Qe6 after 320 simulations with 68 s left (−2.6 more, Rxb2 held); queen lost at 39, mated at 63 |
+| 26 | mangodogo | White | draw | threefold | worse from 20. Bc4, −1.9 by move 36; the opponent gave it back twice; the repetition at 46 was 0.0 with our q at 0.00 |
+| 27 | Something | White | loss | mate | +0.5 for 25 moves, then 26. Be2 and 28. Bb2 (−0.9 each) and four rook moves at full budget, 36. Rf1 to 40. Red6, from 0.0 to −2.0; mated at 80 with 13 s |
+| 28 | Make_no_mistakes | Black | loss | mate | 20...Qa1+ at 99 s and q −0.05 lost 2.1 pawns (Bb7 held 0.0), a move both builds play at 2,400 simulations; mated at 52 |
+| 29 | Amplifirm | Black | draw | threefold | +3.1 at move 23 after the opponent's two exchange sacrifices; q +0.65 to +0.79 through move 44 while six slips at 45 to 98 s (37...e5 −2.0, 39...Bh8 −1.4) took it to 0.0; perpetual check from move 60 |
+| 30 | Finlay Phillips | Black | win | mate | clean: +1.9 after 25. Qg3, q tracking Stockfish from +0.36 to +0.96, mated at 70 with 13 s; the opponent got down to 1.2 s |
 
-Score 13/20. The wins were all against opponents who blundered, eight of the
+Score 14.5/25. The wins were all against opponents who blundered, eight of the
 nine into mate; the two losses to leaders in rounds 17 and 18 came from
-accumulated small errors, not a blunder. Rounds 11 to 18 were analysed the same
+accumulated small errors, not a blunder. Rounds 21 to 25 went D D D L L, all
+against teams ranked 2 to 13 on the public leaderboard (1986 to 2144 that
+evening; we stood 15th of 282 at 1960 after round 24, down from 2001 after
+round 20). Rounds 26 to 30 went D L L D W
+against 1882, 1906, 1993, 1845 and 1849; the rating fell from 2001 after round 20
+to 1848 after round 29, 31st of 295. The pruning build's tally, rounds 15 to 30,
+is 8.5/16; the fixes zip's, rounds 24 to 30, 1.5/7. Rounds 11 to 18 were analysed the same
 way as the first ten; rounds 16 to 18 were played by the Sept 5 upload
 (temperature 1.359, root FPU 1.0, pruning; no repetition fix).
 
@@ -172,6 +193,116 @@ binding on five moves. Time used was 113 s of 144 s available, and round 18
 ended with 58 s unused. Whether more search would have changed the drift
 moves is the replay question recorded below.
 
+**Rounds 21 to 25: two wins thrown in one move each, and the draw rule was
+never in play.** Round 21 was a real draw: the whole game inside 35 cp for both
+sides, final position 0.0. The other four each turned on a single position,
+all scored with Stockfish at 4 s, one thread, multipv 4:
+
+| position | clock left | search | our q | played | Stockfish | best |
+|---|---|---|---|---|---|---|
+| R22 68. | 16.5 s | 320 sims, 1.62 s, stopped early | +0.69 | Rf3 +43 | +240 before | Nc5 +223 |
+| R23 59... | 28.1 s | 416 sims, 1.67 s, stopped early | +0.16 | Bf7 +3 | +546 before | Bxb5 +770 |
+| R24 46... | 38.5 s | 736 sims, 3.05 s, stopped early | +0.24 | Rd7 −252 | −42 before | Rde8 −58 |
+| R25 28... | 75.3 s | 768 sims, 3.85 s, stopped early | −0.24 | Rc1+ −233 | −34 before | Bxf3 −32 |
+| R25 33... | 68.2 s | 320 sims, 1.67 s, stopped early | −0.47 | Qe6 −737 | −315 before | Rxb2 −291 |
+
+Round 22 is the conversion failure of rounds 5, 9 and 14 once more, and this
+time the search knew: q sat at +0.5 to +0.8 from move 30 to move 67 while
+Stockfish had +1.3 to +3.3 (rook and knight against rook and knight, an outside
+a-pawn). The clock was the constraint. The 46-move horizon had spent 92 s of
+the first 117 by move 50 in a position that was level or worse, so the winning
+ending from move 50 to 98 was played on 28 s plus the increment: 22 of the 91
+searches ran under 200 simulations, and 68. Rf3 with 16.5 s (q +0.69, Nc5 was
++2.2) let the knight in; the a-pawn fell at move 79 and the game ended king
+against king with 5.2 s left. The earlier slips (38. Rcc3, 44. Rb3, 47. Rc7,
+60. Kf4) cost 20 to 65 cp each at 4 s, not the win. This is the game the step-2
+clock reshape (`docs/ARENA13_STEP2_CLOCK.md`) is for; its 44% was measured on a
+thrashing Mac and still needs the rerun on Justin's list.
+
+Round 23 is the search's blind spot rather than the clock's. After No More
+Ammo's 58. Bf1 and 59. Bb5 the position was +5.5: 59...Bxb5 60. axb5 a4 and the
+a-pawn queens two moves before the g-pawn. Our search, with 28 s in hand, stopped
+after 416 simulations at q +0.16 and kept the bishops; Stockfish's Bf7 is 0.0,
+and from there Bg6/Bf7 against Bd7/Bc6 repeated. The draw rule did not fire
+because q never reached +0.3, and it was right not to: the position after Bf7
+is drawn. A pawn race ten plies deep is invisible to the value head and to 400
+simulations; proofs would not see it either (no mate). Round 23 also drifted
+from +1.2 at move 26 to 0.0 by move 29 through 24...Qe6, 26...Be5 and 27...Qxg4
+(Bxb5 kept +1.2), each 50 to 90 cp at 2 to 3.5 s.
+
+Round 24, against the second-ranked team, was better for 30 moves: Stockfish
++0.4 to +1.4 from move 21 to 41 with q rising to +0.44, so the net and the
+board agreed. Then five bishop moves in a row, Be7 Bb4 Be7 Bf8 Bb4, at 860 to
+1,090 simulations and 3.1 to 3.7 s each, gave the pawn back (41...Be7 cost 102
+cp) and made no plan in a closed position, and 46...Rd7 at full budget with 38 s
+walked into 47. Bh4 Be7 48. Nc5, the exchange, and a −3 ending the opponent
+converted cleanly. The bot's q was +0.46 the move before Stockfish's 0.0 and
+−0.10 when Stockfish had −2.7: the value head lags tactics by two moves in this
+kind of position, and 736 simulations did not close the gap.
+
+Round 25 was lost at full clock. Two decisive errors with 75 s and 68 s left:
+28...Rc1+ gave 1.6 pawns for a check (Bxf3 held −0.3), and 33...Qe6, after a
+search that stopped at 320 simulations with a 68 s clock and a 4 s cap, walked
+into 34. Qd8+ and 35. Ra8, losing the queen for rook and bishop by move 39.
+That stop is the round-17 pattern: a reused subtree of 254 visits made the
+visit lead look unbeatable, so pruning ended the search at 40% of its budget in
+a position that was already −3 and about to be −7. Before that the drift from
+0.0 to −0.8 by move 22 came in 30 to 40 cp steps (11...c5, 16...Qc8, 19...h6,
+21...Qe6) with a minute and a half on the clock: outplayed, not out-clocked.
+
+What the five games add to the list: conversion of won endings is the largest
+single leak in the set, now five half-points (rounds 5, 9, 14, 22, 23), and it
+splits into a clock problem (22: nothing left by move 50) and a calculation
+problem (23: a pawn race no value head sees); the smart-pruning stop on a reused
+subtree ended two decisive searches early (R25 33..., R23 59...) with 28 to 68 s
+in hand; and the draw rule, on or off, decided nothing in any of the five.
+
+**Rounds 26 to 30: a won game thrown at full clock, and why the search cannot
+feel it.** Round 29 removes the clock from the conversion story. After Amplifirm's
+two exchange sacrifices we were +3.1 at move 23 with 98 s; the search read q
++0.65 and kept reading +0.62 to +0.79 for 22 moves while Stockfish went +3.1,
++2.0, +1.8, +0.9, +0.3: 23...Rxa2 (a5 kept +2.9), 24...a5, 31...Rc8, 37...e5
+(Rh8 kept +3.8), 39...Bh8 (Ra8 kept +2.0), 45...Ke6, each at 2.3 to 3.9 s and
+288 to 896 simulations with 45 to 98 s in hand. By move 58 it was 0.0 and the
+knight's perpetual from move 60 was the correct result. The search never saw
+the advantage go, and the table below says why. Over the 536 searched positions
+of rounds 21 to 30 with both a q and a Stockfish score:
+
+| Stockfish, our view | positions | mean q | spread |
+|---|---|---|---|
+| −300 to −150 | 33 | −0.37 | 0.20 |
+| −150 to −50 | 41 | −0.12 | 0.14 |
+| −50 to +50 | 257 | +0.08 | 0.14 |
+| +50 to +150 | 47 | +0.37 | 0.17 |
+| +150 to +300 | 55 | +0.62 | 0.08 |
+| +300 to +500 | 18 | +0.68 | 0.14 |
+| above +500 | 15 | +0.88 | 0.19 |
+
+Between −1 and +1 the value head moves 0.29 per pawn; between +1 and +4 it
+moves 0.10, and +1.5 and +3.5 read the same to within the spread. So a
+two-pawn slip inside a won position changes nothing the search selects on, and
+the +0.3 threshold that arms the repetition avoidance is crossed at about +0.8
+pawns and stays crossed. This is the same head in both builds (rounds 21 to 23
++0.62 in the +150 to +300 band, rounds 24 to 30 +0.63). It is a training
+target question, not a search one: a value head that separates +1.5 from +3.5
+(a WDL head, or the scaled targets of `docs/ARENA8_R2_VALUE_SCALE.md`) is what
+conversion needs, and it is the first thing to measure on the R6b and R8 nets.
+
+**The fixes zip and the losing streak.** Rounds 24 to 28 scored 0.5 against an
+expectation of 2.07 from the opponents' ratings, a 5% event under no change,
+after rounds 15 to 23 had scored 5.0 against 3.73. The eleven positions that
+decided rounds 22 to 28 were replayed through both uploads' search code, same
+net, 500 and 1,500 simulations: 19 of the 22 choices are identical, including
+every losing move (R24 46...Rd7 at 1,500, R25 33...Qe6, R27's four rook moves,
+R28 20...Qa1+ at 2,400 simulations, q −0.1). Of the three that differ, two favour
+the fixes (R23 59...Bxb5 found at 1,500, R25 28...Rc1+ avoided at 1,500) and one
+the old code (R24 46...Rc8 at 500, a 93-to-84 visit near-tie). The root rule had
+a move to make on four of the 406 searched moves of rounds 24 to 30, twice in
+round 24 at a cost of 9 and 0 cp, twice in round 30's mating sequence. The
+in-tree rule is visible only in the simulation counts: 13,000 to 83,000 per move
+in round 29's perpetual, where repeated positions end a path without a forward
+pass.
+
 ## What the match logs add
 
 The platform's per-game logs sit beside the PGNs from round 1. Our stdout is
@@ -185,9 +316,14 @@ result but no search telemetry. What the captured games show:
   4.5 to 6.2 ms, pre-search 768 to 1,070 simulations in 5 s, about 150 to 210 fresh
   simulations per second. The 10 ms per simulation inferred from clock overruns was
   the in-game figure with tree bookkeeping, not the raw forward.
-- **The pruning build leaves time.** Time used and left at the end: round 15 115 s
-  and 36 s, 16 145 s and 10 s, 17 113 s and 31 s, 18 79 s and 58 s, 19 86 s and
-  53 s, 20 136 s and 16 s. The pre-pruning games used 120 to 169 s and ended at
+- **The pruning build leaves time in short games only.** Time used and left at the
+  end: round 15 115 s and 36 s, 16 145 s and 10 s, 17 113 s and 31 s, 18 79 s and
+  58 s, 19 86 s and 53 s, 20 136 s and 16 s, 21 87 s and 51 s, 22 160 s and 5 s
+  (98 moves), 23 125 s and 23 s, 24 148 s and 9 s (83 moves), 25 125 s and 23 s,
+  26 104 s and 38 s, 27 142 s and 13 s, 28 104 s and 39 s, 29 129 s and 19 s,
+  30 138 s and 13 s.
+  Median simulations per move 320 (round 22) to 480; searches under 200
+  simulations 2 to 6 per game except 22 in round 22. The pre-pruning games used 120 to 169 s and ended at
   2 to 19 s. Pruning stopped 33 of 34 to 66 of 70 searches; the 4 s cap bound on
   five moves in round 17.
 - **The decisions we replayed, as the search saw them.** Round 14 move 45 had
@@ -195,6 +331,10 @@ result but no search telemetry. What the captured games show:
   15, 20 and 22 had 672 to 736 simulations each at 3.0 to 3.9 s, and the replay
   finds no better move up to 2,500, so those were the net's opinion, not a budget
   shortfall. Round 10 move 14 had 670 simulations plus a reused subtree of 1,055.
+- **The ponder thread crashes after a mating move.** Every win by checkmate with
+  pondering (rounds 11, 12, 13, 15, 16, 20, 30) ends its log with `ValueError: no
+  legal moves at search root` from `_ponder`. The game is over by then, so it costs
+  nothing; a one-line guard in `_ponder` would silence it.
 - **Round 19 lost a half point to the repetition rule.** From move 39 the search
   rated the position +0.46 to +0.57 and played Qg5, Qg1+, Qf1+, Qg1+, Qf1+; the
   referee declared the threefold with 53 s on our clock. The fix in
@@ -225,7 +365,14 @@ agent's own verdicts come from replaying those positions through the working
 tree's `chessml` search, which carries the Sept 4 features the upload lacks,
 with the budget it actually had in the game and again with 6 s, on a laptop
 that was running sparring lanes at the time, so simulation counts are neither
-the platform's nor idle. The first-five-move losses were scored on 2026-09-04
+the platform's nor idle. Rounds 21 to 30 were scored on 2026-09-05 at 0.25 s and one thread
+for the trajectory and 4 s multipv 4 on the named positions; the calibration
+table pools every searched position of those ten games with a q in the log. The
+build replay ran each upload's `agent.py` and `chessml` from its zip with
+`node_budget` 500 and 1,500 on the Mac, eleven positions, no arenas (the queues
+are stopped, see `docs/justins-simulations.md`);
+the opponents' ranks and ratings are the public leaderboard at 17:20 BST that
+day, and ours is the team page's rating history. The first-five-move losses were scored on 2026-09-04
 with Stockfish at depth 16 on one thread, our side identified by the clock
 fingerprint above. The lichess opening explorer refused unauthenticated
 requests that day, so how deep a human-games book would follow the curated
