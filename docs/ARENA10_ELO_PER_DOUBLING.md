@@ -67,12 +67,19 @@ terminations: checkmate 111, threefold 89   (threefold 44%)
 failed games: none; distinct games 100+ of 200
 ```
 
-**Between 400 and 800 simulations per move, a doubling of search is worth about
-160 Elo** (95% about 110 to 215). Two things to carry with the number: it was measured
-without pondering, so the budgets are lower than the shipped agent's effective ones,
-and doublings usually buy less as the budget rises, so treat 160 as the value at the
-low end of the range the box plays in and as an upper bound for the box's late-evening
-rate of 1,500.
+**Only 16 of the 200 games are distinct.** With fixed caps, no pondering and the same
+net on both sides the agent is deterministic, so eight openings with both colours give
+sixteen games, each replayed about twelve times. The 71.8% is the mean of sixteen
+outcomes, and the Wilson interval above is wrong by a factor of about four: on 16
+independent trials it runs from roughly 47% to 88%, which is anything from 0 to about
+350 Elo per doubling. Per opening the 800-side scored 100% in three, 50% in four and
+26% in one, so the sign is not in doubt and the magnitude is.
+
+**Between 400 and 800 simulations per move, a doubling of search is worth on the order
+of 160 Elo, with an honest interval of about 0 to 350.** A rerun from a hundred-position
+book (phase J3, below) is what pins it down. Two things to carry with whatever number
+it gives: it is measured without pondering, so the budgets are below the shipped
+agent's effective ones, and doublings usually buy less as the budget rises.
 
 ## 3. What the number does to the week's results
 
@@ -87,7 +94,8 @@ be read for what it says about the net itself:
 | R4 vs R2 (ARENA6, loaded box) | 1.18× | about +40 | −56 | R4 ≈ −95 |
 | RA vs R2 (ARENA6, loaded box) | 1.26× | about +55 | −372 | RA ≈ −425 |
 
-Read with the usual ±70 Elo on each 100-game entry. The picture is consistent: the
+Read with the usual ±70 Elo on each 100-game entry and, until J3 reports, with the
+exchange rate itself uncertain by a factor of two. The picture is consistent: the
 d128 nets are better per node and lose on cost; d64 and d32 are worse per node and
 their extra search never covers it; int8's rounding costs far more than its speed
 returns.
@@ -105,7 +113,10 @@ returns.
 3. **Time management barely matters; node count does.** Phase J's front-loaded versus
    back-loaded allocation moved the score by +21 ± 48 Elo at equal total search; phase
    J2's halving moved it by 162.
-4. **What is not measured:** the next doubling, 800 against 1,600, which says whether
+4. **The design needs a wide book.** Any experiment with the same net on both sides and
+   no pondering must draw its openings from a book large enough that no game repeats;
+   eight positions give sixteen games however many are played.
+5. **What is not measured:** the next doubling, 800 against 1,600, which says whether
    the value of search saturates at the box's budget, and the worth of pondering itself,
    which the shipped agent relies on and which doubles the effective budget.
 
@@ -113,10 +124,16 @@ returns.
 
 **Optimise simulations per move before optimising the network, and read the platform's
 budget from the validation log before deciding anything about size.** Sample: 200
-games at the competition clock with exact node caps, no failures. What would refine
+games at the competition clock with exact node caps, no failures, but only sixteen
+distinct games; the sign is firm and the magnitude waits on J3. What would refine
 it: the 800-vs-1,600 doubling, and the same design with pondering on.
 
-## 5. Artifacts
+## 5. Phase J3
+
+PENDING: the J2 design replayed from a book of 100 positions taken at move 8 of
+distinct 2400+ games in the filtered corpus, each with both colours, 200 distinct games.
+
+## 6. Artifacts
 
 `sparring/bracket_box/lanes/J/` (and `J2/` when played): per lane `results.csv`,
 `meta.json`, one PGN and one log per game with both agents' per-move telemetry;
