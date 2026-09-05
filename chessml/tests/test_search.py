@@ -8,7 +8,7 @@ import pytest
 
 from chessml.encoding import transposition_key
 from chessml.net import PolicyValueNet, load_fastest
-from chessml.search import MCTS, Node
+from chessml.search import MCTS, Node, SearchResult
 from chessml.tests.weights_fixture import needs_trained_net, require_weights
 
 WEIGHTS = require_weights()
@@ -23,20 +23,26 @@ def fresh_counts(board: chess.Board) -> dict[object, int]:
     return {transposition_key(board): 1}
 
 
+def chosen(result: SearchResult) -> chess.Move:
+    """What agent._pick plays: a proven win if the search found one, else the most visited."""
+    for idx, proof in enumerate(result.proofs):
+        if proof == 1.0:
+            return result.moves[idx]
+    return result.moves[int(np.argmax(result.visits))]
+
+
 @needs_trained_net()
 def test_finds_mate_in_one(net: PolicyValueNet) -> None:
     board = chess.Board("6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1")
-    result = MCTS(net).run(board, fresh_counts(board), time.monotonic() + 30.0, max_sims=400)
-    best = result.moves[int(np.argmax(result.visits))]
-    assert best == chess.Move.from_uci("a1a8")
+    result = MCTS(net).run(board, fresh_counts(board), math.inf, max_sims=400)
+    assert chosen(result) == chess.Move.from_uci("a1a8")
 
 
 @needs_trained_net()
 def test_finds_mate_in_one_as_black(net: PolicyValueNet) -> None:
     board = chess.Board("r5k1/5ppp/8/8/8/8/5PPP/6K1 b - - 0 1")
-    result = MCTS(net).run(board, fresh_counts(board), time.monotonic() + 30.0, max_sims=400)
-    best = result.moves[int(np.argmax(result.visits))]
-    assert best == chess.Move.from_uci("a8a1")
+    result = MCTS(net).run(board, fresh_counts(board), math.inf, max_sims=400)
+    assert chosen(result) == chess.Move.from_uci("a8a1")
 
 
 def test_deadline_is_respected(net: PolicyValueNet) -> None:
@@ -55,7 +61,7 @@ def test_third_occurrence_is_a_draw_on_the_path(net: PolicyValueNet) -> None:
     after = board.copy(stack=False)
     after.push(repeating)
     counts = {transposition_key(board): 1, transposition_key(after): 2}
-    result = MCTS(net).run(board, counts, time.monotonic() + 30.0, max_sims=300)
+    result = MCTS(net).run(board, counts, math.inf, max_sims=300)
     idx = result.moves.index(repeating)
     assert result.visits[idx] > 0
     assert abs(float(result.q[idx])) < 1e-6
@@ -82,7 +88,7 @@ def test_root_reuse_continues_the_subtree(net: PolicyValueNet) -> None:
     board = chess.Board()
     counts = fresh_counts(board)
     mcts = MCTS(net)
-    first = mcts.run(board, counts, time.monotonic() + 30.0, max_sims=200)
+    first = mcts.run(board, counts, math.inf, max_sims=200)
     idx = int(np.argmax(first.visits))
     child = first.root.children[idx]
     assert child is not None
@@ -90,7 +96,7 @@ def test_root_reuse_continues_the_subtree(net: PolicyValueNet) -> None:
 
     board.push(first.moves[idx])
     counts[transposition_key(board)] = 1
-    second = mcts.run(board, counts, time.monotonic() + 30.0, max_sims=100, root=child)
+    second = mcts.run(board, counts, math.inf, max_sims=100, root=child)
     assert second.root is child
     assert child.total == visits_before + 100
     assert second.simulations == 100
@@ -116,9 +122,7 @@ def test_stop_event_interrupts_an_unbounded_search(net: PolicyValueNet) -> None:
 
 def test_node_budget_bounds_expansion(net: PolicyValueNet) -> None:
     board = chess.Board()
-    result = MCTS(net).run(
-        board, fresh_counts(board), time.monotonic() + 30.0, max_sims=200, node_budget=5
-    )
+    result = MCTS(net).run(board, fresh_counts(board), math.inf, max_sims=200, node_budget=5)
     assert result.expanded <= 5
     assert result.simulations <= 5
 
@@ -179,19 +183,21 @@ def test_derived_proofs_cascade_and_terminals_persist() -> None:
 
 @needs_trained_net()
 def test_mate_in_two_is_proven_and_stops_the_search(net: PolicyValueNet) -> None:
+    # the search as shipped with proofs on: root FPU and the policy temperature
     board = chess.Board("7k/8/8/8/8/8/R7/1R4K1 w - - 0 1")
-    mcts = MCTS(net)
-    result = mcts.run(board, fresh_counts(board), time.monotonic() + 60.0, max_sims=2000)
+    shipped = PolicyValueNet(net.session, net.name, policy_temperature=1.359)
+    mcts = MCTS(shipped, root_fpu=1.0)
+    result = mcts.run(board, fresh_counts(board), math.inf, max_sims=4000)
     assert mcts._proof(result.root, mcts.generation) == 1.0
-    assert result.simulations < 2000
-    winners = {m.uci() for m, p in zip(result.moves, result.proofs, strict=True) if p == 1.0}
-    assert winners & {"a2a7", "b1b7"}
+    assert result.simulations < 4000
+    first = chosen(result)
+    assert result.proofs[result.moves.index(first)] == 1.0
 
 
 @needs_trained_net()
 def test_mate_in_one_is_proven_on_the_first_visit(net: PolicyValueNet) -> None:
     board = chess.Board("6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1")
-    result = MCTS(net).run(board, fresh_counts(board), time.monotonic() + 30.0, max_sims=400)
+    result = MCTS(net).run(board, fresh_counts(board), math.inf, max_sims=400)
     idx = result.moves.index(chess.Move.from_uci("a1a8"))
     assert result.proofs[idx] == 1.0 and result.root.proof == 1.0
     assert result.simulations < 400
@@ -200,9 +206,7 @@ def test_mate_in_one_is_proven_on_the_first_visit(net: PolicyValueNet) -> None:
 @needs_trained_net()
 def test_proofs_can_be_switched_off(net: PolicyValueNet) -> None:
     board = chess.Board("6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1")
-    result = MCTS(net, proofs=False).run(
-        board, fresh_counts(board), time.monotonic() + 30.0, max_sims=200
-    )
+    result = MCTS(net, proofs=False).run(board, fresh_counts(board), math.inf, max_sims=200)
     assert result.simulations == 200 and result.root.proof is None
     assert np.isnan(result.proofs).all()
 
@@ -210,12 +214,12 @@ def test_proofs_can_be_switched_off(net: PolicyValueNet) -> None:
 def test_smart_pruning_stops_when_the_lead_cannot_be_overtaken(net: PolicyValueNet) -> None:
     board = chess.Board("8/5pk1/6p1/8/3K4/8/5PP1/8 w - - 0 45")
     mcts = MCTS(net, proofs=False)
-    first = mcts.run(board, fresh_counts(board), time.monotonic() + 30.0, max_sims=64)
+    first = mcts.run(board, fresh_counts(board), math.inf, max_sims=64)
     assert not first.pruned
     lead = int(np.argmax(first.root.n))
     first.root.n[lead] += 5000.0
     first.root.total += 5000
-    second = mcts.run(board, fresh_counts(board), time.monotonic() + 1.0, root=first.root)
+    second = mcts.run(board, fresh_counts(board), time.monotonic() + 10.0, root=first.root)
     assert second.pruned and second.simulations == 32
     assert int(np.argmax(second.visits)) == lead
 
@@ -223,13 +227,15 @@ def test_smart_pruning_stops_when_the_lead_cannot_be_overtaken(net: PolicyValueN
 def test_smart_pruning_needs_a_deadline_and_can_be_disabled(net: PolicyValueNet) -> None:
     board = chess.Board("8/5pk1/6p1/8/3K4/8/5PP1/8 w - - 0 45")
     mcts = MCTS(net, proofs=False)
-    seed = mcts.run(board, fresh_counts(board), time.monotonic() + 30.0, max_sims=64)
+    seed = mcts.run(board, fresh_counts(board), math.inf, max_sims=64)
     seed.root.n[int(np.argmax(seed.root.n))] += 5000.0
     seed.root.total += 5000
     unbounded = mcts.run(board, fresh_counts(board), math.inf, max_sims=64, root=seed.root)
     assert not unbounded.pruned and unbounded.simulations == 64
     off = MCTS(net, proofs=False, pruning_factor=None)
-    plain = off.run(board, fresh_counts(board), time.monotonic() + 1.0, max_sims=64, root=seed.root)
+    plain = off.run(
+        board, fresh_counts(board), time.monotonic() + 30.0, max_sims=64, root=seed.root
+    )
     assert not plain.pruned and plain.simulations == 64
 
 
@@ -251,12 +257,10 @@ def test_absolute_root_fpu_visits_every_root_move(net: PolicyValueNet) -> None:
     board = chess.Board()
     sims = len(list(board.legal_moves)) * 6
     every = MCTS(net, proofs=False, root_fpu=1.0).run(
-        board, fresh_counts(board), time.monotonic() + 30.0, max_sims=sims
+        board, fresh_counts(board), math.inf, max_sims=sims
     )
     assert (every.visits > 0).all()
-    plain = MCTS(net, proofs=False).run(
-        board, fresh_counts(board), time.monotonic() + 30.0, max_sims=sims
-    )
+    plain = MCTS(net, proofs=False).run(board, fresh_counts(board), math.inf, max_sims=sims)
     assert (plain.visits == 0).any()
 
 

@@ -53,6 +53,15 @@ leaves no root move unvisited where the default leaves several; a repetition is 
 −0.1 to a root standing at +0.9 and +0.1 at −0.9. 62 tests pass, ruff and mypy strict
 clean, at every commit.
 
+The mate tests are strength tests and take the shape of the active net. Written on R2
+(which ranks the mate 13th at 1.6%), they assumed the mating move would be the most
+visited after 400 simulations. On R1 the mate is the second-ranked move at 17.5%, so
+proofs settle it on the third simulation and the search stops with the mate holding one
+visit; the tests now check what `_pick` plays, a proven win first, and the two-mover
+is checked under the shipped temperature and root FPU, where R1 proves it in ~1,600
+simulations (it also finds a different mate in two, 1.Rg2 Kh7 2.Rh1#). Verified on an
+idle box core with R1: 56 passed.
+
 ## 3. Results
 
 Two chains, same snapshot, same features, same rule. Chain A on the Mac with base
