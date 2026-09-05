@@ -57,7 +57,7 @@ def main() -> int:
         else:
             white, black, wtag, btag = args.reference, args.candidate, "without", "with"
         tag = f"g{g:03d}_{oname}_{wtag}w"
-        stamp = time.strftime("%H:%M:%S")
+        stamp = time.strftime("%H:%M:%SZ", time.gmtime())
         print(f"[{stamp}] game {n}/{args.games} (g{g}) {oname} white={wtag}", flush=True)
         t0 = time.time()
         tel = args.out / "tel" / tag
@@ -68,14 +68,26 @@ def main() -> int:
         with open(args.out / f"{tag}.log", "w", encoding="utf-8") as log:
             subprocess.run(
                 [
-                    str(PY), "-m", "harness.play",
-                    "--white", str(white), "--black", str(black),
-                    "--base-ms", str(args.base_ms),
-                    "--increment-ms", str(args.increment_ms),
-                    "--fen", fen,
-                    "--pgn", str(args.out / f"{tag}.pgn"),
+                    str(PY),
+                    "-m",
+                    "harness.play",
+                    "--white",
+                    str(white),
+                    "--black",
+                    str(black),
+                    "--base-ms",
+                    str(args.base_ms),
+                    "--increment-ms",
+                    str(args.increment_ms),
+                    "--fen",
+                    fen,
+                    "--pgn",
+                    str(args.out / f"{tag}.pgn"),
                 ],
-                cwd=REPO, stdout=log, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL,
+                cwd=REPO,
+                stdout=log,
+                stderr=subprocess.STDOUT,
+                stdin=subprocess.DEVNULL,
                 env=env,
             )
         secs = int(time.time() - t0)
