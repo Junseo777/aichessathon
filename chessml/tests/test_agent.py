@@ -143,27 +143,25 @@ def _clock_before_move_45(overhead_s: float) -> float:
     return clock
 
 
-def test_budget_reaches_move_45_of_round_14_with_thirty_seconds() -> None:
-    for overhead in (0.010, 0.020):
-        assert _clock_before_move_45(overhead) > 30.0
-
-
-def test_budget_before_the_change_reproduces_the_round_14_burn_down(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.setattr(agent, "_BUDGET_HORIZON", 46)
-    monkeypatch.setattr(agent, "_BUDGET_DIVISOR_FLOOR", 14)
-    monkeypatch.setattr(agent, "_BUDGET_FLOOR_S", 0.0)
+def test_budget_reproduces_the_round_14_burn_down() -> None:
     assert agent._budget_s(120_000, 9) == pytest.approx(120 / 37 + 0.4)
+    assert agent._budget_s(100_000, 40) == pytest.approx(4.0)
+    assert agent._budget_s(1_200, 50) == pytest.approx(0.2)
     assert 15.0 < _clock_before_move_45(0.010) < 20.0
 
 
-def test_budget_floor_cap_and_clock_guard() -> None:
+def test_proposed_clock_reaches_move_45_of_round_14_with_thirty_seconds(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # the 60 / 20 / 1.0 s formula of docs/ARENA11_STEP2_CLOCK.md, dropped at 44%
+    monkeypatch.setattr(agent, "_BUDGET_HORIZON", 60)
+    monkeypatch.setattr(agent, "_BUDGET_DIVISOR_FLOOR", 20)
+    monkeypatch.setattr(agent, "_BUDGET_FLOOR_S", 1.0)
+    for overhead in (0.010, 0.020):
+        assert _clock_before_move_45(overhead) > 30.0
     assert agent._budget_s(120_000, 9) == pytest.approx(120 / 51 + 0.4)
     assert agent._budget_s(20_000, 20) == pytest.approx(1.0)
     assert agent._budget_s(14_000, 20) == pytest.approx(14 / 40 + 0.4)
-    assert agent._budget_s(100_000, 40) == pytest.approx(4.0)
-    assert agent._budget_s(1_200, 50) == pytest.approx(0.2)
 
 
 def _extension_setup(
