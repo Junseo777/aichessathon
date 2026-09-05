@@ -62,9 +62,9 @@ Report the point estimate and the interval either way.
    from `weights/R1_e8_ema/`. `use-weights.sh` does this if the run store sits beside the
    repo as `../weights/`.
 3. `ruff check .`, `mypy`, then `pytest -q chessml -k "not mate and not deadline and not smart_pruning"`
-   must be green (64 tests). The excluded six are timing tests and three mate-finding
-   tests that fail on this net before and after every change; run them once anyway and
-   record the outcome.
+   must be green. The excluded tests are timing tests and the three mate-finding tests;
+   with root FPU 1.0 in the reference the mate tests pass on this net, so run them once
+   and record the count you get rather than the number written here.
 4. **Measure the machine.** With nothing else running, play one game of the reference
    against itself with `python -m harness.play --white . --black . --fen "<any opening>"`
    and read the `init:` line (`forward_ms`) and the per-move `sims=` and `t=` from stderr.
@@ -226,6 +226,17 @@ on). `main` mirrors this since `59cd491` (`harness/sandbox.py` sends SIGSTOP bet
 moves), and `ship-chain` is now merged into `main`, so nothing needs cherry-picking. Still
 confirm on the first game that both sides' `pondered=` reads under 30. Results with
 pondering (ARENA #10, the E and D arenas below) are not comparable with results without it.
+
+**Correction C, for Windows: pondering off in the agents, not in the harness.** The
+harness suspends the idle agent with SIGSTOP, which Windows does not have (`harness/
+sandbox.py` says so: `SUSPEND_IDLE` is false there), so on this PC both sides would
+ponder and the result would be the non-comparable kind. Do not edit `harness/`. Instead
+set `_PONDER_NODE_BUDGET = 0` in `agent.py` on **both** sides of every arena, reference
+and candidate alike. The ponder thread then expands nothing (`chessml/search.py` stops
+a run once `expanded >= node_budget`), which is what a suspended process achieves, while
+subtree reuse from our own previous search still works, as it does on the platform. This
+is the treatment ARENA #14 used on the box for the same reason. Record the line in each
+`CONFIG.txt`, and check the first game's logs: `pondered=` must read 0 on both sides.
 
 **Correction B, now a definition: the reference is the ladder build plus the two fixes.**
 The uploaded zip (`bbc55a9`, md5 `93ce8c23`) is R1 with pruning 1.33, policy temperature
