@@ -47,8 +47,10 @@ the other side's 2.40 s and still made more simulations (442 against 310 per mov
 the ARENA #4 mechanism: the opponent's clock starts sooner and the ponder thread
 fills the reused subtree. From move 40 the pruned side had 1.71 s per move to 1.15 s.
 One caveat from the operator's notes: `with/agent.py` carried `proofs=True` for part of
-this arena and was reset before B; proofs were null in both ARENA #4 chains, and
-arena D below measures them alone.
+this arena and was reset before B. Proofs were null in both ARENA #4 chains, and the
+other session's `sparring/step1/D_proofs_vs_step1` (proofs vs step 1, 50 games on the
+platform's curated openings, 00:26–01:56) put them at 52.0%, +9 =34 −7, Elo +14
+(−41 to +69): null again.
 
 **B** (22:32–00:21): as White +8 =11 −6 (54.0%), as Black +7 =17 −1 (62.0%);
 terminations threefold 24, checkmate 22, insufficient material 2, fifty-move 1,
