@@ -14,6 +14,7 @@ from chessml.search import MCTS, Node, SearchResult
 
 _PIECE_VALUES = {chess.PAWN: 1, chess.KNIGHT: 3, chess.BISHOP: 3, chess.ROOK: 5, chess.QUEEN: 9}
 _PLY_CAP = 300
+_STALEMATE_VETO = False
 _PONDER_NODE_BUDGET = 100_000
 _PONDER_JOIN_S = 2.0
 _PRESEARCH_S = float(os.environ.get("CHESS_PRESEARCH_S", "5"))
@@ -187,6 +188,12 @@ def _material_for_mover(board: chess.Board) -> int:
     )
 
 
+def _stalemates(board: chess.Board, move: chess.Move) -> bool:
+    after = board.copy(stack=False)
+    after.push(move)
+    return after.is_stalemate()
+
+
 def _hands_over_draw_claim(
     board: chess.Board, key_counts: dict[object, int], move: chess.Move
 ) -> bool:
@@ -199,6 +206,10 @@ def _hands_over_draw_claim(
 
 def _pick(board: chess.Board, key_counts: dict[object, int], result: SearchResult) -> chess.Move:
     order = [int(i) for i in np.argsort(-result.visits)]
+    if _STALEMATE_VETO and _material_for_mover(board) > 0:
+        kept = [idx for idx in order if not _stalemates(board, result.moves[idx])]
+        if kept:
+            order = kept
     for idx in order:
         if result.proofs[idx] == 1.0 and not _hands_over_draw_claim(
             board, key_counts, result.moves[idx]
