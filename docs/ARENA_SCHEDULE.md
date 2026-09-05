@@ -11,7 +11,7 @@ measurement is stated beside each so you can re-derive them if a machine differs
 | Branch | `main`, arena work committed directly (Justin's instruction; the brief's §6 says branch-and-bundle, overridden) |
 | Done | **item 12** — 50 games, 54.0% (+7 =40 −3), failures 0, **KEPT**. `docs/ARENA13_ITEM12_SHIP_QUESTION.md` |
 | Running | **item 1** (clock 60/20/1.0) on Justin's PC, 2 lanes, started 16:49, ends **~18:26** |
-| Blocked | items 6–9 need the box, which is busy until ~23:00 |
+| Blocked | items 6–9 needed the box; as of 22:30 UTC 6, 7 and 16 are withdrawn and 8, 9 run on this PC (section 3, the box) |
 
 ## 2. The two machines
 
@@ -44,19 +44,28 @@ way to see it. Rate: **50 games = 1.7 h** (234 s/game, two lanes).
 | 5 | mirror calibration | 04:50 | 06:35 |
 | 4 | *conditional*, only if 2 and 3 both pass | 06:35 | 08:20 |
 
-### The box (six lanes, from ~23:00)
+### The box — amended 2026-09-05 22:30 UTC: items 6, 7 and 16 withdrawn, 8 and 9 move to the PC
 
-The box is not free before then. Junseo's chain: phase N (done), speed bench, R8b
-training to ~18:15, phase O to ~19:45, queue P to ~21:30, **queue S to ~23:00** —
-session `s` exists, so S was launched and 23:00 is the number, not 21:30.
+The plan below (six lanes from ~23:00) is superseded. A new net, **R8** (R1's recipe with
+the policy head trained on Stockfish's MultiPV top-four lines), beat R1 **61.5%** in 100
+games at the platform setting (500 sims a side, no pondering; `lanes/U0/summary.txt` on the
+box). Consequences, per `docs/justins-simulations.md` section 11:
 
-| item | what | start | end |
-|---|---|---|---|
-| 6 | ladder at `max_sims=500` vs SF 2800/3000/3190, 90 games | 23:00 | 23:40 |
-| 7 | fixed-node rungs, probe then 3 rungs | 23:40 | 00:30 |
-| 8 | colour check on the curated positions, 60 games | 00:30 | 00:55 |
-| 9 | conversion suite + 30 games at rung 3000 | 00:55 | 02:10 |
-| 16 | R7a vs R1, 100 + 100 games | 02:10 | 04:00 |
+| item | was | now |
+|---|---|---|
+| 6 | ladder at `max_sims=500` on R1 | **deferred** to the final build, which will not be R1 |
+| 7 | fixed-node rungs on R1 | **deferred**, same reason |
+| 8 | colour check, 60 games | keep, **on this PC** after the PC track |
+| 9 | conversion suite ± veto | keep, **on this PC** after the PC track |
+| 16 | R7a vs R1 | **withdrawn** — R7a tied R1, R8 beats R1; 17 goes with it |
+
+The box is booked back to back after S by Junseo's queues **P2** (R8 vs R1 repeat, R8's
+knobs, R8b), **P3** (R8 at 16 epochs vs R8), **gpu2/gpu5** (R8c, then R8g = the MultiPV
+policy on the pure engine value target) and **g8** (R8g vs R8). It looks clear for minutes
+between their phases, for example ~03:15–04:00 between P3 and g8; a launch in such a gap
+holds the cores for hours and delays the R8g arena. The gate below therefore also requires
+`DONE_g8`. Nothing of Justin's runs on the box before that, and after it only what the
+table above still wants there, which is nothing.
 
 **Everything non-conditional finishes ~06:35 Sunday 6 Sept**, PC track being the long
 pole. With conditionals 4, 10 and 17, ~09:30.
@@ -71,6 +80,8 @@ does this):
 
 - `/workspace/bracket/DONE_p` exists, or `ABORT_p`
 - no `queue_s.sh` process, or `DONE_s` / `ABORT_s` exists
+- `/workspace/bracket/DONE_g8` exists, or `ABORT_g8`, or it is past 2026-09-06 12:00 UTC
+  (added 22:30 UTC; the script checks it as `g8_clear`)
 - no `harness/runner.py`, `bracket.py --lane`, `ladder_lane.py --lane`
 
 Then: at most six lanes, one agent per physical core on 0–11, drivers on 12–15,
