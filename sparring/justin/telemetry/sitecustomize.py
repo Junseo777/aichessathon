@@ -1,3 +1,4 @@
+import contextlib
 import os
 import sys
 
@@ -14,18 +15,14 @@ class _Tee:
         self._sink = sink
 
     def write(self, data):
-        try:
+        with contextlib.suppress(Exception):
             self._sink.write(data)
             self._sink.flush()
-        except Exception:
-            pass
         return self._stream.write(data)
 
     def flush(self):
-        try:
+        with contextlib.suppress(Exception):
             self._sink.flush()
-        except Exception:
-            pass
         return self._stream.flush()
 
     def __getattr__(self, name):
@@ -41,7 +38,7 @@ if _DIR and _is_agent_runner():
                 break
         os.makedirs(_DIR, exist_ok=True)
         path = os.path.join(_DIR, f"agent_{agent}_{os.getpid()}.log")
-        sink = open(path, "a", encoding="utf-8", buffering=1)
+        sink = open(path, "a", encoding="utf-8", buffering=1)  # noqa: SIM115
         sys.stdout = _Tee(sys.stdout, sink)
         sys.stderr = _Tee(sys.stderr, sink)
     except Exception:
