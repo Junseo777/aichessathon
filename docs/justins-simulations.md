@@ -163,7 +163,6 @@ machine-independent form.
 | 8 | **colour check on the curated positions** | reference vs an identical copy on `sparring/openings_ladder.tsv`, every position twice with each colour, 60 games; this can double as item 5's calibration if run instead of it | ARENA #12: the bot scored better as Black at every rung (30 points at 3190) and the White side of these positions scored 35–48% whichever engine held it. Either the pool is lopsided or the bot plays the White side badly against a strong engine; bot vs bot separates the two | the White-side score over the 60 games. Book-opening arenas here gave White ~55–63%. Below 45% means the positions; 55% or more means the bot |
 | 9 | **conversion suite, with and without a stalemate veto** | build `_STALEMATE_VETO = True` as a switch (code below). Suite: 20 won positions, the side to move ahead by 5 pawn units or more, in a `suite.tsv` (`name<TAB>fen`): the eight textbook endings KQ v K, KR v K, KRN v K, KBB v K, KBN v K, KQP v KP, KRP v K, KQ v KR, plus twelve middlegame or endgame positions taken from ARENA #12 PGNs where the bot was ahead by 5 or more (`sparring/ladder_box/lanes/L`). The bot with `max_sims=500` plays the side ahead; the defender is Stockfish 18 at full strength (`UCI_LimitStrength` off), one thread. Each position once with the reference and once with the veto candidate, 40 games | ARENA #12 lost six of 90 games to non-conversion: three stalemates with the bot far ahead (rook and knight against a bare king at ply 225) and three threefold draws while ahead. Stalemate is 1–3% of arena games, so a 50-game arena cannot see the veto; a suite can | conversions (checkmate before the 300-ply cap and the fifty-move rule) out of 20 for each build, and the per-move `q=` on the winning side, which tells whether the net even knows it is winning (ARENA #12's KRN v K read q ≈ +0.1 throughout) |
 | 10 (only if item 9 converts under 15 of 20 with the veto) | **mate-search fallback** | when the opponent has a bare king or at most three pawn units and the bot is ahead by five or more, run a small iterative alpha-beta mate search (depth 1 to 9 plies, legal moves only, python-chess, capped at 0.5 s) before the MCTS and play a found mate; otherwise fall back to the MCTS pick | the veto keeps the game alive but the value head does not see the mate, so the search cannot steer; a mate solver in the tiny endings is the direct fix | rerun item 9's suite; conversions out of 20; the solver's time per move |
-| 11 (last) | **R0 and the reference hero on this ladder** | `weights/R0_e8_ema/model.onnx` (and `baselines/reference-hero` if present) in the reference's `agent.py`, `max_sims=500`, vs `UCI_Elo` 2800 and 3000, 30 games each | ARENA #1's R0 = 2868 and the reference project's 2,474 were measured on a Mac with pondering on and from the standard start; nothing links them to today's conditions | the two per-rung scores beside item 6's, the same fit; the R0-to-submission gap under identical conditions |
 
 **The stalemate veto, exactly.** In `agent.py`, next to the other switches: `_STALEMATE_VETO = False`
 (reference) or `True` (candidate). In `_pick`, immediately after `order` is computed and before
@@ -193,13 +192,12 @@ legal move.
 fit, sims per move; lane directories must be named `<rung>_<x>` with opponent directories
 named `sf<rung>`), `sparring/ladder_box/ladder_lane.py` (the Linux lane runner used on the
 box, pins each side to a core with `taskset`; on another OS write the equivalent loop with
-`harness.play --fen`), `docs/ARENA12_STOCKFISH_LADDER_SUBMISSION.md`, and for item 11
-`weights/R0_e8_ema/`. Stockfish 18 is the official release build for this machine's CPU;
+`harness.play --fen`), `docs/ARENA12_STOCKFISH_LADDER_SUBMISSION.md`. Stockfish 18 is the official release build for this machine's CPU;
 check `id name Stockfish 18` and `option name UCI_Elo ... min 1320 max 3190` on the `uci`
 reply before anything else, and note the build in every report. Stockfish is GPL and must
 never enter a candidate directory or the zip.
 
-**Reporting for items 6 to 11.** One `docs/ARENA<n>_<NAME>.md` each, same format, plus this
+**Reporting for items 6 to 10.** One `docs/ARENA<n>_<NAME>.md` each, same format, plus this
 machine's Stockfish speed (`nps` from a 1 s `go movetime 1000` at `Threads=1` from the
 start position) beside the bot's forward time. Items 6 and 7 replace ARENA #12's headline
 figure in the decisions file if they disagree with it; say so explicitly.

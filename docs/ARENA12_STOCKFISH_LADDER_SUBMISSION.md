@@ -117,8 +117,8 @@ Box: `/workspace/ladder/` (queue, lane runner, fit script, agent build with
 
 ## 6. Open items
 
-All five are written up as runs for Justin's machine in `docs/justins-simulations.md`
-(items 6–11 there), with the exact switches, game counts and what to read.
+All four are written up as runs for Justin's machine in `docs/justins-simulations.md`
+(items 6–10 there), with the exact switches, game counts and what to read.
 
 1. The same ladder with the bot capped at 500 simulations per move, the platform's
    budget (§2). This is the number that matters for the competition.
@@ -127,5 +127,3 @@ All five are written up as runs for Justin's machine in `docs/justins-simulation
 3. The colour asymmetry (§3): bot vs bot on the same fifteen positions, both colours.
 4. Fixed-node rungs (Stockfish 18 at fixed `go nodes`) and one full-strength rung beside
    the UCI_Elo rungs, so the yardstick survives a change of machine and has a true ceiling.
-5. R0 and the reference hero on this exact setup, to re-link ARENA #1 and the
-   reference's 2,474 to today's conditions.
