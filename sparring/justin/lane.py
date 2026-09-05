@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import os
 import re
 import subprocess
 import sys
@@ -9,6 +10,7 @@ import time
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
+TELEMETRY = Path(__file__).resolve().parent / "telemetry"
 PY = REPO / ".venv" / "Scripts" / "python.exe"
 if not PY.exists():
     PY = Path(sys.executable)
@@ -58,6 +60,11 @@ def main() -> int:
         stamp = time.strftime("%H:%M:%S")
         print(f"[{stamp}] game {n}/{args.games} (g{g}) {oname} white={wtag}", flush=True)
         t0 = time.time()
+        tel = args.out / "tel" / tag
+        tel.mkdir(parents=True, exist_ok=True)
+        env = dict(os.environ)
+        env["PYTHONPATH"] = str(TELEMETRY) + os.pathsep + env.get("PYTHONPATH", "")
+        env["CHESS_TELEMETRY_DIR"] = str(tel)
         with open(args.out / f"{tag}.log", "w", encoding="utf-8") as log:
             subprocess.run(
                 [
@@ -69,6 +76,7 @@ def main() -> int:
                     "--pgn", str(args.out / f"{tag}.pgn"),
                 ],
                 cwd=REPO, stdout=log, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL,
+                env=env,
             )
         secs = int(time.time() - t0)
         text = (args.out / f"{tag}.log").read_text(encoding="utf-8", errors="replace")

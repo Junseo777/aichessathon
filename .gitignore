@@ -8,3 +8,8 @@ submission.zip
 weights/
 !baselines/reference-hero/weights/
 data/
+
+# arena game artifacts: PGNs, per-game logs, per-move telemetry, candidate copies.
+# Handed back as a zip per the arena brief; CONFIG.txt is force-added so each
+# candidate's one-line diff from its git base stays recorded.
+sparring/justin/item*/

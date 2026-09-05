@@ -1,0 +1,5 @@
+item 12 reference
+base: main 691a904 (ship-chain merged; repetition + opening-adoption fixes, live knobs)
+changed from base, exactly one line (Correction C, Windows has no SIGSTOP):
+  _PONDER_NODE_BUDGET = 100_000  ->  _PONDER_NODE_BUDGET = 0
+switches all at reference values; policy_temperature=1.359 and root_fpu=1.0 both on.

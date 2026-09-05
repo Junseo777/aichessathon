@@ -1,0 +1,5 @@
+item 12 opponent: the uploaded zip
+base: bbc55a9 (md5 93ce8c23), R1 with pruning 1.33, policy temperature 1.359, root FPU 1.0,
+      WITHOUT the repetition and opening-adoption fixes
+changed from base, exactly one line (Correction C, Windows has no SIGSTOP):
+  _PONDER_NODE_BUDGET = 100_000  ->  _PONDER_NODE_BUDGET = 0

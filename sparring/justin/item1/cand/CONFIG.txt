@@ -1,0 +1,6 @@
+item 1 candidate: the clock formula
+base: item 12 reference (main 691a904 + _PONDER_NODE_BUDGET = 0)
+changed, exactly three lines:
+  _BUDGET_HORIZON      46   -> 60
+  _BUDGET_DIVISOR_FLOOR 14  -> 20
+  _BUDGET_FLOOR_S      0.0  -> 1.0
