@@ -44,10 +44,15 @@ pruning, scaled FPU, policy temperature, in-tree draw score).
 | 13 | alien-gambit | Black | win | mate | declined a mate in three at move 44 for a slower win; not provable within 800 simulations, so proofs would not have played it either |
 | 14 | pgn | Black | draw | stalemate | +4.3 at move 44; 45...fxg2 at 1.6 s with 15.6 s left walked into a queen sacrifice; bare king by move 64, the opponent stalemated us at 111 |
 | 15 | 50centraise | White | win | mate | first game of the pruning build: worst move 5.8%, eval rising throughout, 36 s left at the end |
+| 16 | ms | White | win | mate | +2.6 from move 20 after the opponent's 19...Kh8, converted over 77 moves with 9.9 s left |
+| 17 | mate-in-one | Black | loss | mate | −0.9 at move 12 already; every bot move from 12 to 24 within a quarter pawn of Stockfish's; outplayed, 30.7 s left |
+| 18 | sobriety | White | loss | mate | three 0.6-pawn slips at 15, 20 and 22 (Rab1, Ng3, Kg1 were better), then a melee played at Stockfish's first choice from 27 on; 57.9 s left |
 
-Score 10.5/15. The wins were all against opponents who blundered, seven of the
-eight into mate. Rounds 11 to 15 were downloaded at 22:18 and analysed the same
-way as the first ten.
+Score 11.5/18. The wins were all against opponents who blundered, eight of the
+nine into mate; the two losses to leaders in rounds 17 and 18 came from
+accumulated small errors, not a blunder. Rounds 11 to 18 were analysed the same
+way as the first ten; rounds 16 to 18 were played by the Sept 5 upload
+(temperature 1.359, root FPU 1.0, pruning; no repetition fix).
 
 ## What the games show
 
@@ -150,6 +155,20 @@ answer, since low-visit q is noise, but the disagreement itself is a usable
 signal: extend the search while the best-visited and best-q moves differ, or
 select by a lower confidence bound on q among moves with a share of the
 visits, as KataGo does. Both are cheap to arena.
+
+**Rounds 17 and 18 are losses to stronger play, and the clock was not used.**
+The platform's own match log for round 17 (`aichessathon-round-17-mate-in-one.log`,
+beside the PGN) settles two open questions. Init measured `forward_ms` 5.44 and
+832 pre-search simulations in 5 s, so a fresh simulation costs about 6 ms there,
+Mac-like and a little faster than the overrun estimate. And `pondered` is 6 to
+10 per move, so the process really is suspended between moves. The per-move
+lines show the search spending a median 480 simulations, stopping early on 42
+of 48 moves, four times under 200 simulations with more than a minute in hand
+(moves 28 and 37 stopped after 32 new simulations because a reused subtree of
+900 to 1,300 visits made the visit lead look unbeatable), and the 4 s cap
+binding on five moves. Time used was 113 s of 144 s available, and round 18
+ended with 58 s unused. Whether more search would have changed the drift
+moves is the replay question recorded below.
 
 ## What the clocks say about the platform's core
 
