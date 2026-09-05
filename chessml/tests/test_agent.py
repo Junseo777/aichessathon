@@ -110,9 +110,15 @@ def test_low_clock_modes_are_fast_and_legal() -> None:
 
 
 def _result(
-    board: chess.Board, visits: list[int], q: list[float], proofs: list[float] | None = None
+    board: chess.Board,
+    visits: list[int],
+    q: list[float],
+    proofs: list[float] | None = None,
+    moves: list[chess.Move] | None = None,
+    var: list[float] | None = None,
 ) -> SearchResult:
-    moves = list(board.legal_moves)[: len(visits)]
+    if moves is None:
+        moves = list(board.legal_moves)[: len(visits)]
     priors = np.full(len(moves), 1.0 / len(moves), dtype=np.float32)
     return SearchResult(
         moves=moves,
@@ -123,7 +129,118 @@ def _result(
         expanded=0,
         root=Node(moves, priors, q[0]),
         proofs=np.array(proofs if proofs is not None else [np.nan] * len(moves), dtype=np.float32),
+        var=None if var is None else np.array(var, dtype=np.float32),
     )
+
+
+def _clock_before_move_45(overhead_s: float) -> float:
+    # rated round 14: we were Black from move 9, spent the whole budget on every move
+    # (no pruning), and threw the game at move 45 with 16.7 s; the platform's overhead
+    # per move is 3 to 12 ms
+    clock = 120.0
+    for move in range(9, 45):
+        clock += 0.5 - agent._budget_s(int(clock * 1000), move) - overhead_s
+    return clock
+
+
+def test_budget_reproduces_the_round_14_burn_down() -> None:
+    assert agent._budget_s(120_000, 9) == pytest.approx(120 / 37 + 0.4)
+    assert agent._budget_s(100_000, 40) == pytest.approx(4.0)
+    assert agent._budget_s(1_200, 50) == pytest.approx(0.2)
+    assert 15.0 < _clock_before_move_45(0.010) < 20.0
+
+
+def test_proposed_clock_reaches_move_45_of_round_14_with_thirty_seconds(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # the 60 / 20 / 1.0 s formula of docs/ARENA11_STEP2_CLOCK.md, dropped at 44%
+    monkeypatch.setattr(agent, "_BUDGET_HORIZON", 60)
+    monkeypatch.setattr(agent, "_BUDGET_DIVISOR_FLOOR", 20)
+    monkeypatch.setattr(agent, "_BUDGET_FLOOR_S", 1.0)
+    for overhead in (0.010, 0.020):
+        assert _clock_before_move_45(overhead) > 30.0
+    assert agent._budget_s(120_000, 9) == pytest.approx(120 / 51 + 0.4)
+    assert agent._budget_s(20_000, 20) == pytest.approx(1.0)
+    assert agent._budget_s(14_000, 20) == pytest.approx(14 / 40 + 0.4)
+
+
+def _extension_setup(
+    monkeypatch: pytest.MonkeyPatch, agree_after: int
+) -> tuple[chess.Board, SearchResult, list[float]]:
+    board = chess.Board("8/5pk1/6p1/8/3K4/8/5PP1/8 w - - 0 45")
+    deadlines: list[float] = []
+
+    def run(*args: object, **kwargs: object) -> SearchResult:
+        deadline = float(args[2])  # type: ignore[arg-type]
+        deadlines.append(deadline)
+        time.sleep(max(0.0, deadline - time.monotonic()))
+        if len(deadlines) >= agree_after:
+            return _result(board, visits=[100, 50], q=[0.3, 0.1])
+        return _result(board, visits=[100, 50], q=[0.1, 0.3])
+
+    monkeypatch.setattr(agent._MCTS, "run", run)
+    return board, _result(board, visits=[100, 50], q=[0.1, 0.3]), deadlines
+
+
+def test_extension_runs_in_slices_until_the_leaders_agree(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(agent, "_EXTEND_FACTOR", 2.0)
+    board, first, deadlines = _extension_setup(monkeypatch, agree_after=2)
+    started = time.monotonic()
+    result = agent._extend(board, {}, first, started, 1.0, 60.0)
+    assert len(deadlines) == 2 and not agent._leaders_disagree(result)
+    assert result.simulations == 450
+    assert all(started + 0.2 <= d <= started + 2.0 for d in deadlines)
+
+
+def test_extension_stops_at_twice_the_budget(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(agent, "_EXTEND_FACTOR", 2.0)
+    board, first, deadlines = _extension_setup(monkeypatch, agree_after=99)
+    started = time.monotonic() - 1.0
+    result = agent._extend(board, {}, first, started, 1.0, 60.0)
+    assert deadlines and max(deadlines) <= started + 2.0 + 1e-6
+    assert time.monotonic() <= started + 2.1
+    assert agent._leaders_disagree(result)
+
+
+def test_extension_respects_the_clock_guard_and_is_off_by_default(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    board, first, deadlines = _extension_setup(monkeypatch, agree_after=99)
+    started = time.monotonic() - 1.0  # the budget of 1 s is spent
+    assert agent._extend(board, {}, first, started, 1.0, 60.0) is first
+    monkeypatch.setattr(agent, "_EXTEND_FACTOR", 2.0)
+    assert agent._extend(board, {}, first, started, 1.0, 1.5) is first
+    assert deadlines == []
+
+
+def test_leaders_disagree_only_among_candidates() -> None:
+    board = chess.Board("8/5pk1/6p1/8/3K4/8/5PP1/8 w - - 0 45")
+    assert agent._leaders_disagree(_result(board, visits=[100, 20], q=[0.1, 0.3]))
+    assert not agent._leaders_disagree(_result(board, visits=[100, 19], q=[0.1, 0.3]))
+    assert not agent._leaders_disagree(_result(board, visits=[100, 50], q=[0.3, 0.1]))
+
+
+def test_pick_by_lower_bound(monkeypatch: pytest.MonkeyPatch) -> None:
+    board = chess.Board("8/5pk1/6p1/8/3K4/8/5PP1/8 w - - 0 45")
+    better = _result(board, visits=[100, 20], q=[0.1, 0.3], var=[0.01, 0.01])
+    assert agent._pick(board, {}, better) == better.moves[0]
+    monkeypatch.setattr(agent, "_LCB_Z", 2.0)
+    assert agent._pick(board, {}, better) == better.moves[1]
+    few_visits = _result(board, visits=[100, 19], q=[0.1, 0.3], var=[0.01, 0.01])
+    assert agent._pick(board, {}, few_visits) == few_visits.moves[0]
+    noisy = _result(board, visits=[100, 20], q=[0.1, 0.3], var=[0.01, 1.0])
+    assert agent._pick(board, {}, noisy) == noisy.moves[0]
+
+
+def test_pick_by_lower_bound_still_avoids_a_repetition_when_winning(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(agent, "_LCB_Z", 2.0)
+    board = chess.Board("8/5pk1/6p1/8/3K4/8/5PP1/8 w - - 0 45")
+    result = _result(board, visits=[100, 20, 10], q=[0.5, 0.8, 0.4], var=[0.01, 0.01, 0.01])
+    after = board.copy(stack=False)
+    after.push(result.moves[1])
+    assert agent._pick(board, {transposition_key(after): 1}, result) == result.moves[0]
 
 
 def test_pick_prefers_a_proven_win_over_visits() -> None:
@@ -160,6 +277,49 @@ def test_pick_vetoes_draw_claim_when_winning() -> None:
     assert agent._pick(board, {}, result) == favourite
 
 
+def test_pick_avoids_a_second_occurrence_when_winning() -> None:
+    board = chess.Board("8/5pk1/6p1/8/3K4/8/5PP1/8 w - - 0 45")
+    result = _result(board, visits=[100, 50], q=[0.8, 0.7])
+    favourite, second = result.moves[0], result.moves[1]
+
+    after = board.copy(stack=False)
+    after.push(favourite)
+    assert agent._pick(board, {transposition_key(after): 1}, result) == second
+
+
+def test_pick_avoids_running_down_the_fifty_move_count_when_winning() -> None:
+    quiet, pawn = chess.Move.from_uci("d4e4"), chess.Move.from_uci("f2f3")
+    drifting = chess.Board("8/5pk1/6p1/8/3K4/8/5PP1/8 w - - 97 45")
+    result = _result(drifting, visits=[100, 50], q=[0.8, 0.7], moves=[quiet, pawn])
+    assert agent._pick(drifting, {}, result) == pawn
+    fresh = chess.Board("8/5pk1/6p1/8/3K4/8/5PP1/8 w - - 0 45")
+    assert agent._pick(fresh, {}, result) == quiet
+
+
+def test_pick_seeks_a_draw_the_reply_completes_when_losing() -> None:
+    board = chess.Board("8/5pk1/6p1/8/3K4/8/5PP1/8 w - - 0 45")
+    result = _result(board, visits=[100, 50], q=[-0.8, -0.9])
+    second = result.moves[1]
+
+    after = board.copy(stack=False)
+    after.push(second)
+    after.push(next(iter(after.legal_moves)))
+    assert agent._pick(board, {transposition_key(after): 2}, result) == second
+
+
+def test_referee_draws_matches_the_harness_referee() -> None:
+    board = chess.Board("8/5pk1/6p1/8/3K4/8/5PP1/8 w - - 92 45")
+    counts = {transposition_key(board): 1}
+    for uci in ("d4e4", "g7h7", "e4d4", "h7g7", "d4e4", "g7h7", "e4d4", "h7g7"):
+        for move in board.legal_moves:
+            probe = board.copy()
+            probe.push(move)
+            referee = probe.outcome(claim_draw=True) is not None
+            assert agent._referee_draws(board, counts, move) == referee, (board.fen(), move)
+        board.push_uci(uci)
+        counts[transposition_key(board)] = counts.get(transposition_key(board), 0) + 1
+
+
 def test_pick_seeks_draw_claim_when_losing() -> None:
     board = chess.Board("8/5pk1/6p1/8/3K4/8/5PP1/8 w - - 0 45")
     result = _result(board, visits=[100, 50], q=[-0.8, -0.9])
@@ -192,6 +352,22 @@ def test_opening_presearch_is_adopted_for_black() -> None:
     board.push_uci("e2e4")
     child = agent._adopt_opening(board)
     assert child is not None and child.terminal is None
+    assert agent._OPENING_TREE is None
+
+
+def test_opening_presearch_is_adopted_several_plies_in() -> None:
+    agent._OPENING_TREE = agent._presearch(1.0)
+    tree = agent._OPENING_TREE
+    assert tree is not None
+    board = chess.Board()
+    node = tree
+    for _ in range(2):
+        idx = int(np.argmax(node.n))
+        child = node.children[idx]
+        assert child is not None and child.terminal is None
+        board.push(node.moves[idx])
+        node = child
+    assert agent._adopt_opening(board) is node
     assert agent._OPENING_TREE is None
 
 

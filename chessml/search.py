@@ -23,6 +23,7 @@ class Node:
         "total",
         "value",
         "w",
+        "w2",
     )
 
     def __init__(
@@ -38,6 +39,7 @@ class Node:
         self.terminal = terminal
         self.n: npt.NDArray[np.float32] = np.zeros(len(moves), dtype=np.float32)
         self.w: npt.NDArray[np.float32] = np.zeros(len(moves), dtype=np.float32)
+        self.w2: npt.NDArray[np.float32] = np.zeros(len(moves), dtype=np.float32)
         self.children: list[Node | None] = [None] * len(moves)
         self.total = 0
         # exact value for the side to move, when the subtree has been solved; a
@@ -65,6 +67,8 @@ class SearchResult:
     root: Node
     proofs: npt.NDArray[np.float32]
     pruned: bool = False
+    # variance of the values backed up through each root move, for a confidence bound on q
+    var: npt.NDArray[np.float32] | None = None
 
 
 class MCTS:
@@ -209,7 +213,9 @@ class MCTS:
                 sim_board.push(node.moves[idx])
                 path.append((node, idx))
                 key = transposition_key(sim_board)
-                if key_counts.get(key, 0) + path_keys.count(key) >= 2:
+                # a second occurrence is scored as a draw: from there a shuffling
+                # opponent can force the referee's claim, so the line is worth no more
+                if key_counts.get(key, 0) + path_keys.count(key) >= 1:
                     leaf_value = 0.0
                     drawn = True
                     break
@@ -232,6 +238,7 @@ class MCTS:
                 value = -value
                 parent.n[edge] += 1.0
                 parent.w[edge] += value
+                parent.w2[edge] += value * value
                 parent.total += 1
             sims += 1
             if solved and self.proofs:
@@ -243,6 +250,8 @@ class MCTS:
                 break
 
         q = np.divide(root.w, root.n, out=np.zeros_like(root.w), where=root.n > 0)
+        mean_sq = np.divide(root.w2, root.n, out=np.zeros_like(root.w2), where=root.n > 0)
+        var = np.maximum(mean_sq - q * q, 0.0).astype(np.float32)
         proofs = np.full(len(root.moves), np.nan, dtype=np.float32)
         for i, child in enumerate(root.children):
             if child is not None and self.proofs:
@@ -250,5 +259,5 @@ class MCTS:
                 if proof is not None:
                     proofs[i] = -proof
         return SearchResult(
-            root.moves, root.n.copy(), q, root.value, sims, expanded, root, proofs, pruned
+            root.moves, root.n.copy(), q, root.value, sims, expanded, root, proofs, pruned, var
         )

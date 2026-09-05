@@ -18,6 +18,18 @@ _STALEMATE_VETO = False
 _PONDER_NODE_BUDGET = 100_000
 _PONDER_JOIN_S = 2.0
 _PRESEARCH_S = float(os.environ.get("CHESS_PRESEARCH_S", "5"))
+# clock: left / (horizon - move) with the divisor floored, and at least the floor while
+# the clock is above 15 s; 60 / 20 / 1.0 was dropped at 44% in docs/ARENA11_STEP2_CLOCK.md
+_BUDGET_HORIZON = 46
+_BUDGET_DIVISOR_FLOOR = 14
+_BUDGET_FLOOR_S = 0.0
+_BUDGET_FLOOR_ABOVE_S = 15.0
+# pick: a root move with this share of the top visits is a candidate; the search runs on
+# to _EXTEND_FACTOR x budget while the visit leader is not the best-q candidate, and
+# _LCB_Z picks by q minus that many standard errors instead of by visits
+_CANDIDATE_SHARE = 0.2
+_EXTEND_FACTOR: float | None = None
+_LCB_Z: float | None = None
 _START_KEY = transposition_key(chess.Board())
 _NET, _MANIFEST = load_fastest(
     Path(__file__).resolve().parent / "weights", policy_temperature=1.359
@@ -45,6 +57,32 @@ def _presearch(seconds: float) -> Node | None:
 _OPENING_TREE: Node | None = _presearch(_PRESEARCH_S)
 
 
+_ADOPT_NODE_LIMIT = 4096
+
+
+def _find_in_tree(tree: Node, key: object, limit: int = _ADOPT_NODE_LIMIT) -> Node | None:
+    # depth-first walk from the standard start for the position received; rated games
+    # begin from curated positions several plies in, so one ply is never enough
+    board = chess.Board()
+    budget = limit
+
+    def walk(node: Node) -> Node | None:
+        nonlocal budget
+        for idx, move in enumerate(node.moves):
+            child = node.children[idx]
+            if child is None or child.terminal is not None or budget <= 0:
+                continue
+            budget -= 1
+            board.push(move)
+            found = child if transposition_key(board) == key else walk(child)
+            board.pop()
+            if found is not None:
+                return found
+        return None
+
+    return walk(tree)
+
+
 def _adopt_opening(board: chess.Board) -> Node | None:
     global _OPENING_TREE
     tree = _OPENING_TREE
@@ -54,14 +92,7 @@ def _adopt_opening(board: chess.Board) -> Node | None:
     key = transposition_key(board)
     if key == _START_KEY:
         return tree
-    start = chess.Board()
-    for idx, move in enumerate(tree.moves):
-        start.push(move)
-        if transposition_key(start) == key:
-            child = tree.children[idx]
-            return child if child is not None and child.terminal is None else None
-        start.pop()
-    return None
+    return _find_in_tree(tree, key)
 
 
 class _PonderResult:
@@ -176,8 +207,54 @@ def _reusable_root(game: _Game, opponent_move: chess.Move | None) -> Node | None
 
 def _budget_s(time_left_ms: int, move_number: int) -> float:
     left = time_left_ms / 1000.0
-    budget = left / max(14, 46 - move_number) + 0.4
+    budget = left / max(_BUDGET_DIVISOR_FLOOR, _BUDGET_HORIZON - move_number) + 0.4
+    if left > _BUDGET_FLOOR_ABOVE_S:
+        budget = max(budget, _BUDGET_FLOOR_S)
     return max(0.05, min(4.0, budget, left - 1.0))
+
+
+def _candidates(result: SearchResult, order: list[int]) -> list[int]:
+    top = float(result.visits[order[0]])
+    return [idx for idx in order if float(result.visits[idx]) >= _CANDIDATE_SHARE * top]
+
+
+def _leaders_disagree(result: SearchResult) -> bool:
+    order = [int(i) for i in np.argsort(-result.visits)]
+    best_q = max(_candidates(result, order), key=lambda idx: float(result.q[idx]))
+    return best_q != order[0]
+
+
+def _extend(
+    board: chess.Board,
+    key_counts: dict[object, int],
+    result: SearchResult,
+    started: float,
+    budget: float,
+    left: float,
+) -> SearchResult:
+    # in slices of a quarter budget, so the search stops as soon as the leaders agree;
+    # never past the clock guard the budget itself respects
+    if _EXTEND_FACTOR is None:
+        return result
+    limit = started + min(_EXTEND_FACTOR * budget, left - 1.0)
+    step = max(0.1, budget / 4.0)
+    while _leaders_disagree(result):
+        now = time.monotonic()
+        if now + 0.05 >= limit:
+            break
+        more = _MCTS.run(board, key_counts, min(now + step, limit), root=result.root)
+        more.simulations += result.simulations
+        result = more
+    return result
+
+
+def _lower_bound_best(result: SearchResult, order: list[int]) -> int:
+    # KataGo's selection: the best lower confidence bound on q among the candidates
+    if _LCB_Z is None:
+        return order[0]
+    var = result.var if result.var is not None else np.zeros_like(result.q)
+    bound = result.q - _LCB_Z * np.sqrt(var / np.maximum(result.visits, 1.0))
+    return max(_candidates(result, order), key=lambda idx: float(bound[idx]))
 
 
 def _material_for_mover(board: chess.Board) -> int:
@@ -194,14 +271,31 @@ def _stalemates(board: chess.Board, move: chess.Move) -> bool:
     return after.is_stalemate()
 
 
-def _hands_over_draw_claim(
-    board: chess.Board, key_counts: dict[object, int], move: chess.Move
-) -> bool:
+def _referee_draws(board: chess.Board, key_counts: dict[object, int], move: chess.Move) -> bool:
+    # the referee ends the game once the side to move could claim: a third occurrence
+    # or the fifty-move count reached by this move, or reachable by any reply to it
     after = board.copy(stack=False)
     after.push(move)
-    if after.halfmove_clock >= 100:
+    clock = after.halfmove_clock
+    if clock >= 100 or key_counts.get(transposition_key(after), 0) >= 2:
         return True
-    return key_counts.get(transposition_key(after), 0) >= 2
+    for reply in after.legal_moves:
+        if clock >= 99 and not after.is_zeroing(reply):
+            return True
+        after.push(reply)
+        repeated = key_counts.get(transposition_key(after), 0) >= 2
+        after.pop()
+        if repeated:
+            return True
+    return False
+
+
+def _repeats(board: chess.Board, key_counts: dict[object, int], move: chess.Move) -> bool:
+    # a second occurrence, or a fifty-move count the opponent can run down, lets a
+    # shuffling opponent force the referee's claim two plies later
+    after = board.copy(stack=False)
+    after.push(move)
+    return after.halfmove_clock >= 98 or key_counts.get(transposition_key(after), 0) >= 1
 
 
 def _pick(board: chess.Board, key_counts: dict[object, int], result: SearchResult) -> chess.Move:
@@ -211,16 +305,16 @@ def _pick(board: chess.Board, key_counts: dict[object, int], result: SearchResul
         if kept:
             order = kept
     for idx in order:
-        if result.proofs[idx] == 1.0 and not _hands_over_draw_claim(
-            board, key_counts, result.moves[idx]
-        ):
+        if result.proofs[idx] == 1.0 and not _referee_draws(board, key_counts, result.moves[idx]):
             return result.moves[idx]
     safe = [idx for idx in order if result.proofs[idx] != -1.0]
     if safe:
         order = safe
     if float(result.visits[order].max()) <= 0.0:
         return result.moves[order[int(np.argmax(result.root.priors[order]))]]
-    best = order[0]
+    best = _lower_bound_best(result, order)
+    order.remove(best)
+    order.insert(0, best)
     q_best = float(result.q[best])
 
     near_adjudication = board.ply() >= _PLY_CAP - 60
@@ -230,11 +324,11 @@ def _pick(board: chess.Board, key_counts: dict[object, int], result: SearchResul
 
     if losing:
         for idx in order:
-            if _hands_over_draw_claim(board, key_counts, result.moves[idx]):
+            if _referee_draws(board, key_counts, result.moves[idx]):
                 return result.moves[idx]
     if winning:
         for idx in order:
-            if not _hands_over_draw_claim(board, key_counts, result.moves[idx]):
+            if not _repeats(board, key_counts, result.moves[idx]):
                 return result.moves[idx]
     return result.moves[best]
 
@@ -257,9 +351,11 @@ def _play(fen: str, time_left_ms: int) -> str:
         moves, priors, _ = _NET.evaluate(board)
         move = moves[int(np.argmax(priors))]
     else:
-        deadline = started + _budget_s(time_left_ms, board.fullmove_number)
+        budget = _budget_s(time_left_ms, board.fullmove_number)
         inherited = root.total if root is not None else 0
-        result = _MCTS.run(board, game.key_counts, deadline, root=root)
+        result = _MCTS.run(board, game.key_counts, started + budget, root=root)
+        searched = result.simulations
+        result = _extend(board, game.key_counts, result, started, budget, time_left_ms / 1000.0)
         move = _pick(board, game.key_counts, result)
         child = result.root.children[result.moves.index(move)]
         elapsed = time.monotonic() - started
@@ -269,6 +365,7 @@ def _play(fen: str, time_left_ms: int) -> str:
             f"reused={inherited} pondered={pondered} "
             f"q={result.q[result.moves.index(move)]:+.2f} t={elapsed:.2f}s"
             f"{' pruned' if result.pruned else ''}"
+            f"{' extended' if result.simulations > searched else ''}"
         )
 
     game.board.push(move)

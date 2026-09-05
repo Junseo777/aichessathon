@@ -54,6 +54,20 @@ def test_deadline_is_respected(net: PolicyValueNet) -> None:
     assert elapsed < 0.5, f"deadline overrun: {elapsed:.3f}s"
 
 
+def test_second_occurrence_is_a_draw_in_the_tree(net: PolicyValueNet) -> None:
+    board = chess.Board()
+    board.push_uci("g1f3")
+    repeating = chess.Move.from_uci("g8f6")
+    after = board.copy(stack=False)
+    after.push(repeating)
+    counts = {transposition_key(board): 1, transposition_key(after): 1}
+    result = MCTS(net).run(board, counts, time.monotonic() + 30.0, max_sims=300)
+    idx = result.moves.index(repeating)
+    assert result.visits[idx] > 0
+    assert result.q[idx] == 0.0
+    assert result.root.children[idx] is None
+
+
 def test_third_occurrence_is_a_draw_on_the_path(net: PolicyValueNet) -> None:
     board = chess.Board()
     board.push_uci("g1f3")
@@ -125,6 +139,19 @@ def test_node_budget_bounds_expansion(net: PolicyValueNet) -> None:
     result = MCTS(net).run(board, fresh_counts(board), math.inf, max_sims=200, node_budget=5)
     assert result.expanded <= 5
     assert result.simulations <= 5
+
+
+def test_variance_of_backed_up_values_is_tracked(net: PolicyValueNet) -> None:
+    board = chess.Board()
+    result = MCTS(net).run(board, fresh_counts(board), time.monotonic() + 30.0, max_sims=100)
+    assert result.var is not None and (result.var >= 0).all()
+    root = result.root
+    visited = root.n > 0
+    mean = root.w[visited] / root.n[visited]
+    expected = np.maximum(root.w2[visited] / root.n[visited] - mean * mean, 0.0)
+    assert np.allclose(result.var[visited], expected, atol=1e-6)
+    assert (result.var[~visited] == 0).all()
+    assert (result.var[visited] > 0).any()
 
 
 def test_node_arrays_align() -> None:
