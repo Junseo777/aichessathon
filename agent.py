@@ -11,6 +11,7 @@ import numpy as np
 from chessml.encoding import transposition_key
 from chessml.net import load_fastest
 from chessml.search import MCTS, Node, SearchResult
+from chessml.tablebase import Tablebase, load_tablebase
 
 _PIECE_VALUES = {chess.PAWN: 1, chess.KNIGHT: 3, chess.BISHOP: 3, chess.ROOK: 5, chess.QUEEN: 9}
 _PLY_CAP = 300
@@ -34,6 +35,9 @@ _START_KEY = transposition_key(chess.Board())
 _NET, _MANIFEST = load_fastest(
     Path(__file__).resolve().parent / "weights", policy_temperature=1.359
 )
+# Syzygy tables for 3 and 4 pieces (chessml/tablebase.py): exact terminals in the tree,
+# and perfect play by distance to zeroing once the game itself is inside them
+_TABLEBASE = load_tablebase(Path(__file__).resolve().parent / "syzygy")
 _MCTS = MCTS(
     _NET,
     fpu_reduction=0.25,
@@ -42,8 +46,14 @@ _MCTS = MCTS(
     proofs=False,
     pruning_factor=1.33,
     draw_score=0.0,
+    tablebase=_TABLEBASE,
 )
 print(f"init: {_MANIFEST}")
+print(
+    f"init: syzygy {_TABLEBASE.count} tables up to {_TABLEBASE.max_pieces} pieces"
+    if _TABLEBASE is not None
+    else "init: no syzygy tables"
+)
 
 
 def _presearch(seconds: float) -> Node | None:
@@ -147,6 +157,11 @@ def _ponder(
 
 def _start_ponder(game: _Game, root: Node | None) -> None:
     if not game.ponder_ok:
+        return
+    if root is not None and root.terminal is not None:
+        # the position after our move is solved (a mate, or inside the endgame
+        # tables): nothing to ponder, and a terminal cannot be a search root
+        game.tree = None
         return
     game.stop = threading.Event()
     game.box = _PonderResult()
@@ -298,8 +313,47 @@ def _repeats(board: chess.Board, key_counts: dict[object, int], move: chess.Move
     return after.halfmove_clock >= 98 or key_counts.get(transposition_key(after), 0) >= 1
 
 
+def _table_pick(
+    tables: Tablebase,
+    board: chess.Board,
+    key_counts: dict[object, int],
+    result: SearchResult,
+    order: list[int],
+) -> tuple[list[int], chess.Move | None]:
+    # inside the tables the root plays perfectly: a win the fifty-move rule cannot take
+    # away is played by distance to zeroing, so every move makes progress; otherwise the
+    # search chooses among the moves of the best table outcome. A move the referee would
+    # answer with a draw claim counts as a draw whatever the table says, a mate excepted
+    entries = tables.root_moves(board)
+    if entries is None:
+        return order, None
+    by_move = {entry.move: entry for entry in entries}
+    outcome: dict[int, int] = {}
+    for idx in order:
+        entry = by_move[result.moves[idx]]
+        mates = entry.outcome == 2 and entry.dtz == 0
+        claimable = (
+            entry.outcome > 0 and not mates and _referee_draws(board, key_counts, entry.move)
+        )
+        outcome[idx] = 0 if claimable else entry.outcome
+    best = max(outcome.values())
+    kept = [idx for idx in order if outcome[idx] == best]
+    if best < 2:
+        return kept, None
+
+    def progress(idx: int) -> tuple[bool, int]:
+        move = result.moves[idx]
+        return _repeats(board, key_counts, move), by_move[move].dtz
+
+    return kept, result.moves[min(kept, key=progress)]
+
+
 def _pick(board: chess.Board, key_counts: dict[object, int], result: SearchResult) -> chess.Move:
     order = [int(i) for i in np.argsort(-result.visits)]
+    if _TABLEBASE is not None:
+        order, forced = _table_pick(_TABLEBASE, board, key_counts, result, order)
+        if forced is not None:
+            return forced
     if _STALEMATE_VETO and _material_for_mover(board) > 0:
         kept = [idx for idx in order if not _stalemates(board, result.moves[idx])]
         if kept:

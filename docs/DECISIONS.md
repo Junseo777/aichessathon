@@ -532,3 +532,82 @@ until the first-play-urgency fix of 2026-09-04 (`docs/FINDING_fpu.md`).
 Expected strength on the reference's Stockfish-anchored scale: ~2,200-2,500 for the
 first working model, 2,600-2,800 if engine labels, tau and the search work all land.
 Those are estimates with +/-300 error bars, and they do not convert to ladder Elo.
+
+## 14. Endgame tables: Syzygy, three and four pieces
+
+**Decision: ship the 3-4 piece Syzygy tables and probe them in the tree and at the root.
+Implemented 2026-09-06; conversion suite result at the end of this section.**
+
+Every position with up to seven pieces, kings included, is solved. The rules allow
+"opening books and endgame tablebases" within the 50 MB unzipped cap, and python-chess,
+which the platform preinstalls, reads Syzygy files directly. Size picks the slice: the
+3-4 piece set is 70 files and 4.3 MB (35 endings, a WDL and a DTZ file each), the
+5-piece set about a gigabyte, so 3-4 ships and 5 does not. The zip goes from 5.7 to
+10.1 MB unzipped. Files are memory-mapped; init is unchanged. Without a `syzygy/`
+directory the agent runs as before (`init: no syzygy tables`), which is what sparring
+copies without the link do.
+
+Two hooks, both in `chessml/tablebase.py`:
+
+- **In the tree** (`MCTS._expand`): a position inside the tables becomes a terminal
+  holding its exact win/draw/loss value, and the net is not asked. A trade into a won
+  or drawn four-piece ending is backed up exactly, so from five or six pieces the search
+  steers into wins it can see and away from draws. Never at the root, which needs its
+  moves. A cursed win (won, but the fifty-move rule takes it) is scored as the draw the
+  referee will call.
+- **At the root** (`agent._table_pick`): when the game itself is inside the tables,
+  every legal move is classified (a win the rule cannot take away, a win it can, a draw,
+  a loss the rule reaches first, a loss), and a safe win is played by distance to
+  zeroing: mates first, then captures and pawn moves, then the lowest DTZ, visits
+  breaking ties. Minimaxing DTZ makes progress every move, so a table win converts
+  regardless of the search. A win the counter cannot accommodate (DTZ plus counter over
+  99, one ply kept in hand for the table's rounding) is downgraded; a move the referee
+  would answer with a draw claim counts as a draw whatever the table says, a mate
+  excepted. Below a win, the search chooses among the moves of the best table class,
+  so a drawn or lost root still gets the net's practical chances.
+
+One consequence for pondering: after our move inside the tables the chosen child is a
+terminal, and a terminal cannot be a search root, so `_start_ponder` skips it (the
+same path used to raise once per game after a mating move; with the tables it raised
+once per move, a traceback on stderr each time, found in the zip's KBNvK verification
+game and fixed before the zip was rebuilt).
+
+Cost on the M1 Mac: 62 us per probe against 3.7 ms per net forward, so probing
+replaces work rather than adding it; the root classification is 0.3-26 ms once per
+move (17-move KQvKR the worst).
+
+What it fixes. In the conversion suite (`sparring/conv`, R8, max_sims 500, Stockfish
+at UCI_Elo 3190 defending) KBNvK drew by the fifty-move rule in both arms and KQvKR in
+the plain arm; both are four-piece endings. ARENA14's rook-and-knight-against-bare-king
+stalemate is four pieces too. Queen and pawn against pawn (five) and bishop and two
+pawns against pawn (six) stay out of reach at the root. Of the twenty rated games so
+far, four reached four pieces and none of our draws was a failed four-piece conversion
+(round 14 we were the side stalemated), so the gain shows against defenders that hold
+what the search cannot break: the ladder engines.
+
+Tests: `chessml/tests/test_tablebase.py` (values, classification, the fifty-move
+counter, the root never terminal, the zip contents) and `chessml/tests/test_agent.py`
+(KQvK, KBNvK from the wrong corner and KQvKR converted against a defender playing the
+tables' longest resistance; mate over visits; the referee veto; a drawn root left to the
+search). Provenance in `syzygy/SOURCE.md`: sizes matched the mirror's listing file for
+file, sha256 sums in `syzygy/CHECKSUMS.txt`.
+
+Measured: conversion suite arm `tb` (`sparring/conv/suite_tb.sh`, plain's build plus the
+tables, 2026-09-06): **18 of 20**, against plain's 16 and veto's 17. All eight textbook
+endings convert by checkmate, KBNvK in 27 plies and KQvKR in 29 where plain drew both by
+the fifty-move rule at 99, and every one faster than plain (KQvK in 9 plies against 53).
+Those two are the tables' doing. The rated positions moved one each way and neither was
+the tables: r11 converts here (109 plies, never below five pieces, so the search's own
+win) after repetition draws in both other arms, and r08 drew at the 300-ply cap after
+two wins. That r08 game differs from plain's from our first move (the 500-simulation
+search with time-based pruning is not deterministic run to run) and the Lichess
+seven-piece table calls its position at ply 127 a draw already, so the win went in the
+nine-to-fifteen piece phase. r12 stays unconverted in all three arms: the wrong-bishop
+ending, a table draw from ply 121, where our stalemate was one draw among draws. One
+game per position, so the rated half of the suite carries that much variance; the
+textbook half does not.
+
+Not measured: an arena against the same agent without the tables at the real clock.
+The tables cannot lose a position the net would have won, and below a win the choice
+goes back to the search, so the expected difference is the conversion rate and nothing
+else.

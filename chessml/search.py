@@ -9,6 +9,7 @@ import numpy.typing as npt
 
 from chessml.encoding import transposition_key
 from chessml.net import PolicyValueNet
+from chessml.tablebase import Tablebase
 
 
 class Node:
@@ -82,6 +83,7 @@ class MCTS:
         fpu_scaled: bool = False,
         root_fpu: float | None = None,
         draw_score: float = 0.0,
+        tablebase: Tablebase | None = None,
     ) -> None:
         self.net = net
         self.c_puct = c_puct
@@ -96,6 +98,8 @@ class MCTS:
         self.draw_score = draw_score
         self.proofs = proofs
         self.pruning_factor = pruning_factor
+        # endgame tables: a position inside them is a terminal with its exact value
+        self.tablebase = tablebase
         self.generation = 0
 
     def _cannot_be_overtaken(self, root: Node, sims: int, started: float, deadline: float) -> bool:
@@ -155,9 +159,15 @@ class MCTS:
         u = (self.c_puct * np.sqrt(float(node.total) + 1.0)) * node.priors / (1.0 + node.n)
         return int(np.argmax(q + u))
 
-    def _expand(self, board: chess.Board) -> Node:
+    def _expand(self, board: chess.Board, probe: bool = True) -> Node:
         if board.halfmove_clock >= 100 or board.is_insufficient_material():
             return _terminal(0.0)
+        if probe and self.tablebase is not None:
+            # exact inside the tables, and the net is not asked; not at the root,
+            # which needs its moves
+            exact = self.tablebase.value(board)
+            if exact is not None:
+                return _terminal(exact)
         moves, priors, value = self.net.evaluate(board)
         if not moves:
             return _terminal(-1.0 if board.is_check() else 0.0)
@@ -174,7 +184,7 @@ class MCTS:
         node_budget: int | None = None,
     ) -> SearchResult:
         if root is None:
-            root = self._expand(board)
+            root = self._expand(board, probe=False)
         if root.terminal is not None:
             raise ValueError("no legal moves at search root")
         self.generation += 1

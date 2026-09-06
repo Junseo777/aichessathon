@@ -3,6 +3,7 @@ import time
 from collections.abc import Iterator
 
 import chess
+import chess.syzygy
 import numpy as np
 import pytest
 
@@ -375,3 +376,105 @@ def test_opening_presearch_ignores_unrelated_positions() -> None:
     agent._OPENING_TREE = agent._presearch(0.2)
     assert agent._adopt_opening(chess.Board("8/5pk1/6p1/8/3K4/8/5PP1/8 w - - 0 45")) is None
     assert agent._OPENING_TREE is None
+
+
+def _uniform(board: chess.Board) -> SearchResult:
+    moves = list(board.legal_moves)
+    return _result(board, visits=[1] * len(moves), q=[0.0] * len(moves), moves=moves)
+
+
+def _resistance(probe: chess.syzygy.Tablebase, board: chess.Board, move: chess.Move) -> int:
+    # the defender's yardstick: a draw if the tables offer one, else the longest
+    # distance to zeroing for the attacker
+    after = board.copy(stack=False)
+    after.push(move)
+    if after.is_stalemate() or after.is_insufficient_material():
+        return 10**6
+    if probe.probe_wdl(after) <= 0:
+        return 10**5
+    return probe.probe_dtz(after)
+
+
+@pytest.mark.parametrize(
+    ("fen", "plies"),
+    [
+        ("8/8/8/4k3/8/8/8/4K2Q w - - 0 1", 30),
+        # bishop and knight with the king in the wrong corner: the search never mates it
+        ("7k/8/8/8/8/8/8/KB1N4 w - - 0 1", 100),
+        ("8/8/8/3rk3/8/8/8/3QK3 w - - 0 1", 100),
+    ],
+)
+def test_a_table_win_is_converted_against_the_longest_resistance(fen: str, plies: int) -> None:
+    tables = agent._TABLEBASE
+    if tables is None:
+        pytest.skip("no syzygy tables")
+    probe = chess.syzygy.open_tablebase(str(tables.directory))
+    board = chess.Board(fen)
+    counts = {transposition_key(board): 1}
+    for _ in range(plies // 2 + 1):
+        move = agent._pick(board, counts, _uniform(board))
+        board.push(move)
+        counts[transposition_key(board)] = counts.get(transposition_key(board), 0) + 1
+        if board.is_game_over(claim_draw=True):
+            break
+        reply = max(board.legal_moves, key=lambda m: _resistance(probe, board, m))
+        board.push(reply)
+        counts[transposition_key(board)] = counts.get(transposition_key(board), 0) + 1
+        if board.is_game_over(claim_draw=True):
+            break
+    assert board.is_checkmate(), f"not converted: {board.fen()} after {len(board.move_stack)} plies"
+    assert len(board.move_stack) <= plies
+
+
+def test_table_pick_plays_the_mate_whatever_the_visits() -> None:
+    if agent._TABLEBASE is None:
+        pytest.skip("no syzygy tables")
+    board = chess.Board("7k/5K2/8/8/8/8/8/3Q4 w - - 0 1")
+    moves = list(board.legal_moves)
+    mate = moves.index(chess.Move.from_uci("d1h5"))
+    visits = [100 if idx != mate else 0 for idx in range(len(moves))]
+    result = _result(board, visits=visits, q=[0.5] * len(moves), moves=moves)
+    # Qh5 and Qh1 both mate; either is the answer, whatever the visits say
+    board.push(agent._pick(board, {}, result))
+    assert board.is_checkmate()
+
+
+def test_table_pick_vetoes_a_win_the_referee_would_claim() -> None:
+    tables = agent._TABLEBASE
+    if tables is None:
+        pytest.skip("no syzygy tables")
+    board = chess.Board("8/8/8/4k3/8/8/8/4K2Q w - - 0 1")
+    first = agent._pick(board, {}, _uniform(board))
+    after = board.copy(stack=False)
+    after.push(first)
+    second = agent._pick(board, {transposition_key(after): 2}, _uniform(board))
+    assert second != first
+    entries = tables.root_moves(board)
+    assert entries is not None
+    assert next(entry.outcome for entry in entries if entry.move == second) == 2
+
+
+def test_table_pick_leaves_a_drawn_root_to_the_search() -> None:
+    if agent._TABLEBASE is None:
+        pytest.skip("no syzygy tables")
+    # KNNvK: every move keeps the draw, so the search's favourite stands
+    board = chess.Board("8/8/8/4k3/8/8/8/2N1K1N1 w - - 0 1")
+    moves = list(board.legal_moves)
+    visits = [1] * len(moves)
+    visits[3] = 100
+    result = _result(board, visits=visits, q=[0.0] * len(moves), moves=moves)
+    assert agent._pick(board, {}, result) == moves[3]
+
+
+def test_no_ponder_from_a_solved_child(capsys: pytest.CaptureFixture[str]) -> None:
+    # after our move inside the tables (or a mate) the chosen child is a terminal; the
+    # ponder thread must not be started from it, which raised once per move before
+    if agent._TABLEBASE is None:
+        pytest.skip("no syzygy tables")
+    board = chess.Board("8/8/8/4k3/8/8/8/4K2Q w - - 0 1")
+    agent.get_move(board.fen(), 30_000)
+    game = agent._GAME
+    assert game is not None
+    assert game.ponder is None
+    assert game.tree is None
+    assert "Traceback" not in capsys.readouterr().err

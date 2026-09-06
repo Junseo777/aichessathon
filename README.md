@@ -16,7 +16,7 @@ When you like it, `make zip` and drop `submission.zip` on your dashboard.
 
 ## Writing an agent
 
-`agent.py` is the entry point of the submission; `make zip` adds `chessml/` and `weights/`
+`agent.py` is the entry point of the submission; `make zip` adds `chessml/`, `weights/` and `syzygy/`
 beside it. One function:
 
 ```python
@@ -59,7 +59,9 @@ evaluation worth searching with.
 
 ```
 agent.py             the submission: time management, history, pondering, degraded modes
-chessml/             what agent.py imports - encoding, ONNX net, PUCT search
+chessml/             what agent.py imports - encoding, ONNX net, PUCT search, Syzygy tables
+syzygy/              the 3-4 piece Syzygy endgame tables the agent probes (70 files, 4.3 MB;
+                     provenance in syzygy/SOURCE.md)
 baselines/           random, greedy, minimax, numba, reference-hero; each a dir with an agent.py
 harness/runner.py    the process the platform runs your agent in
 harness/referee.py   the clock, legality, draw and adjudication rules

@@ -5,7 +5,7 @@ from pathlib import Path
 
 from harness.rules import MAX_UNZIPPED_BYTES
 
-DEFAULT_INCLUDES = ("weights",)
+DEFAULT_INCLUDES = ("weights", "syzygy")
 SKIP = {"__pycache__", ".DS_Store"}
 
 
