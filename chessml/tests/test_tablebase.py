@@ -100,19 +100,28 @@ def test_search_backs_up_exact_values_from_the_tables(
     net: PolicyValueNet, tables: Tablebase
 ) -> None:
     # KQvKR with the queen attacked: taking the rook enters KQvK, a table win; a king
-    # move loses the queen into KRvK, a table loss. Every child is inside the tables, so
-    # with proofs on the root is solved once each child has been visited
+    # move loses the queen into KRvK, a table loss. Every child is inside the tables.
     board = chess.Board("k7/8/8/8/8/8/8/K2Q3r w - - 0 1")
     search = MCTS(net, tablebase=tables, proofs=True, root_fpu=1.0)
+    # The losing child is exact whether or not the search reaches it: with proofs on, the
+    # root is proven the moment the capture is visited and the search stops there, and
+    # which child comes first depends on the net's priors (CI's random-init net ordered
+    # them differently from a trained one). So probe that child directly: Black to move
+    # wins the queen, a table win for the mover.
+    hung = board.copy()
+    hung.push(chess.Move.from_uci("a1a2"))
+    assert search._expand(hung).terminal == 1.0
     result = search.run(board, {transposition_key(board): 1}, math.inf, max_sims=200)
     take = result.moves.index(chess.Move.from_uci("d1h1"))
     child = result.root.children[take]
     assert child is not None and child.terminal == -1.0
     assert result.q[take] == 1.0
     assert result.proofs[take] == 1.0
-    hang = result.moves.index(chess.Move.from_uci("a1a2"))
-    assert result.proofs[hang] == -1.0
     assert result.root.terminal is None
+    hang = result.moves.index(chess.Move.from_uci("a1a2"))
+    if result.root.children[hang] is not None:
+        assert result.q[hang] == -1.0
+        assert result.proofs[hang] == -1.0
 
 
 def test_the_root_is_expanded_without_the_tables(net: PolicyValueNet, tables: Tablebase) -> None:
