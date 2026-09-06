@@ -19,7 +19,14 @@ onwards R1 with smart pruning; rounds 16 to 23 the 03:26 upload of Sept 5
 (temperature 1.359, root FPU 1.0, pruning, the old repetition test); rounds 24 to
 30 `submission_fixes_R1_e8_ema_fe58a9c.zip`, built 15:31 and byte-identical to
 `main` at fe58a9c (repetition fix, opening-tree adoption, draw rule on, extension
-and LCB off). The clocks agree: not one of the 722 searched
+and LCB off); rounds 31 onwards `submission_R8_int8.zip`, built 06:17 UTC on Sept 6:
+the R8_e8_ema net (checkpoint `912e617b…`) shipped as fp32, fused and int8 graphs
+(the two head MatMuls kept fp32), the same `agent.py` and `chessml` as fe58a9c, and
+a loader that times the graphs at init and plays the fastest; round 40 onwards
+`submission_R8_int8_tb.zip`, built 15:51 UTC, the same plus the Syzygy 3-4 piece
+tables of `aae6dd1` (the round-40 log's init reads `syzygy 70 tables up to 4
+pieces`). The logs date each upload: an upload made a few minutes before a game
+starts plays that game. The clocks agree: not one of the 722 searched
 moves in rounds 1 to 14 stopped before its deadline, and in round 15 the bot
 stopped 62 of 63 searches early and spent 47% of its budget. The moves agree
 too: replaying the 210 search-decided positions of rounds 1 to 10 at 300
@@ -64,6 +71,16 @@ pruning, scaled FPU, policy temperature, in-tree draw score).
 | 28 | Make_no_mistakes | Black | loss | mate | 20...Qa1+ at 99 s and q −0.05 lost 2.1 pawns (Bb7 held 0.0), a move both builds play at 2,400 simulations; mated at 52 |
 | 29 | Amplifirm | Black | draw | threefold | +3.1 at move 23 after the opponent's two exchange sacrifices; q +0.65 to +0.79 through move 44 while six slips at 45 to 98 s (37...e5 −2.0, 39...Bh8 −1.4) took it to 0.0; perpetual check from move 60 |
 | 30 | Finlay Phillips | Black | win | mate | clean: +1.9 after 25. Qg3, q tracking Stockfish from +0.36 to +0.96, mated at 70 with 13 s; the opponent got down to 1.2 s |
+| 31 | LeetBeaters | White | loss | mate | first R8 int8 game, on the slowest machine of the set; 16. fxe4 and 29. bxc6 to −2.4 at full clock, the opponent gave it all back, 51. Kg2 missed Kg4 (+2.1), 54. Rc6 and 58. Be3 lost it again; 98 moves, 5 s left |
+| 32 | CheckmateGPT | White | loss | mate | +0.7 at move 24 with 83 s; 25. h5, 28. Kb1, 40. Ka2 and 41. Qc1 (Qb5 held) at full clock took it to −4.3 while q went +0.41 to −0.27 |
+| 33 | zachFree-zone_sponsorPhanty | Black | win | mate | +1.6 by move 21, +5.8 by 54; nine slips of 50 to 360 cp between moves 54 and 89 at 4 to 21 s changed nothing; mated at 95 with 3.7 s |
+| 34 | The Good Boys | White | win | mate | +2.8 by move 26, the opponent erred back each time we did; converted at 88 with 5.4 s |
+| 35 | Ryan Vincent | White | win | mate | +1 to +4 from move 31, a queen ending converted at 89 with 6.6 s |
+| 36 | zak | Black | draw | insufficient material | level throughout, one 64 cp slip at 24...g3 answered by 25. Nxe4; king against king at 74 |
+| 37 | Solo Man | White | draw | threefold | 489 plies, the longest game in the set; a pawn down from move 34, 16 s at move 60 and 2 to 5 s from move 90 for 145 moves; lost on the board from 62. Rh5 and 65. Kh5, mate scores through the 80s and 90s, but Solo Man at 2.2 s could not convert and gave it back a dozen times; bishop against bishop by 240 |
+| 38 | mangodogo | Black | win | mate | +1.4 after the opponent's 12. Nxe5, +3.3 by 33, a pawn promoted at 54, mated at 73 with 16 s |
+| 39 | adashima | Black | win | mate | +5 by move 41 and mate in 11 at move 63; 29 more moves to deliver it, queen and bishop against a bare king from move 73 at 0.5 s a move, mated at 92 with 2.6 s; the repetition rule refused a repeat eight times at q +0.9 |
+| 40 | xx | White | win | mate | first game with the Syzygy tables (never reached four pieces: queen and rook against king and pawn at the mate); +1.0 after the opponent's 12. Rxf3, +6 by move 45, mated at 64 with 13.6 s; the strongest team beaten so far (2052, 21st) |
 
 Score 14.5/25. The wins were all against opponents who blundered, eight of the
 nine into mate; the two losses to leaders in rounds 17 and 18 came from
@@ -73,7 +90,11 @@ evening; we stood 15th of 282 at 1960 after round 24, down from 2001 after
 round 20). Rounds 26 to 30 went D L L D W
 against 1882, 1906, 1993, 1845 and 1849; the rating fell from 2001 after round 20
 to 1848 after round 29, 31st of 295. The pruning build's tally, rounds 15 to 30,
-is 8.5/16; the fixes zip's, rounds 24 to 30, 1.5/7. Rounds 11 to 18 were analysed the same
+is 8.5/16; the fixes zip's, rounds 24 to 30, 1.5/7. Rounds 31 to 40, the R8 int8
+upload, went L L W W W D D W W W, 7/10 against an expectation of 4.7 from the
+ratings (the losses to the 12th-ranked team and to a 1789, the wins against 1733
+to 2052); the rating fell to 1765 after round 32 and stood at 2027 after round 39,
+23rd of 323. Score 23.5/40. Rounds 11 to 18 were analysed the same
 way as the first ten; rounds 16 to 18 were played by the Sept 5 upload
 (temperature 1.359, root FPU 1.0, pruning; no repetition fix).
 
@@ -303,6 +324,62 @@ in-tree rule is visible only in the simulation counts: 13,000 to 83,000 per move
 in round 29's perpetual, where repeated positions end a path without a forward
 pass.
 
+**Rounds 31 to 38: the R8 int8 upload on the platform.** The first thing the logs
+settle is the speed. `load_fastest` picked the int8 graph on every one of the eight
+machines: 2.83 to 3.17 ms against 3.45 to 4.06 for the fused graph and 4.23 to 5.03
+for fp32 on seven of them, 1.45 to 1.6 times fp32, less than the box's 1.83 but real;
+round 31's machine was the slow one of the set (4.59 / 5.04 / 5.96 ms, 21 s to
+ready). The pre-search made 1,184 to 1,344 simulations in 5 s against 768 to 1,070
+before, and the median search per move was 460 to 800 simulations against 320 to
+576 in rounds 15 to 30, so the platform is now at roughly the 800-simulation side of
+ARENA #11's doubling. The games themselves: two losses, one to the 12th-ranked team
+in a game R1 would have lost the same way (the replay in the previous section's
+method applies: R1, R8 fp32 and R8 int8 chose the same move at 13 of 16 decisive
+comparisons, and int8 matched fp32 at all 16), and one to a 1789 at full clock,
+round 32, where four moves between 25 and 41 (h5, Kb1, Ka2, Qc1) took +0.7 to −4.3
+while q read +0.41 to −0.27. The five wins were conversions against 1733 to 1959
+teams, all played down to 3.7 to 16 s.
+
+R8's value head has the same shape as R1's. On the 568 searched positions of rounds
+31 to 38 with both a q and a Stockfish score, the band means are +0.32 (+50 to +150),
++0.57 (+150 to +300), +0.74 (+300 to +500) and +0.90 above +500, against R1's +0.37,
++0.62, +0.68 and +0.88; the slope between +1 and +4 pawns is 0.14 per pawn against
+R1's 0.10. Same training target, same saturation, so the conversion risk of rounds
+22, 23 and 29 is unchanged by the net; the extra search is what changed.
+
+**Round 37 and two platform rules the code did not know.** Round 37 ran to ply 489
+and ended by threefold. The platform's docs give the failure table: `ply_cap`, "the
+game reached 600 plies", result draw. `agent.py` carries `_PLY_CAP = 300` and
+`harness/rules.py` `PLY_CAP = 300`, and `_pick` switches to material-based winning
+and losing from ply 240, so in round 37 the branch was live from move 120 to move
+245 on a cap that does not exist, and the cap that does is a draw for both sides,
+not an adjudication. In this game it happened to be right: a pawn down from move 34
+(13. b4 was the slip), the bot reached 16 s at move 60 and then played 145 moves at
+0.55 s each on a 2 to 5 s clock, lost on the board from 62. Rh5 and 65. Kh5 by
+Stockfish's count with mate scores through the 80s and 90s, and was saved because
+Solo Man, itself at 2.2 s, gave the win back a dozen times until bishop against
+bishop at move 240. The second rule is the log: stdout and stderr are kept as the
+first 4 KB plus the last 4 KB, which is why the round-37 log holds moves 9 to 62 and
+237 to 245 and nothing between. Both are in `BACKLOG.md` G12 with the fix.
+
+**Round 39 is the mate-finding problem in its purest form.** Against adashima the
+bot was +5 by move 41 and Stockfish had mate in 11 at move 63, mate in 8 at 71 and
+mate in 4 at 79, queen and bishop against a bare king from move 73. The bot read
+q +0.92 to +1.00 throughout, which is the value head's ceiling and carries no
+distance-to-mate, so it played 29 more moves after the mate-in-11, checking from
+square to square at 0.5 to 0.7 s and 190 to 320 simulations a move while the clock
+went from 14 s to 2.6 s. It won because a bare king has no counterplay; against a
+defender with a pawn it would have flagged. The repetition rule was live the whole
+way and refused a repeat eight times at q +0.9, the round-19 failure inverted.
+This is the case for proofs or, since it is a four-piece ending, for the Syzygy
+3-4 piece tables, which landed in `aae6dd1` the same day: exact terminals in the
+tree and a distance-to-zeroing pick at the root. Replayed through them, round 39
+from move 73 (the first position with four pieces on our move) is mate in five,
+nine plies, against the game's 26 moves; the tables' own tests pass. Their cover
+starts at four pieces, so moves 63 to 72, seven pieces down to five with the
+mate-in-11 already on the board, stay with the value head, which reads +0.95
+for all of them.
+
 ## What the match logs add
 
 The platform's per-game logs sit beside the PGNs from round 1. Our stdout is
@@ -321,7 +398,10 @@ result but no search telemetry. What the captured games show:
   58 s, 19 86 s and 53 s, 20 136 s and 16 s, 21 87 s and 51 s, 22 160 s and 5 s
   (98 moves), 23 125 s and 23 s, 24 148 s and 9 s (83 moves), 25 125 s and 23 s,
   26 104 s and 38 s, 27 142 s and 13 s, 28 104 s and 39 s, 29 129 s and 19 s,
-  30 138 s and 13 s.
+  30 138 s and 13 s; the R8 int8 games 31 160 s and 5 s, 32 135 s and 14 s, 33 160 s
+  and 4 s, 34 156 s and 5 s, 35 155 s and 7 s, 36 143 s and 11 s, 37 236 s and 2 s,
+  38 137 s and 16 s, 39 163 s and 3 s, 40 135 s and 14 s. The faster net did not change the formula, so games are still
+  played down to a few seconds.
   Median simulations per move 320 (round 22) to 480; searches under 200
   simulations 2 to 6 per game except 22 in round 22. The pre-pruning games used 120 to 169 s and ended at
   2 to 19 s. Pruning stopped 33 of 34 to 66 of 70 searches; the 4 s cap bound on
@@ -332,7 +412,7 @@ result but no search telemetry. What the captured games show:
   finds no better move up to 2,500, so those were the net's opinion, not a budget
   shortfall. Round 10 move 14 had 670 simulations plus a reused subtree of 1,055.
 - **The ponder thread crashes after a mating move.** Every win by checkmate with
-  pondering (rounds 11, 12, 13, 15, 16, 20, 30) ends its log with `ValueError: no
+  pondering (rounds 11, 12, 13, 15, 16, 20, 30, 33, 34, 35, 38) ends its log with `ValueError: no
   legal moves at search root` from `_ponder`. The game is over by then, so it costs
   nothing; a one-line guard in `_ponder` would silence it.
 - **Round 19 lost a half point to the repetition rule.** From move 39 the search
@@ -365,7 +445,7 @@ agent's own verdicts come from replaying those positions through the working
 tree's `chessml` search, which carries the Sept 4 features the upload lacks,
 with the budget it actually had in the game and again with 6 s, on a laptop
 that was running sparring lanes at the time, so simulation counts are neither
-the platform's nor idle. Rounds 21 to 30 were scored on 2026-09-05 at 0.25 s and one thread
+the platform's nor idle. Rounds 21 to 30 were scored on 2026-09-05, and 31 to 40 on 2026-09-06, at 0.25 s and one thread
 for the trajectory and 4 s multipv 4 on the named positions; the calibration
 table pools every searched position of those ten games with a q in the log. The
 build replay ran each upload's `agent.py` and `chessml` from its zip with

@@ -1,0 +1,400 @@
+AI CHESSATHON MATCH LOG
+=======================
+
+MATCH
+  Round          Rated 37
+  Team           Team1
+  Colour         White
+  Opponent       Solo Man
+  Opening        King's Indian Classical
+  Start FEN      r1bq1rk1/ppp2pbp/2np1np1/3Pp3/2P1P3/P1N2N2/1P2BPPP/R1BQK2R b KQ - 0 8
+  You moved      Second
+  Machine        w-3535e1
+  Finished       2026-09-06 13:09:21 UTC
+  Match ID       7e72bfde-e341-4f86-8716-8a3b38a694c5
+
+INIT
+  Ready in       5.1 s
+  Budget         90.0 s
+  Used           6 percent
+
+CLOCK
+  Base           120.0 s plus 0.5 s per move
+  Moves          237
+  Time used      236.3 s
+  Slowest        4.0 s on move 33
+  Fastest        0.0 s on move 234
+  Average        1.0 s
+  Left at end    2.2 s
+
+RESULT
+  Drawn by threefold repetition
+  Game lasted 467.1 s
+
+MOVES
+    #  move          time     clock left
+    1  O-O           2.6 s      117.9 s
+    2  Be3           3.6 s      114.9 s
+    3  Bd2           2.8 s      112.6 s
+    4  Ng5           3.6 s      109.5 s
+    5  b4            3.7 s      106.2 s
+    6  Ne6           1.4 s      105.3 s
+    7  dxe6          0.7 s      105.1 s
+    8  axb4          1.0 s      104.6 s
+    9  Qxa1          1.4 s      103.7 s
+   10  Qb1           3.5 s      100.7 s
+   11  Nxe4          2.8 s       98.4 s
+   12  Nxf6+         3.0 s       95.9 s
+   13  b5            3.5 s       92.9 s
+   14  Bd3           3.7 s       89.7 s
+   15  Be4           2.3 s       87.9 s
+   16  f3            3.2 s       85.2 s
+   17  g4            3.5 s       82.2 s
+   18  Kg2           2.5 s       80.2 s
+   19  Bxf4          2.0 s       78.7 s
+   20  Re1           3.0 s       76.2 s
+   21  gxh5          1.6 s       75.1 s
+   22  Kh1           1.8 s       73.7 s
+   23  Rg1           1.3 s       72.9 s
+   24  Qc1           2.8 s       70.6 s
+   25  Qc2           3.7 s       67.4 s
+   26  Qd2           2.5 s       65.4 s
+   27  Qd5           1.8 s       64.1 s
+   28  cxd5          1.8 s       62.8 s
+   29  h4            2.6 s       60.7 s
+   30  Kh2           2.3 s       58.9 s
+   31  Kh3           3.2 s       56.2 s
+   32  Rc1           3.9 s       52.8 s
+   33  Rc2           4.0 s       49.4 s
+   34  Rg2           2.6 s       47.2 s
+   35  Rg4           2.8 s       44.9 s
+   36  hxg5          3.2 s       42.2 s
+   37  Rg2           3.3 s       39.4 s
+   38  Rc2           2.5 s       37.3 s
+   39  Rc1           3.0 s       34.8 s
+   40  Rg1           2.6 s       32.7 s
+   41  Rg8           2.5 s       30.8 s
+   42  Kg2           2.6 s       28.7 s
+   43  Kh3           2.4 s       26.8 s
+   44  Rf8           1.9 s       25.4 s
+   45  Kg2           2.2 s       23.7 s
+   46  Kh3           1.7 s       22.5 s
+   47  Kh2           2.0 s       21.0 s
+   48  Kh1           1.9 s       19.6 s
+   49  Kh2           1.0 s       19.0 s
+   50  Rf7           1.4 s       18.1 s
+   51  Rf5           1.7 s       16.9 s
+   52  Kh3           1.3 s       16.1 s
+   53  Kg4           1.2 s       15.5 s
+   54  Rh5           1.5 s       14.5 s
+   55  Kxh5          0.5 s       14.5 s
+   56  Kg4           1.4 s       13.6 s
+   57  Kh5           1.3 s       12.7 s
+   58  Kg4           1.3 s       12.0 s
+   59  Kg5           1.1 s       11.4 s
+   60  Kg6           1.1 s       10.8 s
+   61  Kf7           1.1 s       10.3 s
+   62  Ke8           1.1 s        9.6 s
+   63  Kd7           1.0 s        9.2 s
+   64  Kxc7          0.6 s        9.1 s
+   65  Kd7           0.6 s        9.0 s
+   66  Ke6           0.7 s        8.8 s
+   67  Kf5           0.8 s        8.5 s
+   68  Ke6           1.0 s        7.9 s
+   69  Kf5           0.7 s        7.7 s
+   70  Kg6           0.8 s        7.5 s
+   71  Kh7           0.9 s        7.0 s
+   72  Kg6           0.7 s        6.8 s
+   73  Kg5           0.9 s        6.4 s
+   74  Kf5           0.8 s        6.1 s
+   75  Kg5           0.8 s        5.8 s
+   76  Kf5           0.7 s        5.5 s
+   77  Kg4           0.7 s        5.3 s
+   78  Bb1           0.8 s        5.0 s
+   79  Be4           0.3 s        5.2 s
+   80  Kg5           0.7 s        5.0 s
+   81  Kg4           0.6 s        4.9 s
+   82  Bb1           0.7 s        4.7 s
+   83  Bh7           0.7 s        4.5 s
+   84  Be4           0.7 s        4.3 s
+   85  Kg5           0.7 s        4.1 s
+   86  Kg4           0.3 s        4.2 s
+   87  Kg5           0.7 s        4.1 s
+   88  Kg4           0.6 s        4.0 s
+   89  Kh3           0.7 s        3.8 s
+   90  Kg4           0.5 s        3.8 s
+   91  Bb1           0.7 s        3.6 s
+   92  Be4           0.3 s        3.8 s
+   93  Bg6           0.7 s        3.6 s
+   94  Be4           0.6 s        3.6 s
+   95  Kg5           0.7 s        3.4 s
+   96  Kg4           0.5 s        3.4 s
+   97  Kf5           0.6 s        3.3 s
+   98  Kg4           0.3 s        3.5 s
+   99  Bg6           0.6 s        3.3 s
+  100  Be4           0.3 s        3.5 s
+  101  Bb1           0.6 s        3.4 s
+  102  Bh7           0.6 s        3.2 s
+  103  Be4           0.3 s        3.4 s
+  104  Kh5           0.6 s        3.3 s
+  105  Kg5           0.6 s        3.1 s
+  106  Kg6           0.6 s        3.0 s
+  107  Kg5           0.6 s        3.0 s
+  108  Kh5           0.6 s        2.9 s
+  109  Kg5           0.6 s        2.8 s
+  110  Kg4           0.6 s        2.7 s
+  111  Kh5           0.4 s        2.7 s
+  112  Kg4           0.4 s        2.8 s
+  113  Kg5           0.5 s        2.8 s
+  114  Kg6           0.6 s        2.7 s
+  115  Kg5           0.5 s        2.6 s
+  116  Kh5           0.6 s        2.6 s
+  117  Kg5           0.5 s        2.6 s
+  118  Kg6           0.6 s        2.5 s
+  119  Kg5           0.6 s        2.4 s
+  120  Kg4           0.4 s        2.5 s
+  121  Kxf4          0.5 s        2.5 s
+  122  Kg5           0.6 s        2.4 s
+  123  Kf5           0.6 s        2.4 s
+  124  Ke6           0.6 s        2.3 s
+  125  Kf5           0.6 s        2.2 s
+  126  Kg4           0.6 s        2.2 s
+  127  Kg5           0.6 s        2.1 s
+  128  Kg4           0.5 s        2.1 s
+  129  Kg5           0.6 s        2.1 s
+  130  Kf5           0.5 s        2.0 s
+  131  Kg5           0.5 s        2.0 s
+  132  f4            0.0 s        2.5 s
+  133  Kg4           0.4 s        2.5 s
+  134  Kf3           0.4 s        2.6 s
+  135  Bg6           0.6 s        2.5 s
+  136  Bd3           0.6 s        2.4 s
+  137  Bb1           0.6 s        2.4 s
+  138  f5            0.6 s        2.3 s
+  139  Ke2           0.4 s        2.4 s
+  140  Kd1           0.5 s        2.4 s
+  141  Ke2           0.4 s        2.5 s
+  142  Kd1           0.5 s        2.4 s
+  143  Ke2           0.5 s        2.4 s
+  144  Kd1           0.5 s        2.4 s
+  145  Ke2           0.4 s        2.5 s
+  146  Kd1           0.5 s        2.5 s
+  147  Ke2           0.4 s        2.5 s
+  148  Kd1           0.4 s        2.7 s
+  149  Ke2           0.4 s        2.8 s
+  150  Bd3           0.6 s        2.8 s
+  151  Bb1           0.4 s        2.8 s
+  152  Bd3           0.5 s        2.8 s
+  153  Bb1           0.4 s        2.9 s
+  154  Bd3           0.5 s        2.9 s
+  155  Bb1           0.4 s        2.9 s
+  156  Bd3           0.5 s        2.9 s
+  157  Bb1           0.4 s        3.0 s
+  158  Bd3           0.4 s        3.1 s
+  159  Bb1           0.4 s        3.2 s
+  160  f6            0.6 s        3.1 s
+  161  f7            0.6 s        3.0 s
+  162  Bd3+          0.6 s        2.9 s
+  163  Bb1           0.5 s        2.9 s
+  164  Bd3           0.6 s        2.7 s
+  165  Bb1           0.6 s        2.7 s
+  166  Bd3           0.6 s        2.6 s
+  167  Bb1           0.5 s        2.6 s
+  168  Bh7           0.6 s        2.5 s
+  169  Bb1           0.6 s        2.4 s
+  170  Bd3           0.6 s        2.3 s
+  171  Bb1           0.6 s        2.3 s
+  172  Bh7           0.6 s        2.2 s
+  173  Bb1           0.6 s        2.1 s
+  174  Kd3           0.5 s        2.1 s
+  175  Kxd4          0.5 s        2.1 s
+  176  Kc3           0.6 s        2.0 s
+  177  Kc4           0.5 s        2.0 s
+  178  Kd5           0.0 s        2.5 s
+  179  Kc4           0.6 s        2.4 s
+  180  Kb3           0.6 s        2.3 s
+  181  Kc4           0.6 s        2.3 s
+  182  Kb3           0.6 s        2.2 s
+  183  Kc4           0.5 s        2.1 s
+  184  Kb3           0.5 s        2.1 s
+  185  Ka2           0.5 s        2.1 s
+  186  Bd3           0.5 s        2.1 s
+  187  Be4           0.6 s        2.0 s
+  188  Bf5           0.5 s        2.0 s
+  189  Bd3           0.0 s        2.5 s
+  190  Be4           0.6 s        2.4 s
+  191  Bd3           0.6 s        2.4 s
+  192  Bh7           0.6 s        2.3 s
+  193  Bb1           0.6 s        2.2 s
+  194  Bd3           0.5 s        2.2 s
+  195  Bf5           0.6 s        2.1 s
+  196  Bd3           0.5 s        2.1 s
+  197  Be4           0.5 s        2.0 s
+  198  Bf5           0.5 s        2.0 s
+  199  Bd3           0.5 s        2.0 s
+  200  Be4           0.0 s        2.5 s
+  201  Bf5           0.6 s        2.4 s
+  202  Bd3           0.5 s        2.4 s
+  203  Be4           0.6 s        2.3 s
+  204  Bf5           0.6 s        2.2 s
+  205  Bd3           0.6 s        2.2 s
+  206  Be4           0.6 s        2.1 s
+  207  Bf5           0.6 s        2.0 s
+  208  Bd3           0.5 s        2.0 s
+  209  Be4           0.5 s        2.0 s
+  210  Bf5           0.0 s        2.5 s
+  211  Bd3           0.6 s        2.4 s
+  212  Be4           0.6 s        2.3 s
+  213  Bd3           0.6 s        2.3 s
+  214  Be4           0.6 s        2.2 s
+  215  Bf5           0.6 s        2.1 s
+  216  Bd3           0.5 s        2.1 s
+  217  Bf5           0.6 s        2.1 s
+  218  Bd3           0.5 s        2.0 s
+  219  Be4           0.6 s        2.0 s
+  220  Bf5           0.0 s        2.5 s
+  221  Bd3           0.6 s        2.4 s
+  222  Bh7           0.6 s        2.3 s
+  223  Bd3           0.5 s        2.3 s
+  224  Be4           0.6 s        2.2 s
+  225  Bd3           0.5 s        2.2 s
+  226  Bxb1          0.3 s        2.4 s
+  227  Be4           0.6 s        2.3 s
+  228  Kb3           0.6 s        2.3 s
+  229  Kc4           0.6 s        2.2 s
+  230  Bf5           0.6 s        2.1 s
+  231  Kd5           0.6 s        2.1 s
+  232  Bd3           0.6 s        2.0 s
+  233  Ke6           0.5 s        2.0 s
+  234  Be4           0.0 s        2.5 s
+  235  Bd3           0.6 s        2.4 s
+  236  Kf7           0.6 s        2.3 s
+  237  Ke6           0.6 s        2.2 s
+
+OUTPUT
+  8,215 bytes on stderr
+
+  net: [('model.int8.onnx', 3.09), ('model.fused.onnx', 3.53), ('model.onnx', 4.28)] -> model.int8.onnx
+  init: {'d_model': 96, 'n_heads': 4, 'n_blocks': 12, 'params': 1381050, 'checkpoint': {'file': 'R8_e8_ema.pt', 'sha256': '912e617bc501995bd632009fcca0ebde6c6be70d9926dd3a4688c763da38225e'}, 'forward_ms': 3.085, 'chosen': 'model.int8.onnx', 'sha256': '36be50365fffa677075524dd53e61eeff65a7f71c4533196eb51ff6418e6fa18'}
+  init: opening pre-search sims=1280
+  move 9: e1g1 sims=800 reused=0 pondered=0 q=+0.09 t=2.59s pruned
+  move 10: c1e3 sims=1184 reused=137 pondered=12 q=+0.13 t=3.55s pruned
+  move 11: e3d2 sims=960 reused=95 pondered=15 q=+0.08 t=2.76s pruned
+  move 12: f3g5 sims=1248 reused=267 pondered=11 q=+0.04 t=3.63s pruned
+  move 13: b2b4 sims=1171 reused=342 pondered=13 q=+0.01 t=3.72s
+  move 14: g5e6 sims=480 reused=201 pondered=12 q=+0.02 t=1.43s pruned
+  move 15: d5e6 sims=256 reused=612 pondered=13 q=+0.01 t=0.72s pruned
+  move 16: a3b4 sims=352 reused=558 pondered=13 q=-0.02 t=0.97s pruned
+  move 17: d1a1 sims=512 reused=229 pondered=14 q=+0.01 t=1.43s pruned
+  move 18: a1b1 sims=1280 reused=347 pondered=13 q=-0.01 t=3.53s pruned
+  move 19: c3e4 sims=992 reused=122 pondered=13 q=-0.04 t=2.78s pruned
+  move 20: e4f6 sims=960 reused=379 pondered=12 q=-0.06 t=2.98s pruned
+  move 21: b4b5 sims=1216 reused=120 pondered=13 q=-0.03 t=3.45s pruned
+  move 22: e2d3 sims=1344 reused=84 pondered=12 q=-0.00 t=3.71s pruned
+  move 23: d3e4 sims=864 reused=68 pondered=13 q=+0.02 t=2.29s pruned
+  move 24: f2f3 sims=1152 reused=144 pondered=13 q=+0.06 t=3.24s pruned
+  move 25: g2g4 sims=1184 reused=136 pondered=11 q=+0.05 t=3.52s pruned
+  move 26: g1g2 sims=800 reused=57 pondered=11 q=+0.15 t=2.48s pruned
+  move 27: d2f4 sims=672 reused=289 pondered=12 q=+0.12 t=2.02s pruned
+  move 28: f1e1 sims=960 reused=675 pondered=11 q=+0.26 t=2.97s pruned
+  move 29: g4h5 sims=576 reused=124 pondered=11 q=+0.33 t=1.64s pruned
+  move 30: g2h1 sims=608 reused=59 pondered=12 q=+0.42 t=1.81s pruned
+  move 31: e1g1 sims=512 reused=517 pondered=13 q=+0.38 t=1.34s pruned
+  move 32: b1c1 sims=1248 reused=729 pondered=12 q=+0.34 t=2.78s pruned
+  move 33: c1c2 sims=1440 reused=9 pondered=17 q=+0.41 t=3.73s pruned
+  move 34: c2d2 sims=960 reused=302 pondered=13 q=+0.42 t=2.46s pruned
+  move 35: d2d5 sims=608 reused=248 pondered=12 q=+0.45 t=1.84s pruned
+  move 36: c4d5 sims=640 reused=158 pondered=12 q=+0.55 t=1.79s pruned
+  move 37: h2h4 sims=1184 reused=198 pondered=13 q=+0.61 t=2.59s pruned
+  move 38: h1h2 sims=1312 reused=395 pondered=14 q=+0.59 t=2.30s pruned
+  move 39: h2h3 sims=1984 reused=344 pondered=15 q=+0.44 t=3.21s pruned
+  move 40: g1c1 sims=2976 reused=758 pondered=24 q=+0.34 t=3.87s pruned
+  move 41: c1c2 sims=3200 reused=561 pondered=17 q=+0.20 t=3.95s pruned
+  move 42: c2g2 sims=1088 reused=409 pondered=12 q=+0.15 t=2.63s pruned
+  move 43: g2g4 sims=1536 reused=127 pondered=18 q=+0.15 t=2.84s pruned
+  move 44: h4g5 sims=1568 reused=500 pondered=16 q=+0.09 t=3.17s pruned
+  move 45: g4g2 sims=1952 reused=789 pondered=14 q=+0.08 t=3.34s pruned
+  move 46: g2c2 sims=1248 reused=153 pondered=24 q=+0.07 t=2.53s pruned
+  move 47: c2c1 sims=1536 reused=77 pondered=13 q=+0.07 t=3.00s pruned
+  move 48: c1g1 sims=1152 reused=64 pondered=17 q=+0.06 t=2.59s pruned
+  move 49: g1g8 sims=960 reused=200 pondered=14 q=+0.00 t=2.48s pruned
+  move 50: h3g2 sims=967 reused=43 pondered=13 q=+0.01 t=2.60s
+  move 51: g2h3 sims=992 reused=339 pondered=12 q=+0.01 t=2.36s pruned
+  move 52: g8f8 sims=704 reused=88 pondered=15 q=+0.05 t=1.87s pruned
+  move 53: h3g2 sims=888 reused=180 pondered=13 q=+0.03 t=2.22s
+  move 54: g2h3 sims=768 reused=589 pondered=13 q=+0.03 t=1.72s pruned
+  move 55: h3h2 sims=778 reused=192 pondered=27 q=+0.01 t=2.01s
+  move 56: h2h1 sims=814 reused=281 pondered=13 q=+0.00 t=1.90s
+  move 57: h1h2 sims=512 reused=608 pondered=12 q=-0.01 t=1.04s pruned
+  move 58: f8f7 sims=640 reused=45 pondered=16 q=+0.01 t=1.44s pruned
+  move 59: f7f5 sims=640 reused=80 pondered=15 q=+0.03 t=1.67s pruned
+  move 60: h2h3 sims=448 reused=2 pondered=15 q=+0.11 t=1.27s pruned
+  move 61: h3g4 sims=416 reused=40 pondered=16 q=+0.11 t=1.16s pruned
+  move 62: f5h5 sims
+  [7,609 bytes dropped]
+  ered=34 q=-0.00 t=0.58s
+  move 177: h7b1 sims=544 reused=16 pondered=23 q=-0.01 t=0.57s pruned
+  move 178: b1d3 sims=512 reused=25 pondered=16 q=-0.00 t=0.57s pruned
+  move 179: d3b1 sims=608 reused=26 pondered=33 q=-0.00 t=0.56s pruned
+  move 180: b1h7 sims=444 reused=16 pondered=35 q=-0.00 t=0.57s
+  move 181: h7b1 sims=287 reused=18 pondered=22 q=-0.01 t=0.56s
+  move 182: e2d3 sims=224 reused=6 pondered=18 q=-0.00 t=0.52s pruned
+  move 183: d3d4 sims=224 reused=5 pondered=16 q=-0.00 t=0.51s pruned
+  move 184: d4c3 sims=221 reused=12 pondered=15 q=-0.00 t=0.55s
+  move 185: c3c4 sims=245 reused=5 pondered=13 q=-0.01 t=0.55s
+  move 187: d5c4 sims=273 reused=1 pondered=15 q=-0.02 t=0.58s
+  move 188: c4b3 sims=283 reused=10 pondered=28 q=-0.01 t=0.58s
+  move 189: b3c4 sims=254 reused=7 pondered=13 q=-0.01 t=0.57s
+  move 190: c4b3 sims=278 reused=6 pondered=25 q=-0.01 t=0.56s
+  move 191: b3c4 sims=256 reused=6 pondered=16 q=-0.01 t=0.54s pruned
+  move 192: c4b3 sims=224 reused=5 pondered=21 q=-0.01 t=0.54s pruned
+  move 193: b3a2 sims=192 reused=6 pondered=19 q=-0.00 t=0.49s pruned
+  move 194: b1d3 sims=256 reused=7 pondered=18 q=-0.00 t=0.52s pruned
+  move 195: d3e4 sims=286 reused=6 pondered=35 q=-0.00 t=0.55s
+  move 196: e4f5 sims=288 reused=7 pondered=38 q=-0.00 t=0.54s pruned
+  move 198: d3e4 sims=352 reused=0 pondered=15 q=-0.00 t=0.55s pruned
+  move 199: e4d3 sims=303 reused=11 pondered=23 q=-0.00 t=0.58s
+  move 200: d3h7 sims=271 reused=9 pondered=36 q=-0.00 t=0.57s
+  move 201: h7b1 sims=357 reused=6 pondered=31 q=+0.00 t=0.57s
+  move 202: b1d3 sims=320 reused=0 pondered=13 q=-0.00 t=0.53s pruned
+  move 203: d3f5 sims=345 reused=6 pondered=57 q=-0.02 t=0.56s
+  move 204: f5d3 sims=320 reused=7 pondered=17 q=-0.00 t=0.53s pruned
+  move 205: d3e4 sims=384 reused=7 pondered=34 q=-0.00 t=0.55s pruned
+  move 206: e4f5 sims=320 reused=8 pondered=27 q=-0.00 t=0.54s pruned
+  move 207: f5d3 sims=384 reused=10 pondered=38 q=+0.00 t=0.54s pruned
+  move 209: e4f5 sims=448 reused=1 pondered=20 q=-0.01 t=0.57s pruned
+  move 210: f5d3 sims=512 reused=14 pondered=42 q=+0.00 t=0.52s pruned
+  move 211: d3e4 sims=472 reused=0 pondered=15 q=-0.01 t=0.57s
+  move 212: e4f5 sims=384 reused=8 pondered=23 q=-0.00 t=0.57s pruned
+  move 213: f5d3 sims=368 reused=11 pondered=47 q=+0.00 t=0.56s
+  move 214: d3e4 sims=448 reused=12 pondered=51 q=+0.00 t=0.55s pruned
+  move 215: e4f5 sims=352 reused=11 pondered=28 q=+0.00 t=0.55s pruned
+  move 216: f5d3 sims=416 reused=7 pondered=52 q=+0.00 t=0.51s pruned
+  move 217: d3e4 sims=429 reused=16 pondered=49 q=-0.00 t=0.55s
+  move 219: f5d3 sims=384 reused=0 pondered=17 q=+0.00 t=0.56s pruned
+  move 220: d3e4 sims=444 reused=14 pondered=68 q=-0.00 t=0.58s
+  move 221: e4d3 sims=419 reused=8 pondered=31 q=-0.00 t=0.57s
+  move 222: d3e4 sims=480 reused=13 pondered=52 q=+0.00 t=0.55s pruned
+  move 223: e4f5 sims=498 reused=14 pondered=56 q=+0.00 t=0.56s
+  move 224: f5d3 sims=416 reused=12 pondered=30 q=+0.00 t=0.52s pruned
+  move 225: d3f5 sims=530 reused=9 pondered=73 q=-0.01 t=0.55s
+  move 226: f5d3 sims=448 reused=13 pondered=43 q=+0.00 t=0.51s pruned
+  move 227: d3e4 sims=482 reused=13 pondered=66 q=-0.00 t=0.55s
+  move 229: f5d3 sims=403 reused=1 pondered=18 q=+0.00 t=0.58s
+  move 230: d3h7 sims=361 reused=1 pondered=43 q=-0.00 t=0.58s
+  move 231: h7d3 sims=416 reused=9 pondered=32 q=+0.00 t=0.53s pruned
+  move 232: d3e4 sims=383 reused=5 pondered=72 q=-0.01 t=0.57s
+  move 233: e4d3 sims=416 reused=5 pondered=50 q=-0.00 t=0.53s pruned
+  move 234: d3b1 sims=96 reused=9 pondered=54 q=-0.00 t=0.28s pruned
+  move 235: b1e4 sims=217 reused=4 pondered=13 q=-0.00 t=0.57s
+  move 236: a2b3 sims=213 reused=4 pondered=14 q=+0.00 t=0.57s
+  move 237: b3c4 sims=215 reused=2 pondered=19 q=-0.00 t=0.56s
+  move 238: e4f5 sims=228 reused=3 pondered=18 q=+0.00 t=0.56s
+  move 239: c4d5 sims=224 reused=1 pondered=17 q=-0.00 t=0.55s pruned
+  move 240: f5d3 sims=245 reused=3 pondered=12 q=-0.00 t=0.55s
+  move 241: d5e6 sims=221 reused=1 pondered=16 q=-0.00 t=0.55s
+  move 243: e4d3 sims=297 reused=0 pondered=17 q=+0.00 t=0.58s
+  move 244: e6f7 sims=298 reused=0 pondered=19 q=-0.00 t=0.57s
+  move 245: f7e6 sims=271 reused=3 pondered=27 q=+0.00 t=0.57s
+
+Email hello@aichessathon.com with this file if anything here is unclear.
