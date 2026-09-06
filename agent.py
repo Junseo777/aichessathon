@@ -14,7 +14,7 @@ from chessml.search import MCTS, Node, SearchResult
 from chessml.tablebase import Tablebase, load_tablebase
 
 _PIECE_VALUES = {chess.PAWN: 1, chess.KNIGHT: 3, chess.BISHOP: 3, chess.ROOK: 5, chess.QUEEN: 9}
-_PLY_CAP = 300
+_PLY_CAP = 600
 _STALEMATE_VETO = False
 _PONDER_NODE_BUDGET = 100_000
 _PONDER_JOIN_S = 2.0

@@ -20,7 +20,7 @@ read in full; its measured results are cited as "the reference measured".
 | Init | 90 s before the clock starts (60 when this was written; the harness still enforces 60) | load, warm up, probe hardware; a pre-search only helps from the standard start, which rated games never use |
 | Process model | one process per game, alive between moves, pondering allowed | history tracking and pondering are possible |
 | Failure modes | illegal move, crash, OOM, flag: all full losses | reliability is worth as much as strength |
-| Draws | referee auto-claims threefold and fifty-move; ply 300 adjudicated on material | the agent must track repetition itself |
+| Draws | referee auto-claims threefold and fifty-move; ply 600 is a draw (was 300 on material until the rules page of 2026-09-06) | the agent must track repetition itself |
 | Rules | no Stockfish/Lc0/Maia or wrappers at inference; source must be judge-readable; engine-derived TRAINING labels confirmed permitted | Stockfish may label data, never play |
 | Event | ladder Sept 4-11 seeds a 13-round Swiss on locked builds Sept 11; live final Sept 12 | ten days total; execution risk dominates |
 
@@ -466,7 +466,7 @@ equivalent over a same-strength fragile entry.
 | history reconstructed by matching the opponent's reply among legal moves; rebase from FEN if nothing matches | the contract supplies only a FEN; the repetition plane and draw logic need history |
 | repetition/fifty-move tracked with a zobrist-count dict | the referee auto-claims; the agent must see it coming |
 | veto moves that hand the referee a claim when winning (q > +0.3); seek them when losing (q < -0.3) | a claimed draw is a free half point in a lost position and a thrown win in a won one |
-| past ply 240, material balance drives that logic | ply 300 is adjudicated on material |
+| past ply 540, material balance drives that logic | ply 600 is a draw, so a won game must convert before it and a lost one may reach it |
 | budget = clamp(left / max(14, 46 - move) + 0.4 s, <= 4 s, <= left - 1 s) | flagging is the most common self-inflicted loss |
 | < 2 s: one forward pass; < 0.25 s: first legal move | degraded modes instead of a flag |
 | repo gate: ruff, mypy strict, pytest (47 tests; the two mate-finding tests only on a trained net), two clean fast games | the starter's own bar. On random weights the agent loses those games; the gate checks legality and the clock, not strength. The gate ran no tests until 2026-09-04, which is how the first-play-urgency bug sat in two failing tests for days |
