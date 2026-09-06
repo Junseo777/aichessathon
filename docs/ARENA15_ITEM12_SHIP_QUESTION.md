@@ -1,6 +1,6 @@
-# ARENA #13 — item 12: the repetition and opening fixes on the live build, kept at 54.0%
+# ARENA #15 — item 12: the repetition and opening fixes on the live build, kept at 54.0%
 
-Continues `docs/ARENA12_STOCKFISH_LADDER_SUBMISSION.md`. Written to be read cold.
+Continues `docs/ARENA14_STOCKFISH_LADDER_SUBMISSION.md`. Written to be read cold.
 Branch `justin-arenas` off `main` `535c045` (code identical to `691a904`; the two
 commits between them are docs only).
 

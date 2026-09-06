@@ -1,1 +1,2 @@
 item12_ship_question: 50 games, with 54.0% (+7 =40 -3), failures 0 -> KEPT
+item1_clock_60_20_1.0: 50 games, with 47.0% (+10 =27 -13), failures 0 -> DROPPED

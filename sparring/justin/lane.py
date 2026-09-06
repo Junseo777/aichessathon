@@ -17,6 +17,9 @@ if not PY.exists():
 
 RESULT_RE = re.compile(r".* vs .*: (\w+) by (\w+)")
 
+# a 120 s + 0.5 s game cannot legitimately run this long; a hang must not cost hours
+GAME_TIMEOUT_S = 1200
+
 
 def load_openings(path: Path) -> list[tuple[str, str]]:
     out = []
@@ -65,35 +68,44 @@ def main() -> int:
         env = dict(os.environ)
         env["PYTHONPATH"] = str(TELEMETRY) + os.pathsep + env.get("PYTHONPATH", "")
         env["CHESS_TELEMETRY_DIR"] = str(tel)
+        timed_out = False
         with open(args.out / f"{tag}.log", "w", encoding="utf-8") as log:
-            subprocess.run(
-                [
-                    str(PY),
-                    "-m",
-                    "harness.play",
-                    "--white",
-                    str(white),
-                    "--black",
-                    str(black),
-                    "--base-ms",
-                    str(args.base_ms),
-                    "--increment-ms",
-                    str(args.increment_ms),
-                    "--fen",
-                    fen,
-                    "--pgn",
-                    str(args.out / f"{tag}.pgn"),
-                ],
-                cwd=REPO,
-                stdout=log,
-                stderr=subprocess.STDOUT,
-                stdin=subprocess.DEVNULL,
-                env=env,
-            )
+            cmd = [
+                str(PY),
+                "-m",
+                "harness.play",
+                "--white",
+                str(white),
+                "--black",
+                str(black),
+                "--base-ms",
+                str(args.base_ms),
+                "--increment-ms",
+                str(args.increment_ms),
+                "--fen",
+                fen,
+                "--pgn",
+                str(args.out / f"{tag}.pgn"),
+            ]
+            try:
+                subprocess.run(
+                    cmd,
+                    cwd=REPO,
+                    stdout=log,
+                    stderr=subprocess.STDOUT,
+                    stdin=subprocess.DEVNULL,
+                    env=env,
+                    timeout=GAME_TIMEOUT_S,
+                )
+            except subprocess.TimeoutExpired:
+                timed_out = True
         secs = int(time.time() - t0)
         text = (args.out / f"{tag}.log").read_text(encoding="utf-8", errors="replace")
         m = RESULT_RE.search(text)
-        result, term = (m.group(1), m.group(2)) if m else ("void", "none")
+        if timed_out:
+            result, term = "void", "timeout"
+        else:
+            result, term = (m.group(1), m.group(2)) if m else ("void", "none")
         if (result == "white" and wtag == "with") or (result == "black" and btag == "with"):
             score = "1"
         elif result == "draw":
